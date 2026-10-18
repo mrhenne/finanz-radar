@@ -1,0 +1,46 @@
+name: Validate Finanz-Radar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check config.js
+      - name: Verify critical configuration and access controls
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const app = fs.readFileSync('app.js', 'utf8');
+          const sql = fs.readFileSync('schema.sql', 'utf8');
+          const readme = fs.readFileSync('README.md', 'utf8');
+
+          assert.match(html, /@supabase\/supabase-js@2\.118\.0/);
+          assert.match(app, /function normalizeImportedState\(raw\)/);
+          assert.match(app, /function importBackup\(\)/);
+          assert.match(app, /raw\.length>2000000/);
+          assert.match(sql, /enable row level security/i);
+          assert.match(sql, /grant select, insert, update, delete\s+on table public\.finance_state to authenticated/i);
+          assert.match(sql, /for select to authenticated\s+using \(\(select auth\.uid\(\)\) = user_id\)/i);
+          assert.match(sql, /for update to authenticated\s+using \(\(select auth\.uid\(\)\) = user_id\)\s+with check \(\(select auth\.uid\(\)\) = user_id\)/i);
+          assert.match(readme, /https:\/\/finanz-radar-app\.vercel\.app/);
+          console.log('Critical configuration and security checks passed.');
+          NODE
