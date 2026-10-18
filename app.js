@@ -15,8 +15,30 @@ throw new Error('Unzulässiger Datentyp im Backup.')
 function normalizeImportedState(raw){
 if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Das Backup muss ein JSON-Objekt sein.');
 const clean=sanitizeImportedValue(raw),keys=['tx','as','goals','rec','debts','hist','sales'],base={tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:'light',f:{wr:4,exp:'',r:6}};
-for(const k of keys){if(clean[k]===undefined)clean[k]=[];if(!Array.isArray(clean[k]))throw new Error('Ungültige Datenstruktur: '+k+' muss eine Liste sein.');if(clean[k].length>20000)throw new Error('Zu viele Datensätze in '+k+'.');for(const row of clean[k]){if(!row||typeof row!=='object'||Array.isArray(row))throw new Error('Ungültiger Datensatz in '+k+'.');if(typeof row.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(row.id))row.id=uid()}}
-const out={...base,...clean};out.ui=clean.ui&&typeof clean.ui==='object'&&!Array.isArray(clean.ui)?{c:{},o:{},...clean.ui}:{c:{},o:{}};for(const k of ['c','o'])if(!out.ui[k]||typeof out.ui[k]!=='object'||Array.isArray(out.ui[k]))out.ui[k]={};out.f=clean.f&&typeof clean.f==='object'&&!Array.isArray(clean.f)?{...base.f,...clean.f}:{...base.f};if(!['light','dark','auto'].includes(out.th))out.th='light';return out
+const textField=(row,k,def='')=>typeof row[k]==='string'?row[k]:def;
+const numberField=(row,k,def=0)=>Number.isFinite(row[k])?row[k]:def;
+for(const k of keys){
+if(clean[k]===undefined)clean[k]=[];
+if(!Array.isArray(clean[k]))throw new Error('Ungültige Datenstruktur: '+k+' muss eine Liste sein.');
+if(clean[k].length>20000)throw new Error('Zu viele Datensätze in '+k+'.');
+for(const row of clean[k]){
+if(!row||typeof row!=='object'||Array.isArray(row))throw new Error('Ungültiger Datensatz in '+k+'.');
+if(typeof row.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(row.id))row.id=uid();
+if(k==='tx'){row.d=textField(row,'d');row.c=textField(row,'c','Sonstiges');row.a=numberField(row,'a');row.n=textField(row,'n');row.r=typeof row.r==='string'?row.r:null}
+if(k==='as'){row.n=textField(row,'n');row.k=textField(row,'k','sonst');row.q=numberField(row,'q');row.p=numberField(row,'p');row.c=numberField(row,'c');if(row.l!==undefined){if(!Array.isArray(row.l))row.l=[];row.l=row.l.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)).map(x=>({d:textField(x,'d'),q:numberField(x,'q'),p:numberField(x,'p'),f:numberField(x,'f')}))}if(typeof row.cg==='string'&&!/^[a-z0-9-]{1,100}$/i.test(row.cg))row.cg=''}
+if(k==='goals'){row.n=textField(row,'n');row.t=numberField(row,'t');row.y=row.y==null?'':textField(row,'y',String(row.y));row.m=textField(row,'m','man');row.c=numberField(row,'c')}
+if(k==='rec'){row.c=textField(row,'c','Sonstiges');row.a=numberField(row,'a');row.n=textField(row,'n');row.e=!!row.e}
+if(k==='debts'){row.n=textField(row,'n');row.a=numberField(row,'a')}
+if(k==='hist'){row.m=textField(row,'m');row.nw=numberField(row,'nw')}
+if(k==='sales'){row.n=textField(row,'n');row.d=textField(row,'d');row.k=textField(row,'k','sonst');row.g=numberField(row,'g');row.gc=numberField(row,'gc');row.gp=numberField(row,'gp')}
+}
+}
+const out={...base,...clean};
+out.ui=clean.ui&&typeof clean.ui==='object'&&!Array.isArray(clean.ui)?{c:{},o:{},...clean.ui}:{c:{},o:{}};
+for(const k of ['c','o'])if(!out.ui[k]||typeof out.ui[k]!=='object'||Array.isArray(out.ui[k]))out.ui[k]={};
+out.f=clean.f&&typeof clean.f==='object'&&!Array.isArray(clean.f)?{...base.f,...clean.f}:{...base.f};
+if(!['light','dark','auto'].includes(out.th))out.th='light';
+return out
 }
 try{const j=localStorage.getItem('fr_s');if(j)S=normalizeImportedState(JSON.parse(j))}catch(e){}
 // ==== Supabase: Zugangsdaten stehen in config.js ====
