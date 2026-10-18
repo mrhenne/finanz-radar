@@ -43,6 +43,9 @@ jobs:
           assert.match(app, /function normalizeImportedState\(raw\)/);
           assert.match(app, /function importBackup\(\)/);
           assert.match(app, /raw\.length>2000000/);
+          assert.match(app, /legacyPending/);
+          assert.match(app, /from\('user_state'\)\.select\('app_state,updated_at'\)/);
+          assert.match(app, /pausiert/);
           assert.match(sql, /enable row level security/i);
           assert.match(sql, /grant select, insert, update, delete\s+on table public\.finance_state to authenticated/i);
           assert.match(sql, /for select to authenticated\s+using \(\(select auth\.uid\(\)\) = user_id\)/i);
