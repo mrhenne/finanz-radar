@@ -93,7 +93,7 @@ const NS='http://www.w3.org/2000/svg';
 root.querySelectorAll('svg text').forEach(el=>{
 const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),nodes=[];
 while(walker.nextNode()){const n=walker.currentNode;if(!n.parentElement?.classList.contains('n'))nodes.push(n)}
-nodes.forEach(n=>{const txt=n.nodeValue;if(!/\\d/.test(txt))return;const frag=document.createDocumentFragment();let last=0,m,re=/\\d[\\d.,]*/g;
+nodes.forEach(n=>{const txt=n.nodeValue;if(!/\d/.test(txt))return;const frag=document.createDocumentFragment();let last=0,m,re=/\d[\d.,]*/g;
 while((m=re.exec(txt))){if(m.index>last)frag.append(document.createTextNode(txt.slice(last,m.index)));const t=document.createElementNS(NS,'tspan');t.setAttribute('class','n');t.textContent=m[0];frag.append(t);last=re.lastIndex}
 if(last<txt.length)frag.append(document.createTextNode(txt.slice(last)));n.replaceWith(frag)});
 });
