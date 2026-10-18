@@ -1,5 +1,6 @@
 -- Finanz-Radar: sichere, wiederholt ausfuehrbare Einrichtung.
 -- Diese Datei loescht keine Daten aus finance_state.
+-- Eine vorhandene public.user_state-Tabelle aus einer aelteren App bleibt unangetastet.
 create table if not exists public.finance_state (
   user_id uuid primary key
     references auth.users(id) on delete cascade,
