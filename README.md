@@ -36,6 +36,10 @@ Die App unterstützt Registrierung, Anmeldung per E-Mail und Passwort, Login-Lin
 
 Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Änderungen werden nach kurzer Verzögerung hochgeladen. Beim Anmelden vergleicht die App lokale und Cloud-Zeitstempel; der neuere Stand wird verwendet. Beim Wechsel zu einem anderen Konto werden lokale App-Daten des vorherigen Kontos vor dem Cloud-Abgleich verworfen.
 
+### Vorhandene ältere Cloud-Daten
+
+In diesem Supabase-Projekt existiert bereits ein älterer Datensatz in `public.user_state`. Er bleibt unverändert erhalten. Das ältere Datenformat ist nicht identisch mit dem aktuellen Finanz-Radar-Datenmodell. Wenn für einen Nutzer noch kein Datensatz in `finance_state` existiert, prüft die App zuerst `user_state` und pausiert eine erstmalige Cloud-Synchronisierung, wenn dort ältere Daten gefunden werden. Erst nach deiner bewussten Auswahl in der App wird der aktuelle lokale Finanz-Radar-Datenstand in `finance_state` angelegt. Der ältere Datensatz wird dabei **nicht** automatisch konvertiert, gelöscht oder überschrieben.
+
 **Wichtig:** Vor der ersten Anmeldung mit wichtigen Daten bitte über **Mehr → Daten & Backup → Export** ein Backup erstellen. Der Import wird vor dem Ersetzen der aktuellen Daten bestätigt und prüft die Struktur der JSON-Datei. Gefährliche HTML-Zeichen und ungültige Datensatz-IDs werden beim Laden/Import bereinigt. Der Import ist auf 2 MB begrenzt.
 
 ## Datensicherheit
