@@ -1,31 +1,57 @@
 # Finanz-Radar
 
-Persoenliche Finanz-App (Cashflow, Vermoegen, Krypto, FIRE, Prognose, Steuer). Reines HTML/CSS/JavaScript, kein Build noetig.
+Persönliche Finanz-App für Cashflow, Vermögen, Krypto, FIRE, Prognosen und Steuern. Die App besteht aus HTML, CSS und JavaScript und benötigt keinen Build-Schritt.
+
+**Live-App:** https://finanz-radar-app.vercel.app  
+**Repository:** https://github.com/mrhenne/finanz-radar
 
 ## Dateien
+
 | Datei | Inhalt |
 |---|---|
-| `index.html` | Grundgeruest, bindet alles ein |
-| `styles.css` | komplettes Design (hell/dunkel) |
-| `app.js` | gesamte App-Logik, Ansichten, Charts, Login/Sync |
-| `config.js` | **hier die Supabase-Zugangsdaten eintragen** |
-| `schema.sql` | Tabelle `finance_state` + Row Level Security |
+| `index.html` | Einstieg, Metadaten und Supabase-JavaScript-Client |
+| `styles.css` | Design und helles/dunkles Theme |
+| `app.js` | App-Logik, Ansichten, Login, Daten-Backup und Synchronisierung |
+| `config.js` | Öffentliche Supabase-Project-URL und Publishable Key |
+| `schema.sql` | Tabelle, explizite Data-API-Rechte und Row Level Security |
+| `vercel.json` | Sicherheitsheader für die Bereitstellung |
 
 ## Supabase einrichten
-1. Projekt auf supabase.com anlegen.
-2. SQL Editor: Inhalt von `schema.sql` ausfuehren.
-3. Project Settings -> API: **Project URL** und **anon/publishable Key** in `config.js` eintragen (nie den service_role Key).
-4. Authentication -> URL Configuration: **Site URL** = Adresse der App (z. B. `https://<name>.github.io/finanz-radar/`), dieselbe Adresse unter **Redirect URLs** eintragen. Das braucht der Link aus Bestaetigungs-, Magic-Link- und Passwort-Reset-Mails.
-5. Authentication -> Providers -> Email: Registrierung aktiv lassen. Optional "Confirm email" abschalten, dann geht Login direkt nach der Registrierung.
 
-## Login-Funktionen
-Registrieren, Anmelden (E-Mail + Passwort), Login-Link per E-Mail, Passwort vergessen/neu setzen, Passwort aendern, Abmelden (optional mit Loeschen der lokalen Daten), automatische Sitzungsverlaengerung.
+Für Finanz-Radar ist das bestehende Supabase-Projekt **Liquid-Wealth** in der Region Frankfurt (EU Central) vorgesehen. Nicht versehentlich ein zweites Projekt anlegen.
 
-## Synchronisation
-Eine Zeile pro Nutzer in `finance_state` (`data` = JSON). Aenderungen werden nach 1,5 s hochgeladen. Beim Login gewinnt der neuere Stand (Zeitstempel). Anderer Nutzer auf demselben Geraet: lokale Daten werden vorher verworfen, es gibt keinen Datenmix.
+1. Stelle sicher, dass das Projekt aktiv ist.
+2. Öffne den SQL Editor des Projekts und führe den Inhalt von `schema.sql` aus. Das Skript erstellt `public.finance_state`, aktiviert RLS, setzt die Tabellenrechte und erstellt die vier eigenen Nutzer-Policies. Es löscht keine Finanzdatensätze. Die vier gleichnamigen Policies werden bei erneuter Ausführung ersetzt.
+3. Kopiere die Project URL sowie den öffentlichen **Publishable Key** aus den Supabase-Projekteinstellungen in `config.js`. Der Schlüssel beginnt üblicherweise mit `sb_publishable_`. Ein alter öffentlicher `anon`-Key ist nur für Kompatibilität vorgesehen. **Niemals einen `service_role`- oder Secret-Key in diese Datei, in GitHub oder in den Browser eintragen.**
+4. Öffne in Supabase **Authentication → URL Configuration**. Setze die **Site URL** auf `https://finanz-radar-app.vercel.app` und füge unter **Redirect URLs** mindestens `https://finanz-radar-app.vercel.app/**` hinzu. Login-Link, E-Mail-Bestätigung und Passwort-Reset müssen auf die App zurückführen.
+5. Lasse die E-Mail-Bestätigung zunächst aktiviert. Registriere ein Testkonto, bestätige die E-Mail und prüfe Anmeldung, Magic Link, Passwort-Reset und Passwortänderung. Du kannst die Bestätigung später bewusst anpassen, wenn du den gewünschten Ablauf getestet hast.
 
-## Veroeffentlichen
-GitHub Pages: Settings -> Pages -> Branch `main`, Ordner `/ (root)`. Oder das Repository bei Vercel importieren.
+Die Zugangsdaten in `config.js` sind aktuell leer, bis das Projekt bereit und getestet ist. Nach einer Änderung an GitHub veröffentlicht Vercel die neue Version automatisch.
 
-## Hinweise zur Weiterentwicklung
-`app.js` ist eine lange Datei mit zusammenhaengenden Teilen. Nach jeder Aenderung alle Tabs oeffnen (Home, Cashflow, Vermoegen, FIRE, Prognose, Mehr) und die Browser-Konsole auf Fehler pruefen. Vor Updates ein Backup unter Mehr -> Daten & Backup exportieren.
+## Anmeldung und Cloud-Synchronisierung
+
+Die App unterstützt Registrierung, Anmeldung per E-Mail und Passwort, Login-Link, Passwort-Reset und Passwortänderung sowie Abmeldung.
+
+Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Änderungen werden nach kurzer Verzögerung hochgeladen. Beim Anmelden vergleicht die App lokale und Cloud-Zeitstempel; der neuere Stand wird verwendet. Beim Wechsel zu einem anderen Konto werden lokale App-Daten des vorherigen Kontos vor dem Cloud-Abgleich verworfen.
+
+**Wichtig:** Vor der ersten Anmeldung mit wichtigen Daten bitte über **Mehr → Daten & Backup → Export** ein Backup erstellen. Der Import wird vor dem Ersetzen der aktuellen Daten bestätigt und prüft die Struktur der JSON-Datei. Gefährliche HTML-Zeichen und ungültige Datensatz-IDs werden beim Laden/Import bereinigt. Der Import ist auf 2 MB begrenzt.
+
+## Datensicherheit
+
+- Die Tabelle hat Row Level Security aktiviert. Policies erlauben Zugriff nur, wenn `auth.uid() = user_id`.
+- Die Data-API-Rechte werden ausdrücklich nur der Rolle `authenticated` gewährt. `anon` erhält keine direkten Tabellenrechte.
+- Der Client verwendet ausschließlich einen öffentlichen Publishable Key. Datenzugriffsschutz wird durch Supabase Auth, Tabellenrechte und RLS erzwungen, nicht durch das Verstecken des Keys.
+- Nach der Einrichtung die Supabase Security Advisors kontrollieren und mit zwei getrennten Testkonten prüfen, dass jedes Konto nur seine eigenen Daten lesen und ändern kann.
+- Eine öffentliche Vercel-Adresse ist erreichbar. Persönliche Finanzdaten sollten erst synchronisiert werden, nachdem Login und Datenisolation erfolgreich getestet wurden.
+
+## Veröffentlichen und testen
+
+Die produktive App läuft bei Vercel: https://finanz-radar-app.vercel.app. Jeder Commit auf `main` stößt ein neues Deployment an.
+
+Nach App-Änderungen diese Punkte überprüfen:
+
+1. Die Tabs Home, Cashflow, Vermögen, FIRE, Prognose und Mehr öffnen.
+2. Buchungen, Vermögenswerte, Ziele, Backup-Export und Backup-Import testen.
+3. Nach der Supabase-Konfiguration Anmeldung und Synchronisierung mit zwei getrennten Testkonten testen.
+4. Browser-Konsole, Vercel-Deployment und Supabase Security Advisors auf Fehler prüfen.
+
