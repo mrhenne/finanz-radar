@@ -20,6 +20,8 @@ Persönliche Finanz-App für Cashflow, Vermögen, Krypto, FIRE, Prognosen und St
 
 Für Finanz-Radar ist das bestehende Supabase-Projekt **Liquid-Wealth** in der Region Frankfurt (EU Central) vorgesehen. Nicht versehentlich ein zweites Projekt anlegen.
 
+Im Projekt existiert bereits die ältere Tabelle `public.user_state` mit eigenen RLS-Regeln. Sie bleibt unangetastet. Diese Version von Finanz-Radar verwendet ausschließlich `public.finance_state`; die alte Tabelle sollte erst nach einer gesonderten Prüfung entfernt werden.
+
 1. Stelle sicher, dass das Projekt aktiv ist.
 2. Öffne den SQL Editor des Projekts und führe den Inhalt von `schema.sql` aus. Das Skript erstellt `public.finance_state`, aktiviert RLS, setzt die Tabellenrechte und erstellt die vier eigenen Nutzer-Policies. Es löscht keine Finanzdatensätze. Die vier gleichnamigen Policies werden bei erneuter Ausführung ersetzt.
 3. Kopiere die Project URL sowie den öffentlichen **Publishable Key** aus den Supabase-Projekteinstellungen in `config.js`. Der Schlüssel beginnt üblicherweise mit `sb_publishable_`. Ein alter öffentlicher `anon`-Key ist nur für Kompatibilität vorgesehen. **Niemals einen `service_role`- oder Secret-Key in diese Datei, in GitHub oder in den Browser eintragen.**
@@ -42,6 +44,7 @@ Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` ge
 - Die Data-API-Rechte werden ausdrücklich nur der Rolle `authenticated` gewährt. `anon` erhält keine direkten Tabellenrechte.
 - Der Client verwendet ausschließlich einen öffentlichen Publishable Key. Datenzugriffsschutz wird durch Supabase Auth, Tabellenrechte und RLS erzwungen, nicht durch das Verstecken des Keys.
 - Nach der Einrichtung die Supabase Security Advisors kontrollieren und mit zwei getrennten Testkonten prüfen, dass jedes Konto nur seine eigenen Daten lesen und ändern kann.
+- Der Supabase Security Advisor meldet derzeit außerdem deaktivierten Schutz gegen bekannte kompromittierte Passwörter. Aktiviere **Authentication → Settings/Password Security → Leaked Password Protection** im Dashboard.
 - Eine öffentliche Vercel-Adresse ist erreichbar. Persönliche Finanzdaten sollten erst synchronisiert werden, nachdem Login und Datenisolation erfolgreich getestet wurden.
 
 ## Veröffentlichen und testen
