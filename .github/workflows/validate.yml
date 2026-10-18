@@ -23,6 +23,8 @@ jobs:
         run: |
           node --check app.js
           node --check config.js
+      - name: Verify pinned Supabase CDN is reachable
+        run: curl --fail --silent --show-error --location --output /dev/null "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"
       - name: Verify critical configuration and access controls
         run: |
           node <<'NODE'
@@ -34,6 +36,10 @@ jobs:
           const readme = fs.readFileSync('README.md', 'utf8');
 
           assert.match(html, /@supabase\/supabase-js@2\.118\.0/);
+          const config = fs.readFileSync('config.js', 'utf8');
+          assert.match(config, /url: 'https:\/\/fbrzcvhoeqoqonxkyhrl\.supabase\.co'/);
+          assert.match(config, /key: 'sb_publishable_/);
+          assert.doesNotMatch(config, /(?:service_role|sb_secret)[^\n]*['"][A-Za-z0-9_-]{20,}['"]/i);
           assert.match(app, /function normalizeImportedState\(raw\)/);
           assert.match(app, /function importBackup\(\)/);
           assert.match(app, /raw\.length>2000000/);
