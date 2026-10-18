@@ -25,7 +25,9 @@
   const runway = () => { const f = fixk(); return f > 0 ? liquid() / f : 0; };
   function levelsHTML() {
     const r = runway(), f = fixk(), target = fireF(), net = nn();
-    const levels = [['Stufe 1 · 3 Monate Puffer', 3*f], ['Stufe 2 · 1 Jahr Freiheit', 12*f], ['Stufe 3 · 5 Jahre Freiheit', 60*f], ['Stufe 4 · Fuck-You-Zahl', target]];
+    const customTarget = Number(S.f.runway5Target) > 0 ? Number(S.f.runway5Target) : 120*f;
+    const customName = typeof S.f.runway5Name === 'string' && S.f.runway5Name.trim() ? S.f.runway5Name.trim() : 'Stufe 5 · Eigenes Ziel';
+    const levels = [['Stufe 1 · 3 Monate Puffer', 3*f], ['Stufe 2 · 1 Jahr Freiheit', 12*f], ['Stufe 3 · 5 Jahre Freiheit', 60*f], ['Stufe 4 · Fuck-You-Zahl', target], [customName, customTarget]];
     const have = i => i < 3 ? liquid() : net;
     const done = levels.map((x,i) => x[1] > 0 && have(i) >= x[1]), current = done.indexOf(false);
     let html = '<div class="k big"><b>' + r.toFixed(1).replace('.', ',') + ' Monate</b><span>Runway bei Fixkosten von ' + eur(f) + ' / Monat</span></div>';
@@ -34,8 +36,16 @@
       const y = i === current ? simYears(have(i), avg().s, S.f.r, x[1]) : null;
       return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + (done[i]?'✓':i===current?'▶':'○') + ' ' + x[0] + '</span><b>' + eur(x[1]) + '</b></div><div class="bar"><i style="width:' + p + '%"></i></div><div class="mut">' + (done[i]?'erreicht':pct(p) + ' · noch ' + eur(Math.max(0,x[1]-have(i))) + (y != null ? ' · ca. ' + y.toFixed(1).replace('.', ',') + ' Jahre' : '')) + '</div></div>';
     }).join('');
-    return card('Runway · Fuck-You-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken.</div>');
+    html += '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button>';
+    return card('Runway · Fuck-You-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken. Stufen 1 bis 3 vergleichen liquide Mittel, Stufe 4 und 5 den Net Worth.</div>');
   }
+  W.saveRunway5 = function () {
+    const name = String($('r5n').value || '').trim().slice(0,80);
+    const target = num($('r5t').value);
+    if (!name || !Number.isFinite(target) || target <= 0) { alert('Bitte eine Bezeichnung und einen Zielbetrag größer als 0 eingeben.'); return; }
+    S.f = { ...S.f, runway5Name: name, runway5Target: target };
+    save(); render();
+  };
   const oldFire = V.fire, oldHome = V.home;
   V.fire = () => levelsHTML() + oldFire().replace('[FIRE] Zielzahl', '[FIRE] Fuck-You-Zahl').replace('FIRE-Zahl', 'Fuck-You-Zahl');
   V.home = () => oldHome() + card('Runway · Freiheit', '<div class="k"><b>' + runway().toFixed(1).replace('.', ',') + ' Monate</b><span>so lange reichen liquide Mittel bei heutigen Fixkosten</span></div><div class="bar"><i style="width:' + Math.min(100, runway()/12*100) + '%"></i></div><div class="mut">Orientierungsmarke: 12 Monate · Details im Tab „Fuck You“</div>');
