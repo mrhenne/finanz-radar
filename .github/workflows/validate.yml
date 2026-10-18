@@ -23,6 +23,8 @@ jobs:
         run: |
           node --check app.js
           node --check config.js
+      - name: Run backup import safety tests
+        run: node --test tests/*.test.cjs
       - name: Verify pinned Supabase CDN is reachable
         run: curl --fail --silent --show-error --location --output /dev/null "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"
       - name: Verify critical configuration and access controls
