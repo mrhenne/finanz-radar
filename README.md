@@ -1,44 +1,31 @@
 # Finanz-Radar
 
-Mobile-first Finanzübersicht als statische Einzeldatei-App.
+Persoenliche Finanz-App (Cashflow, Vermoegen, Krypto, FIRE, Prognose, Steuer). Reines HTML/CSS/JavaScript, kein Build noetig.
 
-## Live-Deployment
+## Dateien
+| Datei | Inhalt |
+|---|---|
+| `index.html` | Grundgeruest, bindet alles ein |
+| `styles.css` | komplettes Design (hell/dunkel) |
+| `app.js` | gesamte App-Logik, Ansichten, Charts, Login/Sync |
+| `config.js` | **hier die Supabase-Zugangsdaten eintragen** |
+| `schema.sql` | Tabelle `finance_state` + Row Level Security |
 
-- **Vercel:** https://finanz-radar-app.vercel.app
-- **GitHub:** https://github.com/mrhenne/finanz-radar
-- **Produktions-Branch:** `main`
+## Supabase einrichten
+1. Projekt auf supabase.com anlegen.
+2. SQL Editor: Inhalt von `schema.sql` ausfuehren.
+3. Project Settings -> API: **Project URL** und **anon/publishable Key** in `config.js` eintragen (nie den service_role Key).
+4. Authentication -> URL Configuration: **Site URL** = Adresse der App (z. B. `https://<name>.github.io/finanz-radar/`), dieselbe Adresse unter **Redirect URLs** eintragen. Das braucht der Link aus Bestaetigungs-, Magic-Link- und Passwort-Reset-Mails.
+5. Authentication -> Providers -> Email: Registrierung aktiv lassen. Optional "Confirm email" abschalten, dann geht Login direkt nach der Registrierung.
 
-Vercel ist mit diesem Repository verbunden. Jeder Push auf `main` startet automatisch einen neuen Build und ein Deployment. Die App besteht aus `index.html` und benötigt aktuell weder einen Paketmanager noch einen Build-Schritt.
+## Login-Funktionen
+Registrieren, Anmelden (E-Mail + Passwort), Login-Link per E-Mail, Passwort vergessen/neu setzen, Passwort aendern, Abmelden (optional mit Loeschen der lokalen Daten), automatische Sitzungsverlaengerung.
 
-## Daten und Backups
+## Synchronisation
+Eine Zeile pro Nutzer in `finance_state` (`data` = JSON). Aenderungen werden nach 1,5 s hochgeladen. Beim Login gewinnt der neuere Stand (Zeitstempel). Anderer Nutzer auf demselben Geraet: lokale Daten werden vorher verworfen, es gibt keinen Datenmix.
 
-Aktuell sind `SB_URL` und `SB_KEY` in `index.html` leer. Die App läuft daher im lokalen Modus und speichert Daten im `localStorage` des jeweiligen Browsers. Es gibt derzeit keine geräteübergreifende Synchronisierung.
+## Veroeffentlichen
+GitHub Pages: Settings -> Pages -> Branch `main`, Ordner `/ (root)`. Oder das Repository bei Vercel importieren.
 
-- Exportiere regelmäßig eine JSON-Sicherung unter **Mehr → Daten & Backup**.
-- Browserdaten sind nicht dasselbe wie eine Cloud-Sicherung. Ein gelöschter Browser-Speicher kann Daten entfernen.
-- Nutze die App für private Daten nur in einem geschützten Benutzerprofil und auf eigenen Geräten.
-
-## Supabase: noch nicht aktiviert
-
-`schema.sql` ist ein Entwurf für die spätere Datenbankeinrichtung. Führe ihn erst aus, nachdem Schema, Authentifizierung, Redirect-URLs und Row-Level-Security gemeinsam geprüft wurden.
-
-Vor der Aktivierung müssen wir mindestens Folgendes erledigen:
-
-1. Supabase-Projekt in einer EU-Region auswählen oder anlegen.
-2. SQL und RLS-Policies prüfen und testen.
-3. Authentifizierung und Registrierung festlegen.
-4. Die Frontend-Konfiguration so lösen, dass keine geheimen Server-Schlüssel im Browser landen.
-5. Zwei getrennte Testkonten verwenden und nachweisen, dass kein Konto fremde Daten lesen oder ändern kann.
-6. Export, Import und Wiederherstellung testen.
-
-**Wichtig:** Niemals einen Supabase `service_role`- oder Secret-Key in `index.html`, in GitHub oder in eine öffentliche Frontend-Konfiguration eintragen. Ein Publishable-/Anon-Key darf erst zusammen mit funktionierenden RLS-Policies veröffentlicht werden.
-
-## iPhone
-
-In Safari öffnen, **Teilen → Zum Home-Bildschirm** wählen. Damit lässt sich die App wie eine Web-App vom Home-Bildschirm starten.
-
-## Projektstruktur
-
-- `index.html`: Oberfläche, Berechnungen und derzeit lokale Speicherung
-- `schema.sql`: Datenbankschema-Entwurf für den späteren Supabase-Schritt
-- `vercel.json`: Sicherheits-Header für die ausgelieferte Seite
+## Hinweise zur Weiterentwicklung
+`app.js` ist eine lange Datei mit zusammenhaengenden Teilen. Nach jeder Aenderung alle Tabs oeffnen (Home, Cashflow, Vermoegen, FIRE, Prognose, Mehr) und die Browser-Konsole auf Fehler pruefen. Vor Updates ein Backup unter Mehr -> Daten & Backup exportieren.
