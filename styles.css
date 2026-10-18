@@ -45,7 +45,7 @@ svg{width:100%;height:auto;display:block}
 .btn{transition:transform .12s}.btn:active{transform:scale(.96)}
 .k.big b{text-shadow:0 0 18px rgba(255,90,31,.25)}
 .p{animation:bl 1.4s infinite}
-.hide .wrap :is(.k b,.li b,.li>span:last-child,.badge){filter:blur(7px)}
+.hide .wrap :is(.k b,.li b,.li>span:last-child,.badge,.n){filter:blur(7px)}.n{display:inline-block}.hide tspan.n{fill:transparent}.hide #v :is(input,textarea):not(:focus){filter:blur(7px)}
 .hd{touch-action:none;cursor:grab;color:var(--mut);padding:2px 8px 2px 0;font-size:15px;user-select:none;-webkit-user-select:none}
 .rng{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.rg{font:inherit;font-size:11px;padding:5px 8px;border:1px solid var(--ln);background:transparent;color:var(--mut);border-radius:0}.rg.on{border-color:var(--or);color:var(--or);background:var(--orl)}
 svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-items:center;gap:6px}.tabs button{letter-spacing:.03em!important}
