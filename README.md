@@ -1,20 +1,44 @@
 # Finanz-Radar
 
-Einzeldatei-App (`index.html`), laeuft ohne Build auf GitHub Pages. Daten liegen lokal im Browser; mit Supabase-Login werden sie zusaetzlich verschluesselt uebertragen und geraeteuebergreifend synchronisiert.
+Mobile-first Finanzübersicht als statische Einzeldatei-App.
 
-## 1. Supabase
-1. Projekt auf supabase.com anlegen.
-2. SQL Editor: Inhalt von `schema.sql` ausfuehren (legt Tabelle + Row Level Security an: jeder sieht nur seine eigene Zeile).
-3. Project Settings -> API: **Project URL** und **anon/publishable Key** kopieren (NIEMALS den service_role Key verwenden).
-4. In `index.html` oben im Skript `SB_URL` und `SB_KEY` eintragen.
-5. Authentication -> URL Configuration: **Site URL** = deine GitHub-Pages-Adresse (siehe unten). Optional unter Providers -> Email die Bestaetigungs-Mail abschalten.
+## Live-Deployment
 
-## 2. GitHub
-1. Neues Repository, alle Dateien dieses Ordners hochladen (inkl. `.github/workflows/pages.yml`).
-2. Settings -> Pages -> Source: **GitHub Actions**.
-3. Nach dem Push baut der Workflow die Seite: `https://<name>.github.io/<repo>/`.
+- **Vercel:** https://finanz-radar-app.vercel.app
+- **GitHub:** https://github.com/mrhenne/finanz-radar
+- **Produktions-Branch:** `main`
 
-## 3. iPhone
-Seite in Safari oeffnen -> Teilen -> Zum Home-Bildschirm.
+Vercel ist mit diesem Repository verbunden. Jeder Push auf `main` startet automatisch einen neuen Build und ein Deployment. Die App besteht aus `index.html` und benötigt aktuell weder einen Paketmanager noch einen Build-Schritt.
 
-Ohne eingetragene Keys laeuft die App im lokalen Modus (kein Login).
+## Daten und Backups
+
+Aktuell sind `SB_URL` und `SB_KEY` in `index.html` leer. Die App läuft daher im lokalen Modus und speichert Daten im `localStorage` des jeweiligen Browsers. Es gibt derzeit keine geräteübergreifende Synchronisierung.
+
+- Exportiere regelmäßig eine JSON-Sicherung unter **Mehr → Daten & Backup**.
+- Browserdaten sind nicht dasselbe wie eine Cloud-Sicherung. Ein gelöschter Browser-Speicher kann Daten entfernen.
+- Nutze die App für private Daten nur in einem geschützten Benutzerprofil und auf eigenen Geräten.
+
+## Supabase: noch nicht aktiviert
+
+`schema.sql` ist ein Entwurf für die spätere Datenbankeinrichtung. Führe ihn erst aus, nachdem Schema, Authentifizierung, Redirect-URLs und Row-Level-Security gemeinsam geprüft wurden.
+
+Vor der Aktivierung müssen wir mindestens Folgendes erledigen:
+
+1. Supabase-Projekt in einer EU-Region auswählen oder anlegen.
+2. SQL und RLS-Policies prüfen und testen.
+3. Authentifizierung und Registrierung festlegen.
+4. Die Frontend-Konfiguration so lösen, dass keine geheimen Server-Schlüssel im Browser landen.
+5. Zwei getrennte Testkonten verwenden und nachweisen, dass kein Konto fremde Daten lesen oder ändern kann.
+6. Export, Import und Wiederherstellung testen.
+
+**Wichtig:** Niemals einen Supabase `service_role`- oder Secret-Key in `index.html`, in GitHub oder in eine öffentliche Frontend-Konfiguration eintragen. Ein Publishable-/Anon-Key darf erst zusammen mit funktionierenden RLS-Policies veröffentlicht werden.
+
+## iPhone
+
+In Safari öffnen, **Teilen → Zum Home-Bildschirm** wählen. Damit lässt sich die App wie eine Web-App vom Home-Bildschirm starten.
+
+## Projektstruktur
+
+- `index.html`: Oberfläche, Berechnungen und derzeit lokale Speicherung
+- `schema.sql`: Datenbankschema-Entwurf für den späteren Supabase-Schritt
+- `vercel.json`: Sicherheits-Header für die ausgelieferte Seite
