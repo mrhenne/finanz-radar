@@ -45,15 +45,42 @@ try{const j=localStorage.getItem('fr_s');if(j)S=normalizeImportedState(JSON.pars
 const CFG=window.FR_CONFIG||{},SB_URL=CFG.url||'',SB_KEY=CFG.key||'';
 const sb=(SB_URL&&SB_KEY&&window.supabase)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 let user=null,syncMsg='',syncOk=null,tmr=null,authReady=!sb,recMode=false,busy=false,lem='';
+let legacyPending=false,legacyCheckError='',legacyCheckedUserId='';
 const em=m=>({'Invalid login credentials':'E-Mail oder Passwort falsch.','Email not confirmed':'Bitte zuerst den Link in der Bestätigungs-Mail öffnen.','User already registered':'Diese E-Mail ist schon registriert: bitte anmelden.'}[m]||String(m||'Unbekannter Fehler'));
 function localSave(){try{localStorage.setItem('fr_s',JSON.stringify(S))}catch(e){}}
-function save(){localSave();if(sb&&user){syncOk=null;clearTimeout(tmr);tmr=setTimeout(push,1500)}}
-async function push(){if(!sb||!user)return;const ts=Date.now();S.ts=ts;S.uid=user.id;localSave();try{const{error}=await sb.from('finance_state').upsert({user_id:user.id,data:S,updated_at:new Date(ts).toISOString()});syncOk=!error;syncMsg=error?'Nicht synchronisiert: '+error.message:'Synchronisiert '+new Date().toLocaleTimeString('de-DE')}catch(e){syncOk=false;syncMsg='Nicht synchronisiert: '+(e.message||e)}}
-async function pull(auto){if(!sb||!user)return;if(S.uid&&S.uid!==user.id){S={tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:S.th||'light',f:{wr:4,exp:'',r:6}}}
+function save(){localSave();if(sb&&user&&!legacyPending&&!legacyCheckError){syncOk=null;clearTimeout(tmr);tmr=setTimeout(push,1500)}}
+async function push(){if(!sb||!user||legacyPending||legacyCheckError)return;const ts=Date.now();S.ts=ts;S.uid=user.id;localSave();try{const{error}=await sb.from('finance_state').upsert({user_id:user.id,data:S,updated_at:new Date(ts).toISOString()});syncOk=!error;syncMsg=error?'Nicht synchronisiert: '+error.message:'Synchronisiert '+new Date().toLocaleTimeString('de-DE')}catch(e){syncOk=false;syncMsg='Nicht synchronisiert: '+(e.message||e)}}
+async function pull(auto){
+if(!sb||!user)return;
+if(S.uid&&S.uid!==user.id){S={tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:S.th||'light',f:{wr:4,exp:'',r:6}}}
 let r;try{r=await sb.from('finance_state').select('data,updated_at').eq('user_id',user.id).maybeSingle()}catch(e){r={error:e}}
 if(r.error){syncOk=false;syncMsg='Nicht synchronisiert: '+(r.error.message||r.error);return render()}
-const data=r.data,ct=data?new Date(data.updated_at).getTime():0;if(data&&(ct>(S.ts||0)||!auto)){S={...S,...data.data,ts:ct,uid:user.id};localSave();syncOk=true;syncMsg='Aus Cloud geladen'}else{await push()}render()}
-async function initAuth(){if(!sb)return;try{const{data}=await sb.auth.getSession();user=data.session?data.session.user:null;sb.auth.onAuthStateChange((ev,ses)=>{const u=ses?ses.user:null,was=user;user=u;if(ev==='PASSWORD_RECOVERY')recMode=true;if(u&&!was)setTimeout(()=>pull(true),0);else render()});if(user)await pull(true)}catch(e){syncMsg=em(e.message||e)}authReady=true;render()}
+const data=r.data;
+if(data){legacyPending=false;legacyCheckError='';if(new Date(data.updated_at).getTime()>(S.ts||0)||!auto){S={...S,...data.data,ts:new Date(data.updated_at).getTime(),uid:user.id};localSave();syncOk=true;syncMsg='Aus Cloud geladen'}else{await push()}return render()}
+// Before creating a new cloud row, check for the older app's schema.
+// It is intentionally kept intact; finance_state and user_state are different formats.
+if(legacyCheckedUserId!==user.id){
+  let old;try{old=await sb.from('user_state').select('app_state,updated_at').eq('user_id',user.id).maybeSingle()}catch(e){old={error:e}}
+  if(old.error){legacyCheckError='Der vorhandene Cloud-Datenstand konnte nicht geprüft werden. Die automatische Synchronisierung bleibt pausiert, damit nichts versehentlich überschrieben wird.';syncOk=false;syncMsg=legacyCheckError;return render()}
+  legacyCheckedUserId=user.id;
+  if(old.data&&old.data.app_state){legacyPending=true;syncOk=null;syncMsg='Ältere Cloud-Daten gefunden. Bitte vor dem Start entscheiden.';return render()}
+}
+await push();render()
+}
+async function continueWithCurrentData(){
+if(!sb||!user)return;
+if(!confirm('Der vorhandene ältere Datensatz in user_state bleibt unverändert erhalten, wird von dieser App aber nicht automatisch übernommen. Soll der aktuelle lokale Finanz-Radar-Datenstand jetzt in finance_state gespeichert werden? Exportiere lokale Daten vorher unter Mehr → Daten & Backup, falls du sie sichern möchtest.'))return;
+const check=await sb.from('finance_state').select('user_id').eq('user_id',user.id).maybeSingle();
+if(check.error){alert('Cloud-Status konnte nicht geprüft werden. Es wurde nichts geschrieben.');return}
+if(check.data){legacyPending=false;legacyCheckError='';return pull(true)}
+legacyPending=false;legacyCheckError='';S.uid=user.id;localSave();clearTimeout(tmr);await push();render()
+}
+function legacyNotice(){
+if(legacyPending)return `<div class="panel" style="border-color:var(--or)"><h2>Älterer Cloud-Datenstand erkannt</h2><div class="note">In diesem Supabase-Konto liegt bereits ein älterer Datenstand in <b>user_state</b>. Er verwendet ein anderes Datenformat und wurde nicht verändert. Finanz-Radar synchronisiert erst, wenn du dich entscheidest. Sichere gegebenenfalls zuerst lokale Daten über Mehr → Daten & Backup.</div><button class="btn o" onclick="tab='data';render();scrollTo(0,0)">Lokales Backup öffnen</button><button class="btn" onclick="continueWithCurrentData()">Mit dem aktuellen Finanz-Radar-Datenstand starten</button></div>`;
+if(legacyCheckError)return `<div class="panel" style="border-color:var(--or)"><h2>Cloud-Synchronisierung pausiert</h2><div class="note">${esc(legacyCheckError)}</div><button class="btn o" onclick="pull(true)">Erneut prüfen</button><button class="btn" onclick="continueWithCurrentData()">Trotzdem mit lokalem Datenstand starten</button></div>`;
+return ''
+}
+async function initAuth(){if(!sb)return;try{const{data}=await sb.auth.getSession();user=data.session?data.session.user:null;sb.auth.onAuthStateChange((ev,ses)=>{const u=ses?ses.user:null,was=user;user=u;if(!u){legacyPending=false;legacyCheckError='';legacyCheckedUserId=''}if(ev==='PASSWORD_RECOVERY')recMode=true;if(u&&!was)setTimeout(()=>pull(true),0);else render()});if(user)await pull(true)}catch(e){syncMsg=em(e.message||e)}authReady=true;render()}
 async function login(up){if(busy)return;const e=$('le').value.trim(),p=$('lp').value;lem=e;if(!e||p.length<6){syncMsg='E-Mail und Passwort (mind. 6 Zeichen) eingeben.';return render()}busy=true;let r;try{r=up?await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email:e,password:p})}catch(x){r={error:x}}busy=false;syncMsg=r.error?em(r.error.message):(up&&!(r.data&&r.data.session)?'Fast geschafft: Die Bestätigungs-Mail ist unterwegs. Bitte den Link öffnen und danach anmelden.':'');render()}
 async function magic(){const e=$('le').value.trim();lem=e;if(!e){syncMsg='Bitte E-Mail eingeben.';return render()}const r=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});syncMsg=r.error?em(r.error.message):'Login-Link wurde per E-Mail gesendet.';render()}
 async function forgot(){const e=$('le').value.trim();lem=e;if(!e){syncMsg='Bitte E-Mail eingeben.';return render()}const r=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});syncMsg=r.error?em(r.error.message):'Link zum Zurücksetzen wurde per E-Mail gesendet.';render()}
@@ -233,6 +260,6 @@ $('pc').innerHTML=[0,1,2,3].map(q=>{const t=mx*q/3,yy=Y(t);return `<line x1="40"
 +`<path d="${L(2)}" fill="none" stroke="var(--or)" stroke-width="2"/><circle cx="${X(y)}" cy="${Y(v)}" r="4" fill="var(--or)"><animate attributeName="r" values="3;6;3" dur="1.8s" repeatCount="indefinite"/></circle>${[0,1,2,3,4].map(q=>{const k=Math.round(y*q/4);return `<text x="${X(k)}" y="154" font-size="8" text-anchor="${q==0?'start':q==4?'end':'middle'}" fill="var(--mut)">${new Date().getFullYear()+k}</text>`}).join('')}`;ca($('pc'),A.map(d=>['Jahr '+d[0]+' · '+(new Date().getFullYear()+d[0]),d[2],d[2]/Math.pow(1+i/100,d[0]),d[1]]),['Nominal','Kaufkraft','Eingezahlt'],40,350,10,140,0,mx)}
 const TABS=[['home','Home'],['cash','Cashflow'],['assets','Vermögen'],['fire','FIRE'],['plan','Prognose'],['more','Mehr']],SUB=['goals','tax','data','year','port','crypto','acct'],TT={home:'Home',cash:'Cashflow',assets:'Vermögen',fire:'FIRE',more:'Mehr',plan:'Prognose',goals:'Ziele',tax:'Steuer',data:'Daten',year:'Jahresübersicht',port:'Portfolio',crypto:'Krypto',acct:'Konto'};
 function render(){if(sb&&(!authReady||!user||recMode)){$('tb').innerHTML='';$('ttl').textContent='Login';$('v').innerHTML=!authReady?P('[Auth]','Lade …'):recMode&&user?V.newpw():V.login();applyTh();return}
-$('tb').innerHTML=TABS.map(([k,l])=>`<button class="${tab===k||(k==='more'&&SUB.includes(tab))?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)">${l}</button>`).join('');$('ttl').textContent=TT[tab];applyTh();snap();const fresh=lastTab!==tab;lastTab=tab;$('v').className=fresh?'in':'';$('v').innerHTML=V[tab]();ordP();
+$('tb').innerHTML=TABS.map(([k,l])=>`<button class="${tab===k||(k==='more'&&SUB.includes(tab))?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)">${l}</button>`).join('');$('ttl').textContent=TT[tab];applyTh();snap();const fresh=lastTab!==tab;lastTab=tab;$('v').className=fresh?'in':'';$('v').innerHTML=legacyNotice()+V[tab]();ordP();
 $('bd').textContent=eur(nn());if(fresh)cu();if(tab==='plan'){document.querySelectorAll('#v input').forEach(e=>e.oninput=pcalc);pcalc()}}
 render();initAuth();
