@@ -23,6 +23,7 @@
   /* Fuck-You-Level und Runway */
   const liquid = () => S.as.filter(a => ['cash','etf','aktie','crypto','gold'].includes(a.k)).reduce((s,a) => s + val(a), 0);
   const runway = () => { const f = fixk(); return f > 0 ? liquid() / f : 0; };
+  let runway5Edit = false;
   function levelsHTML() {
     const r = runway(), f = fixk(), target = fireF(), net = nn();
     const customTarget = Number(S.f.runway5Target) > 0 ? Number(S.f.runway5Target) : 120*f;
@@ -36,14 +37,19 @@
       const y = i === current ? simYears(have(i), avg().s, S.f.r, x[1]) : null;
       return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + (done[i]?'✓':i===current?'▶':'○') + ' ' + x[0] + '</span><b>' + eur(x[1]) + '</b></div><div class="bar"><i style="width:' + p + '%"></i></div><div class="mut">' + (done[i]?'erreicht':pct(p) + ' · noch ' + eur(Math.max(0,x[1]-have(i))) + (y != null ? ' · ca. ' + y.toFixed(1).replace('.', ',') + ' Jahre' : '')) + '</div></div>';
     }).join('');
-    html += '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button>';
+    html += runway5Edit
+      ? '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button><button class="btn o" onclick="cancelRunway5()">Abbrechen</button>'
+      : '<div class="hatch"></div><button class="btn o" onclick="editRunway5()">✎ Stufe 5 bearbeiten</button>';
     return card('Runway · Fuck-You-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken. Stufen 1 bis 3 vergleichen liquide Mittel, Stufe 4 und 5 den Net Worth.</div>');
   }
+  W.editRunway5 = function () { runway5Edit = true; render(); };
+  W.cancelRunway5 = function () { runway5Edit = false; render(); };
   W.saveRunway5 = function () {
     const name = String($('r5n').value || '').trim().slice(0,80);
     const target = num($('r5t').value);
     if (!name || !Number.isFinite(target) || target <= 0) { alert('Bitte eine Bezeichnung und einen Zielbetrag größer als 0 eingeben.'); return; }
     S.f = { ...S.f, runway5Name: name, runway5Target: target };
+    runway5Edit = false;
     save(); render();
   };
   const oldFire = V.fire, oldHome = V.home;
@@ -253,6 +259,31 @@
     const p=pinConfig();
     return bk()+card('Sicherheit · PIN','<div class="' + (p?'pos':'mut') + '">' + (p?'PIN ist aktiv ('+p.n+' Stellen)':'Keine PIN gesetzt') + '</div><label>Neue PIN (4 bis 6 Ziffern)</label><input id="pn1" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>PIN wiederholen</label><input id="pn2" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>Automatisch sperren nach</label><select id="lm">' + [[0,'sofort beim Verlassen'],[1,'1 Minute'],[5,'5 Minuten'],[15,'15 Minuten']].map(x=>'<option value="'+x[0]+'" '+(p&&p.m===x[0]?'selected':'')+'>'+x[1]+'</option>').join('') + '</select><button class="btn" onclick="setPin()">PIN speichern</button>' + (p?'<button class="btn o" onclick="lockNow()">Jetzt sperren</button><button class="btn o" onclick="rmPin()">PIN entfernen</button>':'') + '<div class="note">' + esc(pinMessage) + ' Die PIN gilt pro Gerät und wird nicht in die Cloud übertragen. Sie schützt vor neugierigen Blicken, ersetzt aber keine Verschlüsselung der Daten.</div>');
   };
+/* ---------- 7. Fuck-You-Rechner: Ansparen bis zur Zahl, dann Entnahme (Szenarien, Steuer) ---------- */
+let fxEdit=false,lastT=tab;
+const LQ=['cash','etf','aktie','crypto','gold'];
+const fxP=()=>{const f=S.f,a=avg(),exp=parseFloat(f.exp)||fixk();return{r:(f.r!=null&&f.r!=='')?+f.r:6,inf:f.inf!=null?+f.inf:2,wm:+f.wm||exp,wy:+f.wy||30,wi:f.wi!==false,kt:f.kt!=null?+f.kt:26.375,pb:f.pb!=null?+f.pb:1000,sr:Math.max(0,a.s),v0:Math.max(0,nn()),F:fireF(),b0:S.as.filter(x=>LQ.includes(x.k)).reduce((s,x)=>s+((x.k==='cash'||!x.c)?val(x):x.c),0)}};
+function fxSim(rg,P){const m=Math.pow(1+rg/100,1/12)-1,rows=[[0,P.v0]];let v=P.v0,b=Math.min(P.b0,P.v0),k=0,tax=0,net=0,gross=0,dep=null;
+while(v<P.F&&k<720){v=v*(1+m)+P.sr;b+=P.sr;k++;if(k%12===0)rows.push([k/12,v])}
+const ya=k/12,ok=v>=P.F,vs=v;if(k%12)rows.push([ya,v]);
+for(let j=1;j<=P.wy;j++){let tb=0,gr=0;for(let q=0;q<12;q++){v*=1+m;const w=P.wm*(P.wi?Math.pow(1+P.inf/100,ya+(j-1)+q/12):1),g=Math.min(w,Math.max(v,0));if(g>0){const fr=Math.max(0,(v-b)/v);tb+=g*fr*.7;b-=g*(1-fr);v-=g;gr+=g}}
+const tx=Math.max(0,tb-P.pb)*P.kt/100;tax+=tx;net+=gr-tx;gross+=gr;if(v<=.5&&dep===null)dep=j;rows.push([ya+j,Math.max(v,0)])}
+return{ya,ok,vs,rows,tax,net,gross,dep,rest:Math.max(v,0)}}
+const atY=(rows,t)=>{if(t>=rows[rows.length-1][0])return rows[rows.length-1][1];for(let i=0;i<rows.length-1;i++){const a=rows[i],b=rows[i+1];if(t>=a[0]&&t<=b[0])return b[0]===a[0]?b[1]:a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0])}return rows[0][1]};
+const maxW=P=>{let lo=0,hi=P.v0+P.sr*600+1;for(let i=0;i<30;i++){const mid=(lo+hi)/2,r=fxSim(P.r,{...P,wm:mid});if(r.dep===null)lo=mid;else hi=mid}return lo};
+const fm=v=>v.toLocaleString('de-DE',{maximumFractionDigits:1});
+function fxHTML(){const P=fxP(),sp=2,N=fxSim(P.r,P),Pe=fxSim(P.r-sp,P),O=fxSim(P.r+sp,P),y0=new Date().getFullYear(),T=Math.ceil(Math.max(N.ya,Pe.ya,O.ya))+P.wy,yrsW=N.dep||P.wy,real=v=>v/Math.pow(1+P.inf/100,N.ya),mx=maxW(P),rate=N.vs?P.wm*12/N.vs*100:0;
+const rows=[];for(let t=0;t<=T;t++)rows.push(['Jahr '+t+' · '+(y0+t),atY(N.rows,t),atY(Pe.rows,t),atY(O.rows,t)]);
+const kp=(b,l,c)=>`<div class="k"><b class="${c||''}">${b}</b><span>${l}</span></div>`;
+const edit=fxEdit?`<div class="row"><div><label>Ausgaben/Mon. €</label><input id="fe" type="number" inputmode="decimal" value="${S.f.exp}" placeholder="${Math.round(fixk())}"></div><div><label>Entnahme % (Zielzahl)</label><input id="fw" type="number" step="0.1" value="${S.f.wr}"></div></div><div class="row"><div><label>Entnahme/Monat €</label><input id="fm" type="number" inputmode="decimal" value="${S.f.wm||''}" placeholder="${Math.round(P.wm)}"></div><div><label>Dauer (Jahre)</label><input id="fy" type="number" value="${P.wy}"></div></div><div class="row"><div><label>Rendite % p.a.</label><input id="fr" type="number" step="0.1" value="${S.f.r}"></div><div><label>Inflation %</label><input id="fi" type="number" step="0.1" value="${P.inf}"></div></div><label>Fuck-You-Zahl € (leer = automatisch)</label><input id="ftarget" type="number" inputmode="decimal" value="${S.f.fireTarget||''}" placeholder="${Math.round(((parseFloat(S.f.exp)||fixk())*12)/(((+S.f.wr)||4)/100))}"><label class="mut" style="display:flex;gap:8px;align-items:center;text-transform:none"><input type="checkbox" id="fx_wi" style="width:auto" ${P.wi?'checked':''}> Entnahme steigt mit Inflation</label><button class="btn" onclick="setFx()">Übernehmen</button><button class="btn o" onclick="fxToggle(false)">Abbrechen</button>`:`<button class="btn o" onclick="fxToggle(true)">✎ Annahmen bearbeiten</button><div class="mut" style="margin-top:6px">Rendite ${fm(P.r)} % · Inflation ${fm(P.inf)} % · Entnahme ${eur(P.wm)}/Mon. · ${P.wy} J. · Steuer ${fm(P.kt)} % (30 % Teilfreistellung)</div>`;
+const msg=!N.ok?`<div class="neg p">Die Zielzahl ${eur(P.F)} wird in 60 Jahren nicht erreicht. Mehr sparen, weniger Fixkosten oder höhere Rendite nötig.</div>`:N.dep?`<div class="neg p">Kapital reicht nur bis Jahr ${fm(N.ya+N.dep)} (${N.dep} J. Entnahme). Nachhaltig möglich: ${eur(mx)}/Monat.</div>`:`<div class="pos">✓ Kapital reicht für die gesamte Entnahmedauer.</div>`;
+return P_('[Entnahme] Fuck-You-Rechner',`<div class="g2">${kp(N.ok?fm(N.ya)+' J.':'–','bis Fuck-You-Zahl (ca. '+(N.ok?y0+Math.ceil(N.ya):'–')+')')}${kp(eur(N.vs),'Kapital bei Start · real '+eur(real(N.vs)))}${kp(eur(N.net/(12*yrsW)),'Ø Entnahme netto / Monat','pos')}${kp(eur(N.tax),'Steuer in der Entnahme')}${kp(N.dep?'leer in Jahr '+fm(N.ya+N.dep):'reicht ✓','Kapital',N.dep?'neg':'pos')}${kp(eur(N.rest),'Restkapital nach '+P.wy+' J.')}${kp(eur(mx),'max. nachhaltige Entnahme/Mon. (brutto)')}${kp(fm(rate)+' %','Entnahmerate zu Beginn',rate>4?'neg':'pos')}</div>`+msg+lc(rows,['Normal','Pessimistisch','Optimistisch'],['var(--or)','var(--mut)','var(--mut)'],{dash:1})+`<div class="mut" style="margin-top:6px">Vermögen über die Zeit: erst Ansparen (Ø Sparleistung ${eur(P.sr)}/Mon.), ab Erreichen der Zielzahl Entnahme. Szenarien ±${sp} % Rendite. Tippen/Ziehen zeigt Jahr und Werte.</div>`+`<div class="hatch"></div>`+`<table style="border-collapse:collapse;width:100%;font-size:11px"><tr><th align="left">Szenario</th><th align="right">Rendite</th><th align="right">Start nach</th><th align="right">Rest</th></tr>${[['Pessimistisch',P.r-sp,Pe],['Normal',P.r,N],['Optimistisch',P.r+sp,O]].map(([n,r,x])=>`<tr><td style="padding:6px 4px;border-bottom:1px solid var(--ln)">${n}</td><td align="right" style="border-bottom:1px solid var(--ln)">${fm(r)} %</td><td align="right" style="border-bottom:1px solid var(--ln)">${x.ok?fm(x.ya)+' J.':'–'}</td><td align="right" style="border-bottom:1px solid var(--ln)" class="${x.dep?'neg':''}">${x.dep?'leer J. '+fm(x.ya+x.dep):eur(x.rest)}</td></tr>`).join('')}</table>`+`<div class="hatch"></div>`+edit+`<div class="note">Vereinfachung: Rendite nach Kosten, Steuer nur auf den Gewinnanteil jeder Entnahme (Pauschbetrag ${eur(P.pb)}/Jahr), keine Vorabpauschale/Kirchensteuer. Keine Anlageberatung.</div>`)}
+const P_=P;
+W.fxToggle=v=>{fxEdit=v;render()};
+W.setFx=()=>{const g=i=>parseFloat(String($(i).value).replace(',','.')),f=S.f;f.exp=$('fe').value;f.wr=g('fw')||4;f.r=isFinite(g('fr'))?g('fr'):6;f.wm=g('fm')||0;f.wy=Math.max(1,Math.min(80,g('fy')||30));f.inf=isFinite(g('fi'))?g('fi'):2;f.fireTarget=g('ftarget')>0?g('ftarget'):'';f.wi=$('fx_wi').checked;fxEdit=false;save();render()};
+const _fire2=V.fire;V.fire=()=>_fire2().replace(/<div class="hatch"><\/div><div class="row"><div><label>Ausgaben\/Mon\. €<\/label>[\s\S]*?onclick="setF\(\)">Übernehmen<\/button>/,'')+fxHTML();
+const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab}_render2()};
+
   lockUI();
   render();
 })();
