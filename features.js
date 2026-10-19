@@ -23,7 +23,6 @@
   /* Fuck-You-Level und Runway */
   const liquid = () => S.as.filter(a => ['cash','etf','aktie','crypto','gold'].includes(a.k)).reduce((s,a) => s + val(a), 0);
   const runway = () => { const f = fixk(); return f > 0 ? liquid() / f : 0; };
-  let editingRunway5 = false;
   function levelsHTML() {
     const r = runway(), f = fixk(), target = fireF(), net = nn();
     const customTarget = Number(S.f.runway5Target) > 0 ? Number(S.f.runway5Target) : 120*f;
@@ -37,88 +36,18 @@
       const y = i === current ? simYears(have(i), avg().s, S.f.r, x[1]) : null;
       return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + (done[i]?'✓':i===current?'▶':'○') + ' ' + x[0] + '</span><b>' + eur(x[1]) + '</b></div><div class="bar"><i style="width:' + p + '%"></i></div><div class="mut">' + (done[i]?'erreicht':pct(p) + ' · noch ' + eur(Math.max(0,x[1]-have(i))) + (y != null ? ' · ca. ' + y.toFixed(1).replace('.', ',') + ' Jahre' : '')) + '</div></div>';
     }).join('');
-    if (editingRunway5) {
-      html += '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><div class="row"><button class="btn o" onclick="toggleRunway5(false)">Abbrechen</button><button class="btn" onclick="saveRunway5()">Speichern</button></div>';
-    } else {
-      html += '<button class="btn o" onclick="toggleRunway5(true)">Stufe 5 bearbeiten</button>';
-    }
+    html += '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button>';
     return card('Runway · Fuck-You-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken. Stufen 1 bis 3 vergleichen liquide Mittel, Stufe 4 und 5 den Net Worth.</div>');
   }
-  W.toggleRunway5 = function (show) { editingRunway5 = !!show; render(); };
   W.saveRunway5 = function () {
     const name = String($('r5n').value || '').trim().slice(0,80);
     const target = num($('r5t').value);
     if (!name || !Number.isFinite(target) || target <= 0) { alert('Bitte eine Bezeichnung und einen Zielbetrag größer als 0 eingeben.'); return; }
     S.f = { ...S.f, runway5Name: name, runway5Target: target };
-    editingRunway5 = false;
     save(); render();
   };
-
-  /* Entnahme-Rechner: alle Beträge in heutiger Kaufkraft, ohne Steuern und Gebühren. */
-  W.setWithdrawal = function (key, value) {
-    if (!['wdCapital','wdMonthly','wdReturn','wdInflation','wdYears'].includes(key)) return;
-    const v = num(value);
-    if (!Number.isFinite(v)) return;
-    S.f = { ...S.f, [key]: v };
-    save(); render();
-  };
-  function withdrawalHTML() {
-    const a = avg();
-    const capital = S.f.wdCapital == null ? liquid() : Math.max(0, num(S.f.wdCapital) || 0);
-    const monthly = S.f.wdMonthly == null ? (Number(S.f.exp) > 0 ? Number(S.f.exp) : a.o) : Math.max(0, num(S.f.wdMonthly) || 0);
-    const nominalInput = S.f.wdReturn == null ? (Number(S.f.r) || 6) : num(S.f.wdReturn);
-    const inflationInput = S.f.wdInflation == null ? 2 : num(S.f.wdInflation);
-    const nominal = Math.max(-99, Math.min(30, Number.isFinite(nominalInput) ? nominalInput : 6));
-    const inflation = Math.max(-10, Math.min(25, Number.isFinite(inflationInput) ? inflationInput : 2));
-    const years = Math.min(80, Math.max(1, Math.round(S.f.wdYears == null ? 30 : (num(S.f.wdYears) || 30))));
-    const months = years * 12, wr = Number(S.f.wr) > 0 ? Number(S.f.wr) : 4;
-    const realAnnual = (1 + nominal / 100) / (1 + inflation / 100) - 1;
-    const mr = Math.pow(Math.max(0.000001, 1 + realAnnual), 1 / 12) - 1;
-    const byRate = capital * wr / 100 / 12;
-    const required = wr > 0 ? monthly * 12 / (wr / 100) : 0;
-    const actualRate = capital > 0 ? monthly * 12 / capital * 100 : 0;
-    const maxMonthly = Math.abs(mr) < 0.000001 ? capital / months : capital * mr / (1 - Math.pow(1 + mr, -months));
-    let runout = null;
-    if (monthly > 0 && capital <= 0) runout = 0;
-    else if (monthly > 0) {
-      let b = capital;
-      for (let m = 1; m <= 1200; m++) {
-        b = b * (1 + mr) - monthly;
-        if (b <= 0) { runout = m; break; }
-      }
-    }
-    let end = capital;
-    for (let m = 0; m < months; m++) {
-      end = end * (1 + mr) - monthly;
-      if (end <= 0) { end = 0; break; }
-    }
-    const lasts = monthly > 0 && capital > 0 && (runout === null || runout >= months);
-    const runoutText = monthly <= 0 ? 'Entnahme eingeben' : runout === null ? 'Mindestens 100 Jahre' : runout === 0 ? '0 Monate' : Math.floor(runout / 12) + ' J. ' + (runout % 12) + ' Mon.';
-    const check = monthly <= 0
-      ? '<div class="k"><b>Entnahme eingeben</b><span>Monatliche Ausgaben größer 0 setzen</span></div>'
-      : capital <= 0
-        ? '<div class="k"><b class="neg">NEIN</b><span>Kein entnehmbares Kapital hinterlegt</span></div>'
-        : '<div class="k"><b class="' + (lasts ? 'pos' : 'neg') + '">' + (lasts ? 'JA' : 'NEIN') + '</b><span>Reicht für ' + years + ' Jahre bei ' + eur(monthly) + ' monatlicher Entnahme?</span></div>';
-    const html = '<div class="g2">' +
-      '<div class="k"><b>' + eur(capital) + '</b><span>Entnehmbares Kapital</span></div>' +
-      '<div class="k"><b>' + eur(monthly) + '</b><span>Entnahme pro Monat</span></div>' +
-      '<div class="k"><b>' + runoutText + '</b><span>Geschätzte Reichweite</span></div>' +
-      '<div class="k"><b>' + eur(Math.max(0, end)) + '</b><span>Rest nach ' + years + ' Jahren, Kaufkraft heute</span></div>' +
-      '</div>' + check +
-      '<div class="hatch"></div><div class="g2">' +
-      '<div class="k"><b>' + eur(byRate) + '</b><span>Monatlich bei ' + String(wr).replace('.', ',') + ' % Entnahmerate</span></div>' +
-      '<div class="k"><b>' + pct(actualRate) + '</b><span>Erforderliche anfängliche Entnahmerate</span></div>' +
-      '<div class="k"><b>' + eur(required) + '</b><span>Benötigtes Kapital bei ' + String(wr).replace('.', ',') + ' %</span></div>' +
-      '<div class="k"><b>' + eur(Math.max(0, maxMonthly)) + '</b><span>Monatlich für genau ' + years + ' Jahre, Kaufkraft heute</span></div>' +
-      '</div>' +
-      '<div class="row"><div><label>Entnehmbares Kapital €</label><input type="number" min="0" inputmode="decimal" value="' + capital + '" onchange="setWithdrawal(&quot;wdCapital&quot;,this.value)"></div><div><label>Entnahme pro Monat €</label><input type="number" min="0" inputmode="decimal" value="' + monthly + '" onchange="setWithdrawal(&quot;wdMonthly&quot;,this.value)"></div></div>' +
-      '<div class="row"><div><label>Rendite p. a. %</label><input type="number" min="-99" max="30" step="0.1" value="' + nominal + '" onchange="setWithdrawal(&quot;wdReturn&quot;,this.value)"></div><div><label>Inflation p. a. %</label><input type="number" min="-10" max="25" step="0.1" value="' + inflation + '" onchange="setWithdrawal(&quot;wdInflation&quot;,this.value)"></div><div><label>Zeitraum in Jahren</label><input type="number" min="1" max="80" step="1" value="' + years + '" onchange="setWithdrawal(&quot;wdYears&quot;,this.value)"></div></div>' +
-      '<div class="note">Die Reichweite wird monatlich simuliert und berücksichtigt die Rendite abzüglich Inflation. Alle Entnahmen und Restbeträge sind in heutiger Kaufkraft angegeben. Die Rechnung unterstellt eine gleichmäßige Rendite und enthält keine Steuern, Gebühren oder Schwankungen der Börse. Die tatsächliche Reichweite kann deutlich abweichen. Als Startwert dienen Cash, ETFs, Aktien, Krypto und Gold; Immobilien und sonstige Vermögenswerte sind nicht enthalten.</div>';
-    return card('Entnahme-Rechner · Reicht das Geld?', html);
-  };
-
   const oldFire = V.fire, oldHome = V.home;
-  V.fire = () => levelsHTML() + oldFire().replace('[FIRE] Zielzahl', '[FIRE] Fuck-You-Zahl').replace('FIRE-Zahl', 'Fuck-You-Zahl') + withdrawalHTML();
+  V.fire = () => levelsHTML() + oldFire().replace('[FIRE] Zielzahl', '[FIRE] Fuck-You-Zahl').replace('FIRE-Zahl', 'Fuck-You-Zahl');
   V.home = () => oldHome() + card('Runway · Freiheit', '<div class="k"><b>' + runway().toFixed(1).replace('.', ',') + ' Monate</b><span>so lange reichen liquide Mittel bei heutigen Fixkosten</span></div><div class="bar"><i style="width:' + Math.min(100, runway()/12*100) + '%"></i></div><div class="mut">Orientierungsmarke: 12 Monate · Details im Tab „Fuck You“</div>');
 
   /* Wiederkehrende Buchungen: idempotent pro Monat */
