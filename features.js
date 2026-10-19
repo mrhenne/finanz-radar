@@ -36,7 +36,7 @@
       const y = i === current ? simYears(have(i), avg().s, S.f.r, x[1]) : null;
       return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + (done[i]?'✓':i===current?'▶':'○') + ' ' + x[0] + '</span><b>' + eur(x[1]) + '</b></div><div class="bar"><i style="width:' + p + '%"></i></div><div class="mut">' + (done[i]?'erreicht':pct(p) + ' · noch ' + eur(Math.max(0,x[1]-have(i))) + (y != null ? ' · ca. ' + y.toFixed(1).replace('.', ',') + ' Jahre' : '')) + '</div></div>';
     }).join('');
-    html += '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button>';
+    html += '<details class="hatch"><summary style="cursor:pointer;padding:10px 0">Stufe 5 bearbeiten</summary><label>Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Speichern</button></details>';
     return card('Runway · Fuck-You-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken. Stufen 1 bis 3 vergleichen liquide Mittel, Stufe 4 und 5 den Net Worth.</div>');
   }
   W.saveRunway5 = function () {
