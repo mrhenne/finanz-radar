@@ -47,7 +47,32 @@
     save(); render();
   };
   const oldFire = V.fire, oldHome = V.home;
-  V.fire = () => levelsHTML() + oldFire().replace('[FIRE] Zielzahl', '[FIRE] Fuck-You-Zahl').replace('FIRE-Zahl', 'Fuck-You-Zahl');
+  function withdrawalHTML() {
+    const capital = Math.max(0, Number(nn()) || 0);
+    const monthly = Math.max(0, Number(S.f.exp) || avg().o || 0);
+    const annualRate = (Number(S.f.r) || 0) / 100;
+    const monthlyRate = Math.pow(1 + annualRate, 1 / 12) - 1;
+    const safeRate = Math.max(0, Number(S.f.wr) || 4) / 100;
+    const safeMonthly = capital * safeRate / 12;
+    let balance = capital, months = 0;
+    if (monthly <= 0) months = Infinity;
+    else if (monthlyRate > 0 && monthly <= capital * monthlyRate) months = Infinity;
+    else {
+      while (balance > 0 && months < 1200) {
+        balance = balance * (1 + monthlyRate) - monthly;
+        months++;
+      }
+    }
+    const duration = months === Infinity ? 'dauerhaft unter diesen Annahmen' : months >= 1200 ? 'mehr als 100 Jahre' : months === 0 ? '0 Monate' : (Math.floor(months / 12) + ' Jahre und ' + (months % 12) + ' Monate');
+    const gap = monthly - safeMonthly;
+    return card('Entnahme · Reicht das Geld?', '<div class="g2"><div class="k"><b>' + eur(capital) + '</b><span>Startkapital (Net Worth)</span></div><div class="k"><b>' + eur(monthly) + '</b><span>Entnahme pro Monat</span></div><div class="k"><b>' + duration + '</b><span>Rechnerische Laufzeit</span></div><div class="k"><b>' + eur(safeMonthly) + '</b><span>Monatlich bei ' + pct(safeRate * 100) + ' Entnahme p.a.</span></div></div><div class="' + (gap > 0 ? 'neg' : 'pos') + '">' + (gap > 0 ? 'Entnahme liegt ' + eur(gap) + ' € über' : 'Entnahme liegt ' + eur(-gap) + ' € unter oder auf') + ' der rechnerischen Entnahme bei deiner gewählten Rate.</div><div class="note">Modell mit gleichmäßiger Rendite von ' + pct(annualRate * 100) + ' p.a., monatlicher Entnahme und ohne Steuern, Inflation, Gebühren oder Kursschwankungen. Die Laufzeit ist eine Modellrechnung, keine Garantie. Für eine belastbare Planung Rendite und Entnahmerate konservativ wählen.</div>');
+  }
+  V.fire = () => {
+    let html = oldFire().replace('[FIRE] Zielzahl', '[FIRE] Fuck-You-Zahl').replace('FIRE-Zahl', 'Fuck-You-Zahl');
+    html = html.replace('<div class="hatch"></div><div class="row"><div><label>Ausgaben/Mon.', '<details class="hatch"><summary style="cursor:pointer;padding:10px 0">Fuck-You-Zahl bearbeiten</summary><div class="row"><div><label>Ausgaben/Mon.');
+    html = html.replace('<button class="btn o" onclick="setF()">Übernehmen</button>', '<button class="btn o" onclick="setF()">Übernehmen</button></details>');
+    return levelsHTML() + html + withdrawalHTML();
+  };
   V.home = () => oldHome() + card('Runway · Freiheit', '<div class="k"><b>' + runway().toFixed(1).replace('.', ',') + ' Monate</b><span>so lange reichen liquide Mittel bei heutigen Fixkosten</span></div><div class="bar"><i style="width:' + Math.min(100, runway()/12*100) + '%"></i></div><div class="mut">Orientierungsmarke: 12 Monate · Details im Tab „Fuck You“</div>');
 
   /* Wiederkehrende Buchungen: idempotent pro Monat */
