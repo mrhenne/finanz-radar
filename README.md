@@ -12,6 +12,7 @@ Persönliche Finanz-App für Cashflow, Vermögen, Krypto, FIRE, Prognosen und St
 | `index.html` | Einstieg, Metadaten und Supabase-JavaScript-Client |
 | `styles.css` | Design und helles/dunkles Theme |
 | `app.js` | App-Logik, Ansichten, Login, Daten-Backup und Synchronisierung |
+| `features.js` | Erweiterungen: Monatsrückblick, Fuck-Off-Rechner, Prognose-Reiter (nach Vorbild „Prognose Radar“), PIN-Sperre |
 | `config.js` | Öffentliche Supabase-Project-URL und Publishable Key |
 | `schema.sql` | Tabelle, explizite Data-API-Rechte und Row Level Security |
 | `vercel.json` | Sicherheitsheader für die Bereitstellung |
@@ -62,3 +63,10 @@ Nach App-Änderungen diese Punkte überprüfen:
 3. Nach der Supabase-Konfiguration Anmeldung und Synchronisierung mit zwei getrennten Testkonten testen.
 4. Browser-Konsole, Vercel-Deployment und Supabase Security Advisors auf Fehler prüfen.
 
+
+## Fachliche Regeln (bitte bei Änderungen beibehalten)
+
+- **Sparquote** = Summe der Buchungen der Kategorie `Sparen/Invest` ÷ Einnahmen des Monats (nur investiertes Geld, nicht Cashflow ÷ Einnahmen). Gilt in Home, Monatsrückblick und Jahresübersicht. Hilfsfunktion: `invSum()` in `app.js`.
+- **Buchungs-Feed** (Cashflow): nach Kategorie gruppiert, Kategorien nach Summe absteigend, darin Beträge absteigend (`feedHTML()` in `app.js`).
+- **Prognose-Reiter**: Block „Prognose-Reiter nach Vorbild Prognose Radar“ in `features.js`. Alle Element-IDs beginnen mit `pr_`, Zustand liegt in `PR`, gespeicherte Pläne in `S.prPlans` (werden mit dem Datenstand synchronisiert).
+- Der frühere Bereich „Fuck You“ heißt überall **„Fuck Off“**.
