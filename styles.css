@@ -1,6 +1,6 @@
-:root{--bg:#e9eaec;--p:#fff;--ink:#222;--mut:#8a8d93;--ln:#d5d7db;--or:#ff5a1f;--orl:#ffe9e0;--g:#1f9d63;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--p:#202225;--ink:#eceef0;--mut:#8d9198;--ln:#33363b;--orl:#3a2218;--g:#3ccf8e}}
-:root[data-theme="dark"]{--bg:#17181a;--p:#202225;--ink:#eceef0;--mut:#8d9198;--ln:#33363b;--orl:#3a2218;--g:#3ccf8e}
+:root{--bg:#e9eaec;--p:#fff;--ink:#16171a;--mut:#62666d;--ln:#d5d7db;--or:#ff5a1f;--orl:#ffe9e0;--g:#1f9d63;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--p:#202225;--ink:#eceef0;--mut:#a3a7ae;--ln:#33363b;--orl:#3a2218;--g:#3ccf8e}}
+:root[data-theme="dark"]{--bg:#17181a;--p:#202225;--ink:#eceef0;--mut:#a3a7ae;--ln:#33363b;--orl:#3a2218;--g:#3ccf8e}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;padding-bottom:90px;-webkit-text-size-adjust:100%}
 .wrap{max-width:520px;margin:0 auto;padding:10px}
@@ -74,3 +74,15 @@ svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-i
 .ac:active{transform:scale(.96);background:var(--orl)}
 .ac.i{flex:0 0 34px;padding:0;font-size:14px;letter-spacing:0;border-color:var(--ln);color:var(--mut)}
 .ac.eg{flex-basis:100%;border-color:var(--ln);color:var(--mut)}.ac.eg.on{border-color:var(--g);color:var(--g)}
+
+/* Kontrast: Blur-Spans übernehmen die Schrift ihres Elternelements */
+.k span.n,.mut .n,.li small .n,b .n{font-size:inherit;letter-spacing:inherit;color:inherit;text-transform:inherit;font-weight:inherit}
+.k b{font-weight:600;color:var(--ink)}.k b.pos{color:var(--g)}.k b.neg{color:var(--or)}
+.k span{margin-top:2px}
+/* Meilensteine */
+.ms .mst{display:flex;align-items:center;gap:8px}.ms .mst b{font-weight:600;font-size:15px}
+.ms .bar{height:5px;margin:7px 0 4px}.ms.ok .bar i{background:var(--g)}.ms:not(.ok):not(.nx) .bar i{background:var(--mut);opacity:.6}
+.ms .msv{font-size:11px;letter-spacing:.06em;color:var(--mut);font-weight:600}.ms.ok .msv{color:var(--g)}.ms.nx .msv{color:var(--or)}
+.ms.ok .mst{color:var(--g)}.ms.ok .mst b{color:var(--ink)}.ms.nx .mst{color:var(--or)}
+.mse{font:inherit;font-size:12px;width:24px;height:24px;padding:0;border:1px solid var(--ln);background:transparent;color:var(--mut);border-radius:0;cursor:pointer}
+.msn{display:block;color:var(--mut);font-size:10px;margin-top:3px}
