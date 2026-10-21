@@ -4,9 +4,23 @@
   "start_url": "./",
   "display": "standalone",
   "background_color": "#e9eaec",
-  "theme_color": "#ff5a1f",
+  "theme_color": "#e9eaec",
   "icons": [
-    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "./",
+  "scope": "./",
+  "description": "Persönliches Finanz-Cockpit: Cashflow, Vermögen, Fuck-Off-Ziel",
+  "lang": "de",
+  "orientation": "portrait"
 }

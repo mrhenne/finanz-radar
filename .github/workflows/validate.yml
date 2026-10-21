@@ -25,6 +25,8 @@ jobs:
           node --check config.js
           node --check features.js
           node --check extras.js
+          node --check boost.js
+          node --check sw.js
       - name: Run backup import safety tests
         run: node --test tests/*.test.cjs
       - name: Verify pinned Supabase CDN is reachable
