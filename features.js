@@ -319,6 +319,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     const v = id => esc(String(PR.v[id])), ck = id => PR.c[id] ? ' checked' : '';
     const inp = (id, label, unit, step, mode) => '<label>' + label + '</label><div class="row"><input type="number" id="pr_' + id + '" inputmode="' + (mode || 'decimal') + '" value="' + v(id) + '"' + (step ? ' step="' + step + '"' : '') + '><span class="u">' + unit + '</span></div>';
     return '<div class="prw">'
+      + prPanel('<h2>[Daten] Meine Zahlen</h2><div class="g2"><div class="k"><b>' + eur(nn()) + '</b><span>Net Worth</span></div><div class="k"><b>' + eur(avg().s) + '</b><span>Ø investiert / Monat</span></div></div><button class="btn" id="pr_fm">Plan aus meinen Zahlen</button><div class="note">Übernimmt Net Worth als Startkapital, Ø Investiertes als Sparrate sowie Rendite und Ausgaben aus dem Tab Fuck Off. Darunter siehst du, wann deine Stufen erreicht sind.</div>')
       + prPanel('<h2>[Eingabe] Kapital</h2>'
         + inp('s0', 'Startkapital', 'EUR') + inp('sm', 'Sparrate / Monat', 'EUR') + inp('dyn', 'Sparrate steigt jährlich um', '%', '0.5')
         + '<label>Laufzeit · <span id="pr_yl">' + v('y') + '</span> Jahre</label><input type="range" id="pr_y" min="1" max="50" value="' + v('y') + '">'
@@ -336,6 +337,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
         + '<div class="k big hi"><b id="pr_o1">–</b><span>Endwert netto (nominal)</span></div>'
         + [['o2','Kaufkraft heute'],['o3','Eingezahlt'],['o4','Gewinn brutto'],['o5','Steuer'],['o6','Ø Rendite netto p.a.'],['o7','Real-Rendite p.a.'],['o8','Verdopplung nach']].map(x => '<div class="k"><b id="pr_' + x[0] + '">–</b><span>' + x[1] + '</span></div>').join('')
         + '<div id="pr_wp" class="kpis" style="display:none;grid-column:1/-1;border-top:1px solid var(--ln);padding-top:14px"><div class="k hi"><b id="pr_w1">–</b><span>Ø Entnahme netto / Monat</span></div><div class="k"><b id="pr_w4">–</b><span>Kapital</span></div><div class="k"><b id="pr_w2">–</b><span>Steuer (Entnahme)</span></div><div class="k"><b id="pr_w3">–</b><span>Restkapital</span></div></div></div>')
+      + prPanel('<h2>[Ziele] Wann erreicht?</h2><div class="tw"><table id="pr_gt"></table></div><div class="note">Kaufkraft-bereinigt (nach Inflation, Wert in heutigen Euro). Basis: dein Net Worth gegen die Ziele aus dem Tab Fuck Off.</div>')
       + prPanel('<h2>[Verlauf] Vermögen</h2><svg id="pr_ch" viewBox="0 0 360 200"></svg><div class="leg"><span><i style="background:var(--or)"></i>Normal</span><span><i style="background:var(--mut)"></i>Pess./Opt.</span><span><i style="background:var(--ink)"></i>Eingezahlt</span><span><i style="background:var(--or);opacity:.45"></i>Real</span></div><div class="hatch"></div><h2>[Szenarien] Endwert netto</h2><div class="tw"><table id="pr_sc"></table></div>')
       + prPanel('<h2 id="pr_fh">[Feed] Hinweise</h2><div id="pr_fd"></div>')
       + prPanel('<h2>[Replay] Jahresübersicht</h2><div class="tw"><table id="pr_tb"></table></div>')
@@ -395,11 +397,18 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     const dbl = rn > 0 ? Math.log(2) / Math.log(1 + rn / 100) : null; set('o8', dbl ? dbl.toFixed(1).replace('.', ',') + ' J.' : '–');
     PR.last = { net: f.net, real: f.real, r: P.r, y: P.y }; $('pr_wp').style.display = P.ex ? '' : 'none';
     if (P.ex) { const w = M.a.w, last = M.a[M.a.length - 1], yw = w.dep ? Math.max(1, w.dep - P.y) : P.wy; set('w1', prE(w.net / (12 * yw))); set('w2', prE(w.tax)); set('w3', prE(last.v)); set('w4', w.dep ? 'leer in Jahr ' + w.dep : 'reicht ✓'); }
-    const CW = 360, CH = 200, pl = 44, pb = 22, pt = 8, pr = 8, mx = Math.max(...SC[2].a.map(d => d.v), 1) * 1.05, X = y => pl + (CW - pl - pr) * y / P.T, Y = v => pt + (CH - pt - pb) * (1 - v / mx);
+    const f4 = Number(fireF()) || 0, fxk = Number(fixk()) || 0, t5 = Number(S.f && S.f.runway5Target) > 0 ? Number(S.f.runway5Target) : 120 * fxk, n5 = S.f && typeof S.f.runway5Name === 'string' && S.f.runway5Name.trim() ? esc(S.f.runway5Name.trim()) : 'Stufe 5 · Eigenes Ziel';
+    const GOALS = [['Stufe 4 · Fuck-Off-Zahl', f4], [n5, t5], ['Meilenstein', 250000], ['Meilenstein', 500000], ['Meilenstein', 1000000]].filter(x => x[1] > 0);
+    const hit = (a, t) => { for (const d of a) { if (d.y > P.y) break; if (d.v / Math.pow(1 + P.inf / 100, d.y) >= t) return d.y; } return null; };
+    const yr0 = new Date().getFullYear(), hitTxt = y => y === null ? '> ' + P.y + ' J.' : y === 0 ? 'bereits' : 'Jahr ' + y + ' (' + (yr0 + y) + ')';
+    $('pr_gt').innerHTML = '<tr><th>Ziel</th><th>Betrag</th><th>Pess.</th><th>Normal</th><th>Opt.</th></tr>' + GOALS.map(x => '<tr><td>' + x[0] + '</td><td>' + prE(x[1]) + '</td>' + SC.map(s => '<td>' + hitTxt(hit(s.a, x[1])) + '</td>').join('') + '</tr>').join('');
+    const mx0 = Math.max(...SC[2].a.map(d => d.v), 1);
+    const CW = 360, CH = 200, pl = 44, pb = 22, pt = 8, pr = 8, mx = Math.max(mx0 * 1.05, f4 > 0 ? Math.min(f4 * 1.05, mx0 * 1.9) : 0), X = y => pl + (CW - pl - pr) * y / P.T, Y = v => pt + (CH - pt - pb) * (1 - v / mx);
     const line = (a, k) => a.map((d, i) => (i ? 'L' : 'M') + X(d.y).toFixed(1) + ' ' + Y(k(d)).toFixed(1)).join('');
     let g = '';
     for (let i = 0; i <= 4; i++) { const v = mx * i / 4, y = Y(v); g += '<line x1="' + pl + '" x2="' + (CW - pr) + '" y1="' + y + '" y2="' + y + '" stroke="var(--ln)" stroke-width="1"/><text x="' + (pl - 5) + '" y="' + (y + 3) + '" font-size="8" text-anchor="end" fill="var(--mut)">' + (v >= 1e6 ? (v / 1e6).toFixed(1).replace('.', ',') + ' M' : Math.round(v / 1000) + ' T') + '</text>'; }
     const st = Math.max(1, Math.ceil(P.T / 6)); for (let y = 0; y <= P.T; y += st) g += '<text x="' + X(y) + '" y="' + (CH - 7) + '" font-size="8" text-anchor="middle" fill="var(--mut)">' + y + 'J</text>';
+    if (f4 > 0 && f4 <= mx) g += '<line x1="' + pl + '" x2="' + (CW - pr) + '" y1="' + Y(f4) + '" y2="' + Y(f4) + '" stroke="var(--or)" stroke-dasharray="4 3" opacity=".75"/><text x="' + (CW - pr) + '" y="' + (Y(f4) - 3) + '" font-size="8" text-anchor="end" fill="var(--or)">Fuck-Off-Zahl</text>';
     const rl = M.a.map(d => ({ y: d.y, v: d.v / Math.pow(1 + P.inf / 100, d.y) }));
     g += '<path d="' + line(SC[2].a, d => d.v) + line(SC[0].a.slice().reverse(), d => d.v).replace(/M/, 'L') + 'Z" fill="var(--or)" opacity=".08"/>';
     g += '<path d="' + line(SC[2].a, d => d.v) + '" fill="none" stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 3"/><path d="' + line(SC[0].a, d => d.v) + '" fill="none" stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 3"/>';
@@ -437,8 +446,17 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     $('pr_pl').querySelectorAll('[data-d]').forEach(b => b.onclick = () => { L.splice(+b.dataset.d, 1); save(); prPlanUi(); });
     $('pr_pc').innerHTML = L.length ? '<tr><th>Plan</th><th>Netto</th><th>Real</th><th>Rend.</th><th>J.</th></tr>' + L.map(p => '<tr><td>' + esc(p.n) + '</td><td>' + prE(p.s ? p.s.net : 0) + '</td><td>' + prE(p.s ? p.s.real : 0) + '</td><td>' + prP(p.s ? p.s.r : 0) + '</td><td>' + (p.s ? p.s.y : 0) + '</td></tr>').join('') : '';
   }
+  function prFromData() {
+    const v = PR.v, ex = Number(S.f && S.f.exp) || Math.round(avg().o);
+    v.s0 = Math.max(0, Math.round(nn())); v.sm = Math.max(0, Math.round(avg().s));
+    if (Number(S.f && S.f.r) > 0) v.r = Number(S.f.r);
+    if (ex > 0) v.wm = ex;
+    ['s0', 'sm', 'r', 'wm'].forEach(k => { pe(k).value = v[k]; });
+    PR.pre = PR_PRE.length - 1; prUi(); prRun();
+  }
   function prInit() {
     if (!pe('s0')) return;
+    $('pr_fm').onclick = prFromData;
     PR_IDS.concat(PR_CK).forEach(id => {
       const el = pe(id), h = () => {
         if (PR_CK.includes(id)) PR.c[id] = el.checked; else PR.v[id] = el.value;

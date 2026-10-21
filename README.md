@@ -13,6 +13,7 @@ Persönliche Finanz-App für Cashflow, Vermögen, Krypto, FIRE, Prognosen und St
 | `styles.css` | Design und helles/dunkles Theme |
 | `app.js` | App-Logik, Ansichten, Login, Daten-Backup und Synchronisierung |
 | `features.js` | Erweiterungen: Monatsrückblick, Fuck-Off-Rechner, Prognose-Reiter (nach Vorbild „Prognose Radar“), PIN-Sperre |
+| `extras.js` | Sparplan-Check, Vorschau nächste 3 Monate, Monatsabschluss, Schnellerfassung (+), CSV-Import, Datenschutz & Auto-Sicherungen |
 | `config.js` | Öffentliche Supabase-Project-URL und Publishable Key |
 | `schema.sql` | Tabelle, explizite Data-API-Rechte und Row Level Security |
 | `vercel.json` | Sicherheitsheader für die Bereitstellung |
@@ -70,3 +71,7 @@ Nach App-Änderungen diese Punkte überprüfen:
 - **Buchungs-Feed** (Cashflow): nach Kategorie gruppiert, Kategorien nach Summe absteigend, darin Beträge absteigend (`feedHTML()` in `app.js`).
 - **Prognose-Reiter**: Block „Prognose-Reiter nach Vorbild Prognose Radar“ in `features.js`. Alle Element-IDs beginnen mit `pr_`, Zustand liegt in `PR`, gespeicherte Pläne in `S.prPlans` (werden mit dem Datenstand synchronisiert).
 - Der frühere Bereich „Fuck You“ heißt überall **„Fuck Off“**.
+- **Blur** („◉“-Schalter): `blurHtml()` in `app.js` umhüllt automatisch jede Zahl mit €, %, Jahre/Monate in der Ansicht mit `<span class="n">`; SVG-Texte übernimmt `blurNums()`. Neue Ansichten brauchen dafür keine Sonderregeln.
+- **Neue Datenfelder** (alle unter `S`, werden mit synchronisiert): `S.spl` (Sparziel), `S.mnotes` (Monatsnotizen), `S.msn` (Meilenstein-Notizen), `S.prPlans` (Prognose-Pläne), `S.lastImp` (letzter CSV-Import für „Rückgängig“).
+- **Nur auf dem Gerät gespeichert** (nicht in der Cloud): `fr_pin`, `fr_sec` (Datenschutz-Einstellungen), `fr_bk` (die letzten 5 automatischen Tagessicherungen), `fr_exp` (Zeitpunkt des letzten Datei-Backups).
+- **Schnellerfassung**: Der „+“-Button unten rechts öffnet ein Sheet; Kategorie-Vorschlag aus früheren Buchungen und Stichworten (`suggestCat()` in `extras.js`).
