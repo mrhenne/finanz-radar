@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const W = window, $ = id => document.getElementById(id);
-  const css = '.lk{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px}.dots{display:flex;gap:12px}.dots i{width:14px;height:14px;border:1px solid var(--or);border-radius:50%}.dots i.f{background:var(--or)}.pad{display:grid;grid-template-columns:repeat(3,76px);gap:10px}.pad button{height:56px;font:inherit;font-size:20px;background:var(--p);border:1px solid var(--ln);color:var(--ink);border-radius:0}.pad button:active{background:var(--orl)}.mini{width:90px!important;padding:4px 6px!important;font-size:14px!important}';
+  const css = '.lk{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px}.dots{display:flex;gap:12px}.dots i{width:14px;height:14px;border:1px solid var(--or);border-radius:50%}.dots i.f{background:var(--or)}.pad{display:grid;grid-template-columns:repeat(3,76px);gap:10px}.pad button{height:56px;font:inherit;font-size:20px;background:var(--p);border:1px solid var(--ln);color:var(--ink);border-radius:0}.pad button:active{background:var(--orl)}.mini{width:90px!important;padding:4px 6px!important;font-size:16px!important}';
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   const num = s => { s = String(s == null ? '' : s).replace(/[^\d,.\-+]/g, ''); if (s.includes(',') && s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, ''); return parseFloat(s); };
   const monthNow = () => ymOf();
