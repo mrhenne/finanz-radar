@@ -304,9 +304,9 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     + '.prw input[type=range]{border:0;padding:0;accent-color:var(--or);margin:6px 0 0}'
     + '.prw .chips{display:flex;flex-wrap:wrap;gap:6px}.prw .chip{font:inherit;font-size:11px;padding:7px 9px;border:1px solid var(--ln);background:transparent;color:var(--ink);border-radius:0;cursor:pointer;width:auto;margin:0;letter-spacing:0;text-transform:none}.prw .chip.on{border-color:var(--or);background:var(--orl);color:var(--ort)}'
     + '.prw .chk{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--ink)}.prw .chk input{appearance:none;-webkit-appearance:none;width:16px;height:16px;padding:0;border:1px solid var(--or);margin:0;border-radius:0;display:grid;place-items:center;flex:none}.prw .chk input:checked{background:var(--orb)}.prw .chk input:checked::after{content:"✓";color:#fff;font-size:11px}'
-    + '.prw .kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px}.prw .k.hi b{color:var(--ort)}.prw .k.big{grid-column:1/-1}.prw .k.big b{font-size:32px;color:var(--ink)}.prw .k.big.hi b{color:var(--ort)}'
+    + '.prw .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px}.prw .k.hi b{color:var(--ort)}.prw .k.big{grid-column:1/-1}.prw .k.big b{font-size:32px;color:var(--ink)}.prw .k.big.hi b{color:var(--ort)}'
     + '.prw .leg{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--mut);margin-top:8px;letter-spacing:.08em;text-transform:uppercase}.prw .leg i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}'
-    + '.prw .tw{overflow-x:auto}.prw table{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}.prw th,.prw td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--ln)}.prw th{color:var(--mut);font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase}.prw th:first-child,.prw td:first-child{text-align:left}'
+    + '.prw .tw{overflow-x:auto;max-width:100%;min-width:0}.prw table{border-collapse:collapse;width:100%;font-size:11px;white-space:normal}.prw th,.prw td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--ln)}.prw th{color:var(--mut);font-weight:500;font-size:10px;letter-spacing:.1em;text-transform:uppercase}.prw th:first-child,.prw td:first-child{text-align:left}'
     + '.prw .al{border-left:3px solid var(--ln);padding:8px 10px;margin-top:6px;font-size:11px}.prw .al.w{border-color:var(--or);background:linear-gradient(90deg,var(--orl),transparent)}.prw .al small{color:var(--mut);display:block;letter-spacing:.06em}.prw .al .chip{padding:3px 8px;margin-left:4px}';
   const prStyle = document.createElement('style'); prStyle.textContent = prCss; document.head.appendChild(prStyle);
 
@@ -436,7 +436,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     A.push(['', 'INFO · Kosteneffekt', 'TER ' + prP(P.ter) + ' kostet über ' + P.y + ' Jahre ca. ' + prE(prSim(P.r, { ...P, ter: 0, ex: false })[P.y].v - M.a[P.y].v) + ' Endwert (brutto).']);
     A.push(['', 'INFO · Steuer-Anteil', f.g > 0 ? prP(f.t / f.g * 100) + ' des Gewinns gehen an das Finanzamt.' : 'Kein Gewinn.']);
     if (P.ex && M.a.w.dep) A.unshift(['w', 'CRIT · Kapital aufgebraucht', 'Im Normalfall ist das Vermögen in Jahr ' + M.a.w.dep + ' leer. Entnahme senken oder Laufzeit/Sparrate erhöhen.']);
-    $('pr_fd').innerHTML = A.map(a => '<div class="al ' + a[0] + '"><small>' + a[1] + '</small>' + a[2] + '</div>').join('');
+    $('pr_fd').innerHTML = A.map(a => '<div class="al ' + a[0] + '"><small>' + a[1] + '</small><span>' + a[2] + '</span></div>').join('');
     $('pr_fh').textContent = '[Feed] Hinweise · Alerts ' + A.filter(a => a[0]).length;
     $('pr_tb').innerHTML = '<tr><th>Jahr</th><th>Eingezahlt</th><th>Wert</th><th>Real</th></tr>' + M.a.slice(1).map(d => '<tr><td>' + d.y + '</td><td>' + prE(d.inv) + '</td><td>' + prE(d.v) + '</td><td>' + prE(d.v / Math.pow(1 + P.inf / 100, d.y)) + '</td></tr>').join('');
     if (typeof blurNums === 'function') blurNums();
