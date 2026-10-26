@@ -55,7 +55,7 @@
     const t = spT(), a = avg(), ist = invSum(txOf(mo)), sug = Math.round(a.s / 10) * 10;
     const cur = ymOf(), day = new Date().getDate();
     let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn o" style="margin:0;align-self:end" onclick="setSpl()">Speichern</button></div>';
-    if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" onclick="useSpl(' + sug + ');return false" style="color:var(--or)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
+    if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" onclick="useSpl(' + sug + ');return false" style="color:var(--ort)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
     const pc = Math.min(100, ist / t * 100), diff = ist - t;
     let status;
     if (diff >= 0) status = '<b class="pos">✓ Plan erfüllt</b> · ' + eur(ist) + ' von ' + eur(t) + (diff > 0 ? ' (+' + eur(diff) + ')' : '');
