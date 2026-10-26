@@ -93,7 +93,7 @@
     if (!vs.some(v => v > 0)) return '';
     let g = '<line x1="40" x2="352" y1="100" y2="100" stroke="var(--ln)"/><text x="36" y="14" font-size="8" text-anchor="end" fill="var(--mut)">' + eur(mx) + '</text>';
     vs.forEach((v, i) => { const h = v / mx * 86, x = 40 + i * bw; g += '<rect x="' + (x + 3).toFixed(1) + '" y="' + (100 - h).toFixed(1) + '" width="' + (bw - 6).toFixed(1) + '" height="' + Math.max(v > 0 ? 1.5 : 0, h).toFixed(1) + '" fill="' + (i === vs.length - 1 ? 'var(--or)' : 'var(--g)') + '"' + (v > 0 ? '' : ' opacity=".3"') + '><title>' + monLabel(ms[i]) + ': ' + eur(v) + '</title></rect>'; if (i % 2 === 1 || i === vs.length - 1) g += '<text x="' + (x + bw / 2).toFixed(1) + '" y="112" font-size="7" text-anchor="middle" fill="var(--mut)">' + monLabel(ms[i]) + '</text>'; });
-    return '<svg viewBox="0 0 360 118" class="pib">' + g + '</svg>';
+    return '<svg role="img" aria-label="Balkendiagramm: passives Einkommen pro Monat" viewBox="0 0 360 118" class="pib">' + g + '</svg>';
   }
 
   SUB.push('passive', 'job');
