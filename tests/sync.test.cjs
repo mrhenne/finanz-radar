@@ -181,3 +181,17 @@ test('Zwei Geräte laden gleichzeitig hoch: Last-Write-Wins bleibt, die übersch
   assert.deepEqual(cloudTxIds(server), ['von-b'], 'letzter Upload gewinnt (Verhalten unverändert)');
   assert.ok(readBk(B).includes('von-a'), 'die überschriebene Fassung von A ist in den Sicherungen von B');
 });
+
+test('Abgelaufene Sitzung: Änderungen bleiben lokal, es wird nichts hochgeladen', async () => {
+  const server = makeServer();
+  server.addUser('a@example.test', 'geheim123');
+  const A = device(server, T.t0);
+  await login(A, 'a@example.test', 'geheim123');
+  A.ctx.logout(false);            // Sitzung endet (SIGNED_OUT)
+  await A.settle();
+  const before = server.upserts;
+  addTx(A, tx('nach-ablauf', 4));
+  await A.settle();
+  assert.equal(server.upserts, before, 'kein Upload ohne Sitzung');
+  assert.equal(A.h.S().tx.length, 1, 'lokal erhalten');
+});
