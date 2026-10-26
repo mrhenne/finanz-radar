@@ -48,7 +48,7 @@ out.f=clean.f&&typeof clean.f==='object'&&!Array.isArray(clean.f)?{...base.f,...
 if(!['light','dark','auto'].includes(out.th))out.th='light';
 return out
 }
-try{const j=localStorage.getItem('fr_s');if(j)S=normalizeImportedState(JSON.parse(j))}catch(e){}
+try{const j=localStorage.getItem('fr_s');if(j)S=normalizeImportedState(JSON.parse(j))}catch(e){/* Rohdaten unter eigenem Schlüssel sichern, bevor der erste Speichervorgang sie überschreibt */try{const raw=localStorage.getItem('fr_s');if(raw){localStorage.setItem(localStorage.getItem('fr_s_defekt')?'fr_s_defekt_'+Date.now():'fr_s_defekt',raw)}}catch(x){}}
 // ==== Supabase: Zugangsdaten stehen in config.js ====
 const CFG=window.FR_CONFIG||{},SB_URL=CFG.url||'',SB_KEY=CFG.key||'';
 const sb=(SB_URL&&SB_KEY&&window.supabase)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
