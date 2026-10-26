@@ -205,12 +205,14 @@
     else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
     const v = parseFloat(t); return isFinite(v) ? (neg ? -v : v) : null;
   }
+  /* shortcut: nur Kalenderprüfung für Tag/Monat/Jahr, keine Zeitzonen-Logik */
+  const realDay = (y, m, d) => { const x = new Date(Date.UTC(+y, +m - 1, +d)); return x.getUTCFullYear() === +y && x.getUTCMonth() === +m - 1 && x.getUTCDate() === +d; };
   function parseDate(s) {
-    const t = String(s || '').trim(); let m;
-    if ((m = t.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[1] + '-' + m[2] + '-' + m[3];
-    if ((m = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/))) return m[3] + '-' + pad(+m[2]) + '-' + pad(+m[1]);
-    if ((m = t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\b/))) return '20' + m[3] + '-' + pad(+m[2]) + '-' + pad(+m[1]);
-    return null;
+    const t = String(s || '').trim(); let m, r = null;
+    if ((m = t.match(/^(\d{4})-(\d{2})-(\d{2})/))) r = [m[1], m[2], m[3]];
+    else if ((m = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/))) r = [m[3], m[2], m[1]];
+    else if ((m = t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\b/))) r = ['20' + m[3], m[2], m[1]];
+    return r && realDay(r[0], r[1], r[2]) ? r[0] + '-' + pad(+r[1]) + '-' + pad(+r[2]) : null;
   }
   function importText(text) {
     text = String(text || '').replace(/^\uFEFF/, '');
@@ -240,7 +242,8 @@
       const ac = Math.round(Math.abs(a) * 100), dup = S.tx.some(x => x.d === d && Math.round(x.a * 100) === ac && (IN.includes(x.c) === (sign > 0) || x.c === 'Sparen/Invest'));
       rows.push({ d, a: Math.abs(a), sign, n, c, dup, inc: !dup });
     });
-    IMP.rows = rows; IMP.info = rows.length + ' Zeilen erkannt' + (skipped ? ', ' + skipped + ' übersprungen' : '') + '.';
+    const rest = Math.max(0, all.length - hi - 1501);
+    IMP.rows = rows; IMP.info = rows.length + ' Zeilen erkannt' + (skipped ? ', ' + skipped + ' übersprungen' : '') + '.' + (rest ? ' Nur die ersten 1500 Zeilen wurden gelesen, ' + rest + ' weitere nicht.' : '');
     return rows.length;
   }
   W.impUndo = () => {
