@@ -35,7 +35,8 @@ class ClassList {
 class StubEl {
   constructor(doc, tagName = 'div') {
     this._doc = doc; this.tagName = String(tagName).toUpperCase(); this._id = ''; this._html = ''; this._kids = [];
-    this.attrs = {}; this.value = ''; this.checked = false; this.textContent = ''; this.style = {}; this.dataset = {};
+    this.attrs = {}; this.value = ''; this.checked = false; this.textContent = ''; this.dataset = {};
+    this.style = { setProperty(k, v) { this[k] = v; } };
     this.children = []; this.parentNode = null; this.listeners = {}; this.className = ''; this.classList = new ClassList(this);
   }
   get id() { return this._id; }

@@ -166,3 +166,29 @@ test('Ladereihenfolge: config, app, features, extras, boost laufen ohne Fehler i
   assert.equal(typeof a.ctx.piAdd, 'function', 'boost.js geladen');
   assert.equal(typeof a.ctx.csvLoad, 'function', 'features.js geladen');
 });
+
+// --- 4.7 Passives Einkommen, Notgroschen, Meilenstein (Hilfsfunktionen aus dem Gültigkeitsbereich der App) ---
+test('Passives Einkommen: Potenzial = (ETF + Aktien) × Ausschüttung + Cash × Zins, pro Monat (Annahmen 1,8 % und 2 %)', () => {
+  const a = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: small() });
+  const pot = a.ctx.__fr_boost.piPot();
+  // Fixture: ETF 10 × 50 € = 500 €, Cash 5.000 €. (500 × 1,8 % + 5.000 × 2 %) / 12 = 9,0833 €
+  assert.ok(Math.abs(pot - 9.083333) < 1e-5, String(pot));
+  assert.ok(Math.abs(a.ctx.__fr_boost.piCov() - (9.083333 / 900 * 100)) < 1e-6, 'Deckung der Fixkosten (900 €) in %');
+});
+
+test('Notgroschen: Reichweite = Notgroschen-Stand ÷ Fixkosten (5.000 € ÷ 900 € = 5,6 Monate)', () => {
+  const state = small();
+  state.as[0].eg = true;
+  const a = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: state });
+  const html = a.evalApp('egCore()');
+  assert.ok(html.includes('reicht für 5,6 Monate'), 'Reichweite');
+});
+
+test('Meilenstein: bei 11.500 € Net Worth wird der höchste erreichte Schwellenwert gemeldet (10.000 €)', () => {
+  const state = small();
+  state.msSeen = 0;
+  state.debts = [];
+  const a = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: state });
+  a.ctx.__fr_ms.check();
+  assert.equal(a.el('toast').textContent, 'Meilenstein erreicht: 10.000 €');
+});
