@@ -1,0 +1,32 @@
+{
+  "tx": [
+    { "id": "e1", "d": "2026-01-31", "c": "Gehalt", "a": 2500, "n": "Fixture Monatsende", "r": null },
+    { "id": "e2", "d": "2026-02-28", "c": "Wohnen", "a": 700, "n": "Fixture Februar", "r": null },
+    { "id": "e3", "d": "2028-02-29", "c": "Lebensmittel", "a": 45.5, "n": "Fixture Schaltjahr", "r": null },
+    { "id": "e4", "d": "2026-04-30", "c": "Freizeit", "a": 12.34, "n": "Fixture 30. April", "r": null },
+    { "id": "e5", "d": "2025-12-31", "c": "Sparen/Invest", "a": 100, "n": "Fixture Jahresende", "r": null },
+    { "id": "e6", "d": "2026-01-01", "c": "Gehalt", "a": 2500, "n": "Fixture Jahresbeginn", "r": null },
+    { "id": "e7", "d": "2026-05-10", "c": "Mobilität", "a": 120, "n": "Fixture ohne Einnahmen", "r": null },
+    { "id": "e8", "d": "2026-05-11", "c": "Freizeit", "a": -15, "n": "Fixture negativer Betrag", "r": null },
+    { "id": "e9", "d": "2026-06-01", "c": "Sonstiges", "a": 1234567.89, "n": "Fixture sehr große Zahl", "r": null },
+    { "id": "e10", "d": "2026-06-15", "c": "Sonstiges", "a": 0, "n": "Fixture Betrag null", "r": null }
+  ],
+  "as": [
+    { "id": "x1", "n": "Fixture Cash leer", "k": "cash", "q": 1, "p": 0, "c": 0 },
+    { "id": "x2", "n": "Fixture Krypto ohne Einstand", "k": "crypto", "q": 2, "p": 100, "c": 0 }
+  ],
+  "goals": [],
+  "rec": [
+    { "id": "r2", "c": "Wohnen", "a": 700, "n": "Fixture Vorlage Monatsende", "e": false }
+  ],
+  "debts": [],
+  "hist": [
+    { "id": "h4", "m": "2026-01", "nw": 1000 },
+    { "id": "h5", "m": "2026-01", "nw": 1100 },
+    { "id": "h6", "m": "2025-12", "nw": 900 }
+  ],
+  "sales": [],
+  "ui": { "c": {}, "o": {} },
+  "th": "dark",
+  "f": { "wr": 4, "exp": "", "r": 6 }
+}

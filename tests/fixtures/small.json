@@ -1,0 +1,39 @@
+{
+  "tx": [
+    { "id": "f1", "d": "2026-07-01", "c": "Gehalt", "a": 3000, "n": "Fixture Gehalt", "r": null },
+    { "id": "f2", "d": "2026-07-03", "c": "Wohnen", "a": 900, "n": "Fixture Miete", "r": "r1" },
+    { "id": "f3", "d": "2026-07-10", "c": "Sparen/Invest", "a": 300, "n": "Fixture ETF-Sparplan", "r": null },
+    { "id": "f4", "d": "2026-08-01", "c": "Gehalt", "a": 3000, "n": "Fixture Gehalt", "r": null },
+    { "id": "f5", "d": "2026-08-02", "c": "Wohnen", "a": 900, "n": "Fixture Miete", "r": "r1" },
+    { "id": "f6", "d": "2026-08-14", "c": "Lebensmittel", "a": 210.5, "n": "Fixture Markt", "r": null },
+    { "id": "f7", "d": "2026-08-20", "c": "Sparen/Invest", "a": 300, "n": "Fixture ETF-Sparplan", "r": null },
+    { "id": "f8", "d": "2026-09-01", "c": "Gehalt", "a": 3000, "n": "Fixture Gehalt", "r": null },
+    { "id": "f9", "d": "2026-09-02", "c": "Wohnen", "a": 900, "n": "Fixture Miete", "r": "r1" },
+    { "id": "f10", "d": "2026-09-30", "c": "Freizeit", "a": -40, "n": "Fixture Erstattung", "r": null }
+  ],
+  "as": [
+    { "id": "a1", "n": "Fixture Tagesgeld", "k": "cash", "q": 1, "p": 5000, "c": 5000, "l": [{ "d": "2026-01-01", "q": 1, "p": 5000, "f": 0 }] },
+    { "id": "a2", "n": "Fixture ETF", "k": "etf", "q": 10, "p": 50, "c": 450, "l": [{ "d": "2025-06-01", "q": 10, "p": 45, "f": 0 }] },
+    { "id": "a3", "n": "Fixture Coin", "k": "crypto", "q": 0.5, "p": 20000, "c": 6000, "cg": "bitcoin", "l": [{ "d": "2024-01-01", "q": 0.5, "p": 12000, "f": 0 }] }
+  ],
+  "goals": [
+    { "id": "g1", "n": "Fixture Notgroschen", "t": 10000, "y": "2027", "m": "cash", "c": 0 }
+  ],
+  "rec": [
+    { "id": "r1", "c": "Wohnen", "a": 900, "n": "Fixture Miete", "e": false }
+  ],
+  "debts": [
+    { "id": "d1", "n": "Fixture Kredit", "a": 4000 }
+  ],
+  "hist": [
+    { "id": "h1", "m": "2026-07", "nw": 9000 },
+    { "id": "h2", "m": "2026-08", "nw": 9500 },
+    { "id": "h3", "m": "2026-09", "nw": 10200 }
+  ],
+  "sales": [
+    { "id": "s1", "d": "2026-03-15", "n": "Fixture ETF", "k": "etf", "g": 120, "gc": 120, "gp": 0 }
+  ],
+  "ui": { "c": {}, "o": {} },
+  "th": "light",
+  "f": { "wr": 4, "exp": "2000", "r": 6 }
+}
