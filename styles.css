@@ -15,8 +15,8 @@ input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);ba
 select option{color:var(--ink);background:var(--p)}::placeholder{color:var(--mut);opacity:1}
 input:focus,select:focus{outline:1px solid var(--or);border-color:var(--or)}
 .row{display:flex;gap:8px}.row>*{flex:1}
-.btn{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;border:1px solid var(--orb);background:var(--orb);color:#fff;border-radius:0;cursor:pointer;width:100%;margin-top:10px}
-.btn.o{background:transparent;color:var(--ort)}.x{width:auto;margin:0;padding:3px 9px;border-color:var(--ln);background:transparent;color:var(--mut)}
+.btn{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;min-height:44px;border:1px solid var(--orb);background:var(--orb);color:#fff;border-radius:0;cursor:pointer;width:100%;margin-top:10px}
+.btn.o{background:transparent;color:var(--ort)}.x{width:auto;min-height:0;margin:0;padding:3px 9px;border-color:var(--ln);background:transparent;color:var(--mut);position:relative}.top .x::after{content:"";position:absolute;inset:-14px -12px}.li .x::after{content:"";position:absolute;inset:-12px -14px}
 .k{margin-bottom:8px}.k b{display:block;font-size:24px;font-weight:500;letter-spacing:-.02em}.k.big b{font-size:32px;color:var(--ort)}
 .k span,.mut{font-size:10px;letter-spacing:.12em;color:var(--mut);text-transform:uppercase}
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -28,7 +28,7 @@ input:focus,select:focus{outline:1px solid var(--or);border-color:var(--or)}
 .nav{display:flex;align-items:center;gap:8px}.nav .btn{margin:0;width:44px}.nav div{flex:1;text-align:center;letter-spacing:.1em}
 svg{width:100%;height:auto;display:block}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--p);border-top:1px solid var(--ln);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
-.tabs button{flex:1;min-width:0;font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:14px 2px;background:transparent;border:0;border-top:2px solid transparent;color:var(--mut);cursor:pointer}
+.tabs button{flex:1;min-width:0;min-height:44px;font:inherit;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:14px 2px;background:transparent;border:0;border-top:2px solid transparent;color:var(--mut);cursor:pointer}
 .tabs button.on{color:var(--ort);border-top-color:var(--or);background:var(--orl)}
 .note{font-size:10px;color:var(--mut);margin:12px 2px}
 @keyframes pu{0%{box-shadow:0 0 0 0 rgba(255,90,31,.55)}100%{box-shadow:0 0 0 12px rgba(255,90,31,0)}}
@@ -53,7 +53,7 @@ svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-i
 
 /* Erweiterungen: Chips, Tabellen, Schnellerfassung, Verdecken, Toast */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:inherit;font-size:11px;padding:7px 9px;border:1px solid var(--ln);background:transparent;color:var(--ink);border-radius:0;cursor:pointer;width:auto;margin:0}
+.chip{font:inherit;font-size:11px;padding:7px 9px;border:1px solid var(--ln);background:transparent;color:var(--ink);border-radius:0;cursor:pointer;width:auto;margin:0;position:relative}.chip::after{content:"";position:absolute;inset:-7px -4px}
 .chip.on{border-color:var(--or);background:var(--orl);color:var(--ort)}
 .chk{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin:8px 0}
 .chk input{width:16px;height:16px;padding:0;flex:none;accent-color:var(--or)}
@@ -70,9 +70,9 @@ svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-i
 
 /* Aktionsleiste je Position (Kauf / Verkauf / Bearbeiten / Löschen) */
 .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.ac{flex:1 1 0;min-width:0;height:34px;padding:0 8px;font:inherit;font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--or);background:transparent;color:var(--ort);border-radius:0;cursor:pointer;transition:background .15s,transform .12s}
+.ac{flex:1 1 0;min-width:0;min-height:44px;padding:0 8px;font:inherit;font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--or);background:transparent;color:var(--ort);border-radius:0;cursor:pointer;transition:background .15s,transform .12s}
 .ac:active{transform:scale(.96);background:var(--orl)}
-.ac.i{flex:0 0 34px;padding:0;font-size:14px;letter-spacing:0;border-color:var(--ln);color:var(--mut)}
+.ac.i{flex:0 0 44px;padding:0;font-size:14px;letter-spacing:0;border-color:var(--ln);color:var(--mut)}
 .ac.eg{flex-basis:100%;border-color:var(--ln);color:var(--mut)}.ac.eg.on{border-color:var(--g);color:var(--gt)}
 
 /* Kontrast: Blur-Spans übernehmen die Schrift ihres Elternelements */
@@ -84,7 +84,7 @@ svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-i
 .ms .bar{height:5px;margin:7px 0 4px}.ms.ok .bar i{background:var(--g)}.ms:not(.ok):not(.nx) .bar i{background:var(--mut);opacity:.6}
 .ms .msv{font-size:11px;letter-spacing:.06em;color:var(--mut);font-weight:600}.ms.ok .msv{color:var(--gt)}.ms.nx .msv{color:var(--ort)}
 .ms.ok .mst{color:var(--gt)}.ms.ok .mst b{color:var(--ink)}.ms.nx .mst{color:var(--ort)}
-.mse{font:inherit;font-size:12px;width:24px;height:24px;padding:0;border:1px solid var(--ln);background:transparent;color:var(--mut);border-radius:0;cursor:pointer}
+.mse{font:inherit;font-size:12px;width:24px;height:24px;padding:0;border:1px solid var(--ln);background:transparent;color:var(--mut);border-radius:0;cursor:pointer;position:relative}.mse::after{content:"";position:absolute;inset:-10px}
 .msn{display:block;color:var(--mut);font-size:10px;margin-top:3px}
 
 /* Boost: Fokus-Home, Kacheln, Statusleiste, Offline, Konfetti */
