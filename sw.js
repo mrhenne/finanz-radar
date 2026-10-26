@@ -2,7 +2,7 @@
    Strategie: eigene Dateien zuerst aus dem Netz (immer aktuell), bei fehlender Verbindung aus dem Cache.
    Supabase-Bibliothek vom CDN: Cache mit Aktualisierung im Hintergrund.
    API-Aufrufe (Supabase-Daten, CoinGecko) werden NIE gecacht. */
-const VERSION = 'fr-2026-10-26d';
+const VERSION = 'fr-2026-10-26e';
 const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'app.js', 'features.js', 'extras.js', 'boost.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 const CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@';
 

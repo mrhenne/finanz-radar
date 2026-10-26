@@ -123,7 +123,7 @@ function registerStaticDom(doc) {
 
 /**
  * loadApp(opts)
- *  opts.now        ISO-Zeitpunkt für new Date() und Date.now() (fest)
+ *  opts.now        ISO-Zeitpunkt für new Date() und Date.now() (fest, mit api.setNow änderbar)
  *  opts.tz         Zeitzone des Prozesses, z. B. 'Europe/Berlin' (Node setzt sie zur Laufzeit)
  *  opts.fixture    Objekt, das als fr_s im localStorage liegt (wie beim Start der App)
  *  opts.storage    weitere localStorage-Einträge (Schlüssel -> String)
@@ -134,7 +134,7 @@ function registerStaticDom(doc) {
 function loadApp(opts = {}) {
   if (opts.tz) process.env.TZ = opts.tz;
   const RealDate = Date;
-  const nowMs = opts.now ? RealDate.parse(opts.now) : null;
+  let nowMs = opts.now ? RealDate.parse(opts.now) : null;
   class FakeDate extends RealDate {
     constructor(...a) { if (a.length === 0) super(nowMs ?? RealDate.now()); else super(...a); }
     static now() { return nowMs ?? RealDate.now(); }
@@ -186,6 +186,8 @@ function loadApp(opts = {}) {
   const api = {
     ctx, doc, calls, alerts, confirms, logs, storage,
     h: ctx.__h,
+    /** Setzt die Uhr auf einen anderen Zeitpunkt (ISO-String). */
+    setNow(iso) { nowMs = RealDate.parse(iso); },
     el: id => doc.getElementById(id),
     /** Führt alle ausstehenden Timer aus (debounce, Wiederholungen). */
     runTimers() { const list = timers.splice(0); list.forEach(t => t.fn(...t.args)); return list.length; },

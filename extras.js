@@ -53,7 +53,7 @@
   W.useSpl = v => { S.spl = { t: Math.max(0, Math.round(v)) }; save(); render(); };
   function spPanel() {
     const t = spT(), a = avg(), ist = invSum(txOf(mo)), sug = Math.round(a.s / 10) * 10;
-    const cur = new Date().toISOString().slice(0, 7), day = new Date().getDate();
+    const cur = ymOf(), day = new Date().getDate();
     let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn o" style="margin:0;align-self:end" onclick="setSpl()">Speichern</button></div>';
     if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" onclick="useSpl(' + sug + ');return false" style="color:var(--or)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
     const pc = Math.min(100, ist / t * 100), diff = ist - t;
@@ -302,8 +302,8 @@
     try {
       if (!S.tx.length && !S.as.length) return;
       const d = JSON.stringify(S); if (d.length > 900000) return;
-      const a = bkGet(), day = new Date().toISOString().slice(0, 10), last = a[a.length - 1], rec = { t: new Date().toISOString(), n: S.tx.length, u: S.uid || '', d };
-      if (last && last.t.slice(0, 10) === day) a[a.length - 1] = rec; else a.push(rec);
+      const a = bkGet(), day = ymdOf(), last = a[a.length - 1], rec = { t: new Date().toISOString(), n: S.tx.length, u: S.uid || '', d };
+      if (last && ymdOf(new Date(last.t)) === day) a[a.length - 1] = rec; else a.push(rec);
       while (a.length > 5) a.shift();
       localStorage.setItem(BK_K, JSON.stringify(a));
     } catch (e) { }

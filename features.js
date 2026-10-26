@@ -5,7 +5,7 @@
   const css = '.lk{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px}.dots{display:flex;gap:12px}.dots i{width:14px;height:14px;border:1px solid var(--or);border-radius:50%}.dots i.f{background:var(--or)}.pad{display:grid;grid-template-columns:repeat(3,76px);gap:10px}.pad button{height:56px;font:inherit;font-size:20px;background:var(--p);border:1px solid var(--ln);color:var(--ink);border-radius:0}.pad button:active{background:var(--orl)}.mini{width:90px!important;padding:4px 6px!important;font-size:14px!important}';
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   const num = s => { s = String(s == null ? '' : s).replace(/[^\d,.\-+]/g, ''); if (s.includes(',') && s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, ''); return parseFloat(s); };
-  const monthNow = () => new Date().toISOString().slice(0, 7);
+  const monthNow = () => ymOf();
   const card = (t, h) => P('[' + t + ']', h);
   const button = (k, label) => '<button class="btn o" style="text-align:left" onclick="tab=\'' + k + '\';render();scrollTo(0,0)">' + label + '</button>';
 
