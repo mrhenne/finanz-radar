@@ -4,9 +4,9 @@ Stand: 2026-10-26 · Basis: Commit `e4e1ff9` (Tag `backup-vor-endkontrolle-2026-
 
 ## 0. Kurzfassung
 
-- **Erledigt:** Phase 1 (Baseline, Inventur, Fixtures) und Phase 2 (Sicherheit, Abschnitte 3.1 bis 3.9).
-- **Nicht begonnen:** Phase 3 (Berechnungen), Phase 4 (UI), Phase 5 (Performance und Prozesse). Der Auftrag beschränkte sich auf Phase 1 und 2.
-- **Tests:** vorher 11 grün, nachher 28 grün (+17). Alle `node --check` grün.
+- **Erledigt:** Phase 1 (Baseline, Inventur, Fixtures), Phase 2 (Sicherheit, Abschnitte 3.1 bis 3.9) und Phase 3 (Berechnungen und Logik, Abschnitt 3a mit Befunden B-01 bis B-29).
+- **Nicht begonnen:** Phase 4 (UI), Phase 5 (Performance und Prozesse).
+- **Tests:** Phase 1 und 2: vorher 11, nachher 28 grün. Phase 3: 121 grün (+93). Alle `node --check` grün.
 - **Nicht getan (wie vorgegeben):** kein Push, kein Deploy, kein Zugriff auf die Live-Supabase, keine echten Daten, keine neuen Abhängigkeiten, nichts installiert.
 - **Abweichungen:** siehe Abschnitt 8.
 
@@ -64,7 +64,7 @@ Die vier Dateien teilen sich den globalen Scope über `window`. `app.js` definie
 - `tests/fixtures/edge.json`: Grenzfälle: 31.01., 28.02., 29.02.2028 (Schaltjahr), 30.04., 31.12./01.01. (Jahreswechsel), Einnahmen 0 im Mai, negativer Betrag, Betrag 0, sehr große Zahl (1.234.567,89), Position ohne Einstand, doppelter Historienmonat.
 - `tests/fixtures/extreme.cjs`: Generator (nicht JSON, um das Repo klein zu halten). 5.000 Buchungen über 12 Jahre, 20 Krypto-Positionen, 144 Historienpunkte. Deterministisch (feste Folge). `node tests/fixtures/extreme.cjs` gibt ca. 430 KB JSON aus.
 
-Die Fixtures werden noch von keinem Test genutzt. Ihre Nutzung ist Phase 3/5 (Messung, Nachrechnung). Commit `ef0ca9e` (Phase-1-Artefakte nach den Sicherheits-Commits, siehe Abschnitt 8).
+Die Fixtures wurden in Phase 3 von Tests genutzt (Ansichten, Kennzahlen, Prognose, Grenzfälle). Messungen mit der Extrem-Fixture folgen in Phase 5. Commit `ef0ca9e` (Phase-1-Artefakte nach den Sicherheits-Commits, siehe Abschnitt 8).
 
 ### 2.3 Funktionsinventar
 
@@ -425,6 +425,136 @@ Jede Teilziffer hat einen Status: **behoben**, **gemeldet** oder **unkritisch**.
 - **Veraltete Aussage (S-22):** README sagt, `config.js` sei leer. Die Datei enthält URL und publishable Key.
 - **Code:** Die Prognose-Ansicht verlinkt `claude.ai/artifact/…` (app.js, `plan()`, toter Code). Kein Befund.
 
+## 3a. Phase 3: Funktionen, Berechnungen und Logik
+
+**Stand:** Phase 3 (Abschnitt 4 des Plans, Punkte 4.1 bis 4.9) ist bearbeitet. 16 Commits (`3213d2b` bis `93d11b7`). Tests: vorher 28, nachher 121, alle grün. Kein Push, kein Deploy, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt. Datenmodell `S`, fachliche Regeln der README (Sparquote, Feed, „Fuck Off“, Blur, Datenfelder, lokale Schlüssel `fr_pin`, `fr_sec`, `fr_bk`, `fr_exp`) unverändert. Offen sind die in 3a.8 genannten Punkte (Entscheidungen Henne und Grenzen der Prüfung).
+
+### 3a.1 Vorgehen und Werkzeuge
+
+- **Harness** `tests/harness/load-app.cjs`: lädt `config.js`, `app.js`, `features.js`, `extras.js`, `boost.js` in dieser Reihenfolge in einen vm-Kontext (gemeinsamer Gültigkeitsbereich wie im Browser). DOM-Stub mit IDs aus `index.html` und aus `innerHTML`, `localStorage`-Stub, manuelle Timer, `fetch` ohne Netz (Standard: Fehler), festes Datum mit Zeitzone (`process.env.TZ`).
+- **Fake-Supabase** `tests/harness/fake-supabase.cjs`: ein gemeinsamer Server für mehrere Geräte (Upsert, Select, Auth, Offline, 413).
+- **Reine Funktionen** werden wie in `import-safety.test.cjs` aus dem Quelltext geladen (`prSim`, `prFin`, `fxSim`, `maxW`, `simYears`, `parseAmount`, `parseDate`, `netAt`, `simJob`, beide `parseCSV`).
+- **Unabhängige Nachrechnung** `tests/reference/forecast.cjs`: eigene Formeln und Monatsschleifen, ohne Code aus der App.
+- **Regressionsvergleich** (3a.4): Phase-2-Stand gegen den aktuellen Stand, alle 19 Ansichten für vier Fixtures (leer, klein, Grenzfälle, extrem), Text-Diff.
+- Die Fixtures aus Phase 1 werden jetzt genutzt (`views-smoke`, `kennzahlen`, `vermoegen`, `prognose`).
+
+**Prüfprotokoll Phase 3** (Befehle und Ergebnisse, vorher und nachher):
+
+| Prüfung | Befehl | vorher (`abc4c6c`) | nachher (`93d11b7`) |
+|---|---|---|---|
+| Syntax | `node --check app.js config.js features.js extras.js boost.js sw.js` | alle 6 OK | alle 6 OK |
+| Tests | `node --test tests/*.test.cjs` | 28 von 28 bestanden | 121 von 121 bestanden |
+| Regressionsvergleich | Ansichten × Fixtures (3a.4) | Referenz: Phase-2-Stand | 12 Textstellen geändert, alle in 3a.5 |
+| Laufzeit (nur Information, Phase 5 misst im Browser) | `render()` je Ansicht, Extrem-Fixture, Node mit DOM-Stub | nicht gemessen | 0 bis 103 ms je Ansicht |
+| Ladereihenfolge | Harness lädt `config.js`, `app.js`, `features.js`, `extras.js`, `boost.js` | nicht geprüft | ohne Fehler (Test) |
+
+### 3a.2 Berechnungen: Formel, Test, Status
+
+Status: **geprüft** = Test grün, Ergebnis stimmt; **behoben** = Fehler gefunden, Test vorher rot, jetzt grün; **gemeldet** = nicht geändert (Regel 10), siehe 3a.8 und Befundtabelle.
+
+| Nr | Berechnung (Funktion) | Formel in einem Satz | Test | Status |
+|---|---|---|---|---|
+| R-01 | Anzeige `eur()`, `pct()`, `tv()` | Kaufmännisch auf ganze Euro bzw. 0,1 % gerundet, Vorzeichen getrennt; ungültige Zahl → „–“, kein Minus-Null | `numbers.test.cjs` | behoben (B-07) |
+| R-02 | Net Worth `nn()` | Summe aller Positionen (Menge × Kurs) minus Summe der Schulden; Home, Vermögen, Portfolio und Prognose zeigen 11.500 € (Fixture klein) | `kennzahlen.test.cjs` | geprüft |
+| R-03 | Sparquote (`invSum`, Home, Monatsrückblick, Jahr) | Summe „Sparen/Invest“ ÷ Einnahmen × 100; ohne Einnahmen „–“ | `kennzahlen.test.cjs` (10 %, „–“, 6,7 % im Jahr) | behoben (B-06) |
+| R-04 | Monatssummen (`sm`, `mt`) | Einnahmen = Summe der Einnahme-Kategorien; Ausgaben = übrige Kategorien ohne „Sparen/Invest“; Cashflow = Einnahmen − Ausgaben (August: 3.000 / 1.111 / 1.890 €) | `kennzahlen.test.cjs` (Home, Rückblick, Cashflow, Jahr) | geprüft |
+| R-05 | Kalendertag und Monat (`ymdOf`, `ymOf`, `snap`, `doTr`, `autoRecurring`, Sparplan, Tagessicherung) | Datum und Monat aus lokaler Zeit (`getFullYear/getMonth/getDate`), nicht aus UTC | `dates.test.cjs` (Monatsgrenze, Jahreswechsel, Winter- und Sommerzeit 2026, Sicherung je Ortstag) | behoben (S-31) |
+| R-06 | Haltefrist (`heldMore1Y`, `hf`, `tax`) | Steuerfrei nur, wenn der Verkauf nach Kaufdatum + 1 Kalenderjahr liegt; ohne Kaufdatum Haltefrist | `krypto.test.cjs` (Jahrestag, Schaltjahr, zwei Lots) | behoben (B-05) |
+| R-07 | FIFO-Verkauf (`doTr`) | Gewinn = Menge × Verkaufspreis − Gebühr − Σ Einstand der ältesten Lots; Gebühr anteilig; Spekulationsgewinn = Lots unter 1 Jahr (Beispiel: 590 € gesamt, 395 € kurz gehalten) | `krypto.test.cjs` | geprüft |
+| R-08 | Steuer der Verkäufe (`tax`) | Kapitalerträge: max(0; Gewinn − 1.000 €) × 26,375 %, ETF mit 70 % angesetzt; Krypto/Gold: Freigrenze 1.000 €, darüber persönlicher Satz (30 %) auf den gesamten Spekulationsgewinn (Beispiel: 1.100 € → 330 €) | `krypto.test.cjs` | geprüft, Annahmen offen (B-17) |
+| R-09 | Ø Kaufpreis (`assetRow`) | Einstand (Σ Menge × Preis + Gebühr) ÷ Menge (Beispiel: 2 × 100 € und 3 × 200 € → 160 €) | `krypto.test.cjs` | geprüft |
+| R-10 | Kursdaten CoinGecko (`cgClean`, `liveFetch`, `cgPrice`, `cgPump`) | Übernommen nur Einträge mit Text-ID, Name, Symbol und endlichem Preis; Anfragen enthalten nur kodierte Coin-IDs | `coingecko-daten.test.cjs` | behoben (B-10, B-23 gemeldet) |
+| R-11 | Verlaufs-Cache (`need`, `series`) | Eintrag gilt nach TTL (1 Tag: 3 min … 1 Jahr: 6 h), danach Neuabruf; 429 pausiert die Warteschlange | `coingecko-daten.test.cjs`, `coingecko-queue.test.cjs` | geprüft; „Kurs veraltet“ fehlt (B-21) |
+| R-12 | Prognose Endwert (`prSim`) | Monatlich verzinst mit äquivalentem Monatszins (1 + r − TER)^(1/12) − 1; Sparrate am Monatsende, je Jahr × (1 + dyn); Einmalzahlungen am Jahresende. Beispiel 10.000 € Start, 500 €/Monat, 5 % p. a., 20 Jahre: **229.435,22 €** | `prognose.test.cjs` (cent-genau) | geprüft (B-18 Modell offen) |
+| R-13 | Steuer der Prognose (`prFin`) | Steuer = max(0; Gewinn × (1 − TF) − Pauschbetrag) × Satz, am Ende der Ansparphase (Beispiel: 18.094,48 €, TF 30 %, Pauschbetrag 1.000 €, 26,375 %; netto 211.340,74 €) | `prognose.test.cjs` | geprüft (B-17) |
+| R-14 | Kaufkraft (`prFin`, `prRun`) | Nominalwert ÷ (1 + Inflation)^Jahre; Real-Rendite = (1 + r − TER)/(1 + Inflation) − 1 | `prognose.test.cjs` | geprüft |
+| R-15 | Entnahmephase (`prSim` mit Entnahme) | Entnahme/Monat = Betrag × (1 + Inflation)^Jahr; Steuer je Kalenderjahr auf den anteiligen Gewinn, Pauschbetrag je Jahr. Beispiel 1.500 €/Monat, 25 Jahre: netto 264.119,46 €, Steuer 27.133,90 €, Kapital erschöpft im Jahr 30 | `prognose.test.cjs` (Monatsschleife) | geprüft |
+| R-16 | Zielzeit (`simYears`) | Kleinste Monatszahl mit Endwert ≥ Ziel, angegeben als Monate ÷ 12; nie erreichbar → „–“ | `prognose.test.cjs` | geprüft |
+| R-17 | Fuck-Off-Zahl (`fireF`) | Ausgaben × 12 ÷ Entnahmerate; Entnahmerate ≤ 0 oder ungültig → 4 % (wie in der Anzeige) | `fuckoff.test.cjs` (600.000 € bei 2.000 € Ausgaben) | behoben (B-12), Basis offen (B-16) |
+| R-18 | Fuck-Off-Rechner (`fxSim`) | Monatlich ansparen bis zur Zielzahl (k Monate → k/12 Jahre), danach jährlich entnehmen mit Steuer (70 % Gewinnanteil, Pauschbetrag). Beispiel: 42,917 Jahre bis zum Ziel, Erschöpfung im Entnahmejahr 14 | `prognose.test.cjs` | geprüft (70 % fest, B-17) |
+| R-19 | Höchste nachhaltige Entnahme (`maxW`) | Bisektion über die Monatsentnahme; 99 % des Maximums hält das Kapital, 101 % nicht | `prognose.test.cjs` | geprüft |
+| R-20 | Runway-Stufen (`levelsHTML`) | Runway = liquide Mittel ÷ Fixkosten; Stufen 1 bis 3 mit liquiden Mitteln, Stufe 4 und 5 mit Net Worth; Zielzeit nur bei Ziel > 0 | `fuckoff.test.cjs` | behoben (B-13) |
+| R-21 | Fixkosten (`fixk`) | Summe wiederkehrender Ausgaben, sonst Ø Ausgaben | `erweiterungen.test.cjs` (Notgroschen, Passiv) | geprüft; Basis weicht von R-17 ab (B-16) |
+| R-22 | Passives Einkommen (`piPot`, `piCov`) | Potenzial je Monat = ((ETF + Aktien) × Ausschüttung + Cash × Zins) ÷ 12 + Miete; Deckung = Potenzial ÷ Fixkosten (Beispiel: 9,08 € bzw. 1,0 %) | `erweiterungen.test.cjs` | geprüft |
+| R-23 | Netto bei Teilzeit (`netAt`) | Netto = Brutto × (1 − (1 − Anteil) × 0,86); Näherung, im UI als Schätzung gekennzeichnet (80 %: 2.484 € bei 3.000 € Brutto) | `erweiterungen.test.cjs` | geprüft, Näherung |
+| R-24 | Sparplan-Rest (`spPanel`) | Rest = Ziel − Ist; Ist = Σ „Sparen/Invest“ des Monats (Beispiel: 500 − 300 = 200 €) | `erweiterungen.test.cjs` | geprüft |
+| R-25 | Vorschau Cash (`pvPanel`) | Cash_k = Cash_(k−1) + Einnahmen − (Vorlagen-Ausgaben + Ø variable Ausgaben) − Vorlagen-Investitionen; Ø variable = max(0; Ø Ausgaben − Vorlagen). Beispiel Fixture klein im Oktober: 4.057 € und 3.115 € | `erweiterungen.test.cjs` | geprüft |
+| R-26 | Notgroschen-Reichweite (`egCore`) | Stand ÷ Fixkosten (5.000 € ÷ 900 € = 5,6 Monate) | `erweiterungen.test.cjs` | geprüft |
+| R-27 | Meilenstein (`msCheck`) | Höchster erreichter Wert aus 10 T … 1 M € und Fuck-Off-Zahl; Meldung nur bei neuem Höchstwert | `erweiterungen.test.cjs` (10.000 €) | geprüft |
+| R-28 | Sankey-Flüsse (`sankey`) | Breite = a × b ÷ T × k mit T = max(Einnahmen, Ausgaben + Investiert); Beschriftungen mit Mindestabstand | `erweiterungen.test.cjs` (ohne NaN, ohne negative Maße) | teilweise (Summen nicht getrennt geprüft) |
+| R-29 | Feed-Reihenfolge (`feedHTML`) | Gruppen nach Summe absteigend, innerhalb nach Betrag absteigend; Erstattung in Ausgaben als Plus | `erweiterungen.test.cjs`, `numbers.test.cjs` | behoben (B-08) |
+| R-30 | Wiederkehrende Buchungen (`autoRecurring`, `applyRec`) | Je Vorlage und Monat genau eine Buchung, Datum Tag 1; mehrfacher Start ändert nichts | `buchungen.test.cjs` | geprüft; keine Pause/Beenden (B-20) |
+| R-31 | Monat übernehmen (`copyMo`) | Tag = min(Tag der Quelle, letzter Tag des Zielmonats) | `buchungen.test.cjs` (28. Februar, 30. April, 29. Februar 2028) | behoben (B-09) |
+| R-32 | Monatsnavigation (`sh`) | Monat + d über Jahreswechsel und in die Zukunft | `erweiterungen.test.cjs` | geprüft |
+| R-33 | Historie (`histPick`, `histUniq`, `snap`, `addHist`) | Je Monat ein Eintrag: der manuelle, sonst der zuletzt gespeicherte; Verlauf und Rückblick nutzen dieselbe Auswahl | `vermoegen.test.cjs` | behoben (B-14) |
+| R-34 | Bearbeiten (`edSave`) | Leeres Datum (Buchung) und ungültiger Monat (Historie) ändern den Eintrag nicht | `vermoegen.test.cjs` | behoben (B-15) |
+| R-35 | Tagessicherung (`autoSnap`) | Höchstens 5 Einträge; je Ortstag einer; Sicherungen mit Kennzeichen (Cloud-Abgleich) werden nie ersetzt | `erweiterungen.test.cjs`, `dates.test.cjs` | behoben (S-31) |
+| R-36 | CSV-Import (`parseDate`, `parseAmount`, `importText`, Duplikate, Rückgängig) | Datum nur mit gültigem Kalendertag; Betrag mit de-DE/en-Schreibweise und Klammern; Duplikat = gleiches Datum, gleicher Betrag in Cent und passende Art; Rückgängig entfernt genau die Ids des letzten Imports | `csv-import.test.cjs`, `erweiterungen.test.cjs` | geprüft |
+| R-37 | Sync (`push`, `pull`, `save`, `keepSnap`, `continueWithCurrentData`) | Upload erst nach Lesen des Cloud-Stands; S.ts wird erst nach dieser Prüfung gesetzt; vor jedem Überschreiben lokale Sicherung; Last-Write-Wins nach Gerätezeit | `sync.test.cjs` (12 Szenarien), `speicher.test.cjs` (2) | behoben (B-01 bis B-04); LWW bleibt (B-03, Entscheidung Henne) |
+
+### 3a.3 Ergebnis der Prüfung nach Punkten (4.1 bis 4.9)
+
+- **4.1 Geld und Zahlen:** Anzeige behoben (R-01), Kennzahlen per Test über alle Ansichten (R-02 bis R-04). Gleitkomma: Summen laufen als Fließkommazahlen, die Anzeige rundet auf ganze Euro; Vergleiche mit Toleranz. Keine Umstellung auf Cent-Ganzzahlen (würde das Datenformat ändern, Regel 10).
+- **4.2 Datum und Zeit:** S-31 behoben (R-05). `parseDate` und `parseAmount` mit den Schreibweisen aus dem Plan getestet (R-36). Monatsnavigation getestet (R-32).
+- **4.3 Cashflow, Sparquote, Feed:** R-03, R-04, R-29, R-30, R-31, Vorschau und Sparplan (R-24, R-25). Erstattungen behoben (B-08).
+- **4.4 Vermögen, Historie, Schulden:** R-02, R-33, R-34. Schuldenabbau mit Zins und Restlaufzeit ist im Code nicht vorhanden (B-19, gemeldet). `need` ist der Verlaufs-Loader für Kurse, nicht die Zielrechnung.
+- **4.5 Krypto und Kurse:** R-07 bis R-11. Durchschnittspreis und Verkauf über den Bestand hinaus (abgelehnt, getestet).
+- **4.6 Prognose und Fuck-Off:** R-12 bis R-20, gegen die Nachrechnung auf den Cent. Steuer- und Zinsannahmen offengelegt (B-17, B-18). Gespeicherte Pläne (Laden, Löschen) sind nicht testbar (B-27).
+- **4.7 Erweiterungen:** R-22 bis R-27 und R-35, R-36. Job-Modell mit Näherung (R-23). Nicht gesondert geprüft: Schnellerfassung, Monatsabschluss-Notiz, Alarme außer Backup-Hinweis, Meilenstein-Notizen (B-27).
+- **4.8 Synchronisierung:** B-01 bis B-04 behoben, B-03 mit Entscheidung offen, B-24 (Neuversuch) gemeldet. Szenarien: zwei Geräte, Debounce, Offline, 413, Konto-Wechsel, Sitzung abgelaufen, ungesicherte Offline-Änderungen, gleichzeitiger Upload, Altdaten in `user_state`, kaputtes `fr_s`.
+- **4.9 Ladereihenfolge:** Alle fünf Dateien laden ohne Fehler im gemeinsamen Gültigkeitsbereich (Test). Kein TDZ-Fehler beim Start. `parseCSV` existiert zweimal: die Version in `extras.js` ist die aktive (Vorschau und Import), die in `features.js` ist toter Pfad. Beide werden verglichen (gleiche Ausgabe für Semikolon-Dateien; nur die aktive kennt Tab-Trennung). Entfernen in Phase 5 (B-29).
+
+### 3a.4 Regressionsvergleich (Phase 2 gegen Phase 3)
+
+Gleiches Datum (15.08.2026, Europe/Berlin), gleiche Fixtures, alle Ansichten und die Home-Details. Ergebnis: **12 von ca. 160 Textzeilen** unterscheiden sich. Alle Unterschiede gehören zu SÄ-1 (Sparquote „–“), SÄ-2 (Vormonatsvergleich entfällt), SÄ-3 (halbe Euro negativ), SÄ-7 (Runway-Stufe ohne Zeitangabe) oder SÄ-8 (Historie je Monat einmal). Die übrigen Änderungen (SÄ-4 bis SÄ-6, SÄ-9 bis SÄ-16) betreffen Fälle, die die Fixtures nicht enthalten; sie sind über Tests belegt. Der Vergleich liegt im Scratchpad (`dump.cjs`, `dump_old.txt`, `dump_new.txt`) und ist nicht im Repo.
+
+### 3a.5 Sichtbare Änderungen (Vorher / Nachher)
+
+Für Henne sichtbar, bei den Fixtures oder in der Praxis:
+
+- **SÄ-1 Sparquote ohne Einnahmen:** „0 %“ wird „–“ in Home-Details, Monatsrückblick und Jahresübersicht. Beispiel: Oktober 2026 ohne Einnahmen (Fixture: Home-Details `0 %` → `–`).
+- **SÄ-2 Vormonatsvergleich der Sparquote:** „+0 %-Pkt. zum Vormonat“ entfällt, wenn der Vormonat keine Einnahmen hat (Monatsrückblick).
+- **SÄ-3 Halbe Euro bei negativen Werten:** kaufmännisch gerundet, Vorzeichen getrennt. Vorher → nachher: Cashflow-Vorschau Vormonat −210 € → −211 €; Jahresübersicht Cashflow −45 € → −46 €; Job-Vergleich −847 € → −848 €, −417 € → −418 €. Positive halbe Euro bleiben gleich (2,50 € → 3 €).
+- **SÄ-4 Minus-Null:** „−0,30 €“ wird „0 €“ statt „-0 €“.
+- **SÄ-5 Ungültige Zahlen:** „NaN €“ und „Infinity €“ werden „–“ (betrifft nur defekte Daten).
+- **SÄ-6 Erstattung in einer Ausgabenkategorie:** vorher „−-40 €“ (rot), nachher „+40 €“ (grün). Betrifft jede Erstattung in der Buchungsliste.
+- **SÄ-7 Runway-Stufen:** Die Zeitangabe „ca. 0,0 Jahre“ entfällt bei Stufen ohne Ziel (leere Daten, Tab Fuck Off).
+- **SÄ-8 Historie:** Gibt es zwei Einträge für einen Monat (z. B. nach einem Import), erscheint der Monat einmal (Vorher: Monat zweimal, Verlauf und Rückblick konnten verschiedene Werte zeigen). Im Fixture Grenzfälle: Verlauf zeigt „2026-01 1.100 €“ statt zusätzlich „2026-01 1.000 €“.
+- **SÄ-9 Haltefrist Krypto/Gold:** Am Jahrestag des Kaufs gilt das Lot noch als Haltefrist. Beispiel: Kauf 01.11.2025; am 01.11.2026 vorher „steuerfrei (>1 J.)“, nachher „in Haltefrist bis 1.11.2026“ und steuerpflichtig. Ab 02.11.2026 unverändert steuerfrei. Bei mehreren Lots nennt „bis“ das späteste Ende (vorher das früheste). Verkäufe am Jahrestag werden jetzt als Spekulationsgewinn gebucht.
+- **SÄ-10 Erste Stunde des Monats (00:00 bis 01:00/02:00 Ortszeit am 1.):** Die App öffnet im richtigen Monat; Standard-Buchungsdatum, Verkaufsdatum, Verlaufspunkt und wiederkehrende Buchungen tragen das richtige Datum (vorher Vormonat). Nur in dieser Zeitspanne sichtbar.
+- **SÄ-11 Monat übernehmen:** 31. Januar → 28. Februar (vorher „31.02.“, ungültiges Datum).
+- **SÄ-12 Fuck-Off-Zahl bei Entnahmerate 0** (nur nach Import eines defekten Backups): vorher „Infinity €“ bzw. „NaN €“, nachher 4 % als Standard (600.000 € bei 2.000 € Ausgaben).
+- **SÄ-13 Krypto-Liste:** Eine Marktdaten-Position ohne Preis wird ausgeblendet. Vorher stürzte die Ansicht ab.
+- **SÄ-14 Bearbeiten:** Ein geleertes Datum ändert die Buchung nicht; ein ungültiger Historie-Monat wird ignoriert.
+- **SÄ-15 Synchronisierung (Sonderfall):** Melde ich mich ohne Netz an, ändere etwas und ist die Cloud danach neuer, wird die lokale Änderung in **Mehr → Datenschutz → Sicherungen** abgelegt (wiederherstellbar) statt still verworfen. Ein Upload vor dem Laden der Cloud findet nicht mehr statt. Im Normalbetrieb (Anmeldung mit Netz) ändert sich nichts.
+- **SÄ-16 Sicherungen-Liste:** Zusätzlich zu den Tagessicherungen erscheinen Einträge „vor Cloud-Abgleich“ und „Cloud-Stand vor Überschreiben“ mit Anzahl der Buchungen und „Wiederherstellen“. Die Liste behält höchstens fünf Einträge (wie bisher).
+
+### 3a.6 Neue lokale Schlüssel und Format (für README und Phase 5)
+
+- `fr_dirty` (Wert „1“): Gerät hat Änderungen, die noch nicht erfolgreich hochgeladen wurden. Wird beim erfolgreichen Upload gelöscht, sofern währenddessen nichts geändert wurde. Beim Abmelden mit Löschen entfernt.
+- `fr_s_defekt` bzw. `fr_s_defekt_<Zeitstempel>`: Rohdaten eines nicht lesbaren lokalen Stands. Beim Abmelden mit Löschen entfernt.
+- Einträge in `fr_bk` tragen optional `k` (`vor-cloud` oder `cloud`). Alte Einträge ohne `k` bleiben gültig.
+- Datenmodell `S` unverändert.
+
+### 3a.7 Grenzen der Prüfung
+
+- Der DOM-Stub führt keine Ereignis-Handler gerenderter Elemente aus und liefert für `querySelectorAll` leere Listen. Gespeicherte Prognose-Pläne, Schnellerfassung und Feed-Filter sind deshalb nicht geprüft (B-27).
+- Blur (`blurHtml`, `blurNums`) läuft im Stub nicht. Das Verhalten im Browser ist nicht geprüft (B-28, Phase 4).
+- Fake-Supabase ist kein Supabase: keine Policies, keine Latenz, Server-Zeitstempel = Client-Zeitstempel. Die Live-Datenbank wurde nicht geprüft (Abschnitt 8).
+- Zeit: festes Datum je Test. Sommer- und Winterzeit 2026 mit Europe/Berlin geprüft; andere Zonen nicht.
+- Steuerrecht: Annahmen wurden gegen meinen Kenntnisstand abgeglichen (Abgeltung 25 % + Soli, Teilfreistellung 30 % für Aktienfonds, Mischfonds 15 %, Sparer-Pauschbetrag 1.000 € für Einzelpersonen, Freigrenze § 23 EStG 1.000 €, Haltefrist ein Jahr). Eine Online-Prüfung der Rechtslage 2026 habe ich nicht durchgeführt.
+- Browser: Es wurde kein Browser-Lauf gemacht (Playwright nicht installiert, Chrome-Probe aus Phase 2 nicht wiederholt). Konsolenfehler werden im Harness geprüft, nicht im Browser.
+
+### 3a.8 Offene Punkte für Henne (Entscheidungen, nicht geändert)
+
+1. **Ausgaben-Basis (B-16):** Ist das Ausgaben-Feld leer, rechnet die Fuck-Off-Zahl mit Ø Ausgaben (942,63 € Monat → 282.788 €), der Fuck-Off-Rechner mit den Fixkosten (900 € Monat). Im Fixture klein ergibt das 282.788 € Zielzahl statt 270.000 €, wenn die Fixkosten gelten (900 €), und die Entnahme im Rechner ist 900 € je Monat statt 942,63 €. Vorschlag: eine Basis, sichtbar in der Anzeige.
+2. **Last-Write-Wins (B-03):** Der letzte Upload gewinnt; die überschriebene Cloud-Fassung liegt in den Sicherungen. Alternative: Konflikt-Dialog (Aufwand mittel, Verhalten sichtbar).
+3. **Kontowechsel (B-25):** Ungesyncte Daten des alten Kontos gehen beim Wechsel verloren (README-Regel). Sicherung nur, wenn Henne das will.
+4. **Steuer-Annahmen (B-17):** Verlustverrechnung, Vorabpauschale und Kirchensteuer sind nicht modelliert. Die Teilfreistellung im Fuck-Off-Rechner ist fest 30 %. Entscheidung: ergänzen oder als Hinweis lassen.
+5. **Schulden mit Zins (B-19):** Fehlt im Modell (Datenmodell-Änderung, Regel 10).
+6. **Neuversuch bei Upload-Fehlern (B-24):** Derzeit nur bei nächster Änderung, Netzrückkehr oder manuell.
+
+
 ## 4. Befundtabelle
 
 Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Beleg, Commit. Schwere: kritisch, hoch, mittel, niedrig.
@@ -459,12 +589,41 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | S-26 | Service Worker | niedrig | sw.js | nur eigene 200-GET-Antworten gecacht; API nie | unkritisch | sw.js, `boost.test.cjs` | – |
 | S-27 | Service Worker | niedrig | sw.js (`install`) | Teilweise gefüllter Cache wird nicht erkannt | gemeldet | Code | – |
 | S-28 | Konsole | – | App-Code | keine `console.*`-Aufrufe | unkritisch | Grep | – |
-| S-29 | Code | niedrig | app.js: `plan`/`pcalc`, `cu`, `bars`, `applyTh`, `theme` | überschriebene oder tote Funktionen | gemeldet (Phase 3/5) | Ladeprüfung, Grep | – |
-| S-30 | Code | niedrig | features.js:82, extras.js:185 | `parseCSV` doppelt (IIFE-lokal) | gemeldet (4.9) | Grep | – |
-| S-31 | Datum | mittel | app.js:5, 52, 138, 222, 253; features.js:8; extras.js:56, 302 | `toISOString` für Kalendertage (UTC, Monatsgrenze) | gemeldet (Phase 3, 4.2) | Grep (8 Zeilen) | – |
+| S-29 | Code | niedrig | app.js: `plan`/`pcalc`, `cu`, `bars`, `applyTh`, `theme` | überschriebene oder tote Funktionen | belegt (Phase 3), Entfernen Phase 5 | Ladeprüfung, Grep, B-29 | – |
+| S-30 | Code | niedrig | features.js:82, extras.js:185 | `parseCSV` doppelt (IIFE-lokal) | belegt (4.9): aktiv ist die Version in extras.js | `erweiterungen.test.cjs` (Vergleich) | – |
+| S-31 | Datum | mittel | app.js (Monat, `snap`, `doTr`, Standarddatum, `hf`); features.js (`monthNow`); extras.js (`spPanel`, `autoSnap`) | `toISOString` für Kalendertage (UTC, Monatsgrenze) | behoben: lokale Datumsbildung (R-05) | `dates.test.cjs` (8, vorher rot) | 83816a9 |
 | S-32 | Design | niedrig | index.html | impeccable-Hook: `dark-glow` (vorbestehend) | gemeldet (Phase 4) | Hook-Ausgabe | – |
 | S-33 | UI | niedrig | Login-Ansicht | Konsolenhinweis „Password field is not contained in a form“ | gemeldet (Phase 4) | Chrome-stderr | – |
 | S-34 | Header | offen | vercel.json | Cache-Header live nicht geprüft | nicht geprüft | – | – |
+| B-01 | Sync | hoch | app.js (`save`, `push`, `pull`) | Nach der Anmeldung lief der Upload-Timer, bevor der Cloud-Stand gelesen war. Ein leerer lokaler Stand konnte die Cloud überschreiben. | behoben | `sync.test.cjs` („zwei Geräte“, „Erster Abruf“), vorher rot | e24c6bc |
+| B-02 | Sync | hoch | app.js (`pull`) | Das Laden der Cloud ersetzte ungesicherte lokale Änderungen ohne Sicherung. | behoben (Eintrag in „Sicherungen“, Art `vor-cloud`) | `sync.test.cjs` („ungesicherte Offline-Änderungen“), vorher rot | e24c6bc |
+| B-03 | Sync | mittel | app.js (`push`) | Ein Upload überschrieb eine neuere Cloud-Fassung eines anderen Geräts (Last-Write-Wins ohne Konfliktprüfung). | behoben als Sicherung (Art `cloud`); Last-Write-Wins bleibt, Entscheidung Henne (3a.8) | `sync.test.cjs` („gleichzeitiger Upload“), vorher rot | e24c6bc |
+| B-04 | Datenhaltung | hoch | app.js (Start, `fr_s`) | Lokaler Stand mit ungültigem JSON oder falscher Struktur: Die Rohdaten wurden beim ersten Speichern überschrieben. | behoben (Sicherung unter `fr_s_defekt`) | `speicher.test.cjs`, vorher rot | e9f3c3f |
+| B-05 | Berechnung | mittel | app.js (`heldMore1Y`, `hf`, `doTr`, `tax`) | Haltefrist: Am Jahrestag steuerfrei gezeigt und gerechnet; im Schaltjahr falsch (365,25-Tage-Jahr); „bis“ nannte das früheste Ende. | behoben (SÄ-9) | `krypto.test.cjs` (4 Fälle), vorher rot | 785af24 |
+| B-06 | Anzeige | mittel | app.js (`V.home`, `V.year`); features.js (`V.review`) | Sparquote „0 %“ ohne Einnahmen; Vormonatsvergleich gegen 0. | behoben (SÄ-1, SÄ-2) | `kennzahlen.test.cjs`, vorher rot | ecae92f |
+| B-07 | Anzeige | mittel | app.js (`eur`, `pct`, `tv`) | „NaN €“, „Infinity €“, „-0 €“ möglich; Rundung negativer Halbwerte asymmetrisch. | behoben (SÄ-3 bis SÄ-5) | `numbers.test.cjs`, vorher rot | 7701b0a |
+| B-08 | Anzeige | mittel | app.js (`feedHTML`) | Erstattung in einer Ausgabenkategorie als „−-40 €“. | behoben (SÄ-6) | `numbers.test.cjs`, vorher rot | 7701b0a |
+| B-09 | Datum | mittel | app.js (`copyMo`) | „Monat übernehmen“ erzeugte 2026-02-31. | behoben (SÄ-11) | `buchungen.test.cjs`, vorher rot | 02c9c7b |
+| B-10 | Logik | mittel | app.js (`cgClean`, `liveFetch`) | Marktdaten-Eintrag ohne Preis (null): Die Krypto-Ansicht brach ab. | behoben (SÄ-13) | `coingecko-daten.test.cjs`, vorher rot | 429de13 |
+| B-11 | Anzeige | niedrig | app.js (`spark`) | Mini-Verlauf mit weniger als vier Punkten: NaN im SVG-Pfad. | behoben | `coingecko-daten.test.cjs` | 429de13 |
+| B-12 | Berechnung | niedrig | app.js (`fireF`) | Entnahmerate 0 oder ungültig (aus eingespieltem Backup): Fuck-Off-Zahl Unendlich bzw. NaN. | behoben (SÄ-12) | `fuckoff.test.cjs`, vorher rot | 4d976ce |
+| B-13 | Anzeige | niedrig | features.js (`levelsHTML`) | Runway-Stufe mit Ziel 0 zeigt „ca. 0,0 Jahre“. | behoben (SÄ-7) | `fuckoff.test.cjs`, vorher rot | 4d976ce |
+| B-14 | Datenintegrität | mittel | app.js (`histPick`, `histHTML`, `snap`); features.js, boost.js (Verlauf, Rückblick) | Zwei Historie-Einträge für einen Monat: doppelt angezeigt; Verlauf und Rückblick lasen verschiedene Einträge. | behoben (SÄ-8) | `vermoegen.test.cjs`, vorher rot | 5473286 |
+| B-15 | Datenintegrität | mittel | app.js (`edSave`) | Bearbeiten: Ein leeres Datum machte die Buchung datumslos (verschwindet aus dem Monat); ein ungültiger Monat in der Historie wurde übernommen. | behoben (SÄ-14) | `vermoegen.test.cjs`, vorher rot | 5473286 |
+| B-16 | Kennzahl | mittel | app.js (`fireF`); features.js (`fxP`, Ausgaben-Feld) | Ausgaben-Basis: Die Fuck-Off-Zahl rechnet mit Ø Ausgaben, der Fuck-Off-Rechner mit den Fixkosten, wenn das Ausgaben-Feld leer ist (Fixture: 282.788 € gegen 900 € je Monat Entnahme). | gemeldet, Entscheidung Henne | Nachmessung in 3a.8 | – |
+| B-17 | Annahme | mittel | features.js (`fxSim`, `prFin`); app.js (`tax`) | Steuer-Annahmen: keine Verlustverrechnung, keine Vorabpauschale, keine Kirchensteuer; Teilfreistellung im Fuck-Off-Rechner fest 30 %. | gemeldet, teilweise offengelegt | `krypto.test.cjs`, `prognose.test.cjs` | – |
+| B-18 | Modell | niedrig | features.js (`prSim`, `prFin`) | Zinsmodell: effektiver Jahreszins, monatlich verzinst; Steuer nur am Ende; Einmalzahlungen am Jahresende. | gemeldet, teilweise offengelegt | `prognose.test.cjs` | – |
+| B-19 | Fehlende Funktion | mittel | app.js (`debtsHTML`, `addDebt`) | Schulden ohne Zins, Tilgung und Restlaufzeit. Schuldenabbau (Plan 4.4) ist nicht vorhanden. | gemeldet (Vorschlag) | Code-Lesung | – |
+| B-20 | Logik | niedrig | features.js (`autoRecurring`) | Wiederkehrende Buchungen: keine Pause und kein Beenden. Automatisch gebucht wird nur der aktuelle Monat; frühere Monate per „Recurring anwenden“. | gemeldet (Verhalten) | `buchungen.test.cjs` | – |
+| B-21 | Fehlende Funktion | niedrig | app.js (`liveHTML`) | Anzeige „Kurs veraltet“ fehlt (Plan 4.5). | gemeldet | Code-Lesung | – |
+| B-22 | Text | niedrig | app.js (`liveFetch`) | Fehlertext für Kurse nennt die Entwicklungsumgebung („In der Claude-Vorschau …“). Der Nutzer sieht ihn. | gemeldet (Phase 4, Texte) | Code-Lesung | – |
+| B-23 | Datenschutz | niedrig | app.js (`sugg`) | Die Eingabe der Coin-Suche (Name, kein Betrag) wird an CoinGecko gesendet. | gemeldet (Restrisiko) | Code-Lesung | – |
+| B-24 | Sync | niedrig | app.js (`push`) | Upload-Fehler ohne automatischen Neuversuch (nur bei nächster Änderung, Netzrückkehr oder manuell). | gemeldet (Vorschlag) | `sync.test.cjs` („Offline“) | – |
+| B-25 | Sync, Datenschutz | mittel | app.js (`pull`, `logout`) | Kontowechsel verwirft ungesyncte Daten des vorherigen Kontos (README-Regel). | gemeldet, Entscheidung Henne | `sync.test.cjs` („Konto-Wechsel“) | – |
+| B-26 | Text | niedrig | extras.js (Sicherungen, `wrap('sec')`) | Die Sicherungen-Liste enthält jetzt auch Cloud-Einträge. Der Hinweis „Täglich wird automatisch …“ passt nicht mehr ganz. | gemeldet (Phase 4) | Code-Lesung | – |
+| B-27 | Testlücke | niedrig | features.js (`prPlanUi`), extras.js (`qSave`, Feed-Filter, Alarme, Notizen) | Nicht per Test geprüft: gespeicherte Prognose-Pläne, Schnellerfassung, Feed-Filter, Meilenstein- und Monatsnotizen. Der Harness führt keine Ereignis-Handler aus. | gemeldet | 3a.7 | – |
+| B-28 | Testlücke | niedrig | app.js (`blurHtml`, `blurNums`) | Blur wurde im Browser nicht geprüft (im Harness nicht ausgeführt). | gemeldet (Phase 4) | 3a.7 | – |
+| B-29 | Code | niedrig | app.js (`pcalc`); features.js (`parseCSV`, `parseDate`, `csvLoad`) | Toter Code, belegt: `V.plan` wird durch `prHTML` ersetzt, `$('po')` fehlt. Die `parseCSV`-Kopie in features.js ist toter Pfad. | belegt, Entfernen Phase 5 | `erweiterungen.test.cjs`, `prognose.test.cjs` | – |
 
 ## 5. Offene Vorschläge
 
@@ -480,15 +639,25 @@ Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 8. **`fr_pin` beim Löschen der lokalen Daten mit entfernen** (S-13). Entscheidung Henne.
 9. **Commit-Historie:** Alte E-Mail-Adresse aus den Metadaten nicht ändern (würde Historie umschreiben). Empfehlung: GitHub-Einstellung „Private Email“ aktivieren und künftig nutzen. Entscheidung Henne.
 10. **README aktualisieren** (S-22): Konfigurationsabschnitt, Sicherheitsprüfung. Phase 5 (6.4).
+11. **Ausgaben-Basis vereinheitlichen** (B-16): eine Basis für Fuck-Off-Zahl und Fuck-Off-Rechner, sichtbar in der Anzeige. Aufwand klein, Zahlen ändern sich bei leerem Ausgaben-Feld. Entscheidung Henne.
+12. **Schulden mit Zins und Restlaufzeit** (B-19): Datenmodell-Erweiterung, daher nur Vorschlag. Aufwand groß.
+13. **Steuer-Annahmen ergänzen oder ausweisen** (B-17): Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart. Aufwand mittel, rechtlicher Abgleich nötig.
+14. **Neuversuch bei Upload-Fehlern** (B-24): kurzer Wiederholungs-Timer mit Obergrenze. Aufwand klein, Verhalten sichtbar im Konto-Tab.
+15. **Konflikt-Dialog statt Last-Write-Wins** (B-03): Aufwand mittel, Verhalten sichtbar. Entscheidung Henne.
+16. **Kontowechsel mit Sicherung** (B-25): nur wenn Henne das will (Datenschutz gegen Datenverlust abwägen).
+17. **Live-Kurs-Fehlertext und „Kurs veraltet“** (B-21, B-22): Texte und Anzeige, Phase 4.
 
 ## 6. Restrisiken
 
 - **`'unsafe-inline'`** in `script-src` und `style-src` (CSP). Inline-Handler und `style=`-Attribute bleiben. XSS-Schutz hängt damit weiter an `esc()`.
 - **PIN nur Sichtschutz:** Die Daten liegen unverschlüsselt in `localStorage`. Wer das Gerät mit Entwicklerwerkzeugen öffnet, kommt an die Daten.
-- **Last-Write-Wins bei zwei Geräten:** Zeitstempel kommen vom Client. Uhrzeitabweichungen können den falschen Stand gewinnen lassen. Nicht getestet (Phase 3, 4.8).
+- **Last-Write-Wins bei zwei Geräten:** Zeitstempel kommen vom Client. Uhrzeitabweichungen können den falschen Stand gewinnen lassen (B-03). Im Test mit Fake-Supabase bestätigt, nicht behoben.
 - **Backup-Import:** Fremde oder manipulierte Dateien werden bereinigt, aber Datumsfelder und Textbeträge nicht geprüft (S-17).
 - **Service Worker:** Geöffnete Tabs können kurz mit neuem SW und altem Stand arbeiten (S-27).
 - **Supabase `user_state`:** Alte Tabelle, RLS unbekannt. Nur Live-Prüfung (S-25).
+- **Last-Write-Wins bei zwei Geräten (B-03):** Mit Fake-Supabase geprüft. Der letzte Upload gewinnt; die überschriebene Cloud-Fassung liegt in Mehr → Datenschutz → Sicherungen. Keine Live-Messung.
+- **Kontowechsel (B-25):** Ungesyncte Daten des alten Kontos gehen verloren (README-Regel).
+- **Blur im Browser (B-28):** nicht geprüft.
 - **Commit-Historie:** Private E-Mail öffentlich (S-21).
 
 ## 7. Änderungsliste
@@ -501,6 +670,29 @@ Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 - `8bbab07` Phase 2: PIN mit Salt und PBKDF2 hashen, Fehlversuche dauerhaft bremsen
 - `19ecab5` Phase 2: Sicherheitsheader und SRI für Supabase-Skript
 - `1454d01` Phase 2: XSS-Ausgabe über echtes HTML-Escaping absichern
+
+### 7.1a Phase 3 (Commits seit Phase 2)
+
+`git log --oneline abc4c6c..HEAD` (16 Commits, älteste zuerst):
+
+- `3213d2b` Test-Harness lädt die echte App per vm mit DOM-Stubs, Ansichten-Smoke-Test
+- `83816a9` Kalendertage in Ortszeit statt UTC (S-31)
+- `7701b0a` Beträge und Prozente zeigen bei ungültigen Werten „–“, kein Minus-Null, doppeltes Vorzeichen bei Erstattungen behoben
+- `ecae92f` Sparquote zeigt „–“ ohne Einnahmen, Kennzahlen per Test über alle Ansichten abgeglichen
+- `02c9c7b` Monat übernehmen setzt den Tag 29 bis 31 auf den letzten Tag des Zielmonats
+- `0212afa` Prognose, Entnahme und Fuck-Off-Rechner gegen unabhängige Referenz auf den Cent geprüft (nur Tests)
+- `785af24` Haltefrist kalendarisch (mehr als ein Jahr), Anzeige nennt das späteste Ende
+- `429de13` CoinGecko-Marktdaten validieren, Coin-IDs kodieren, Mini-Verlauf ohne NaN
+- `e9f3c3f` kaputten lokalen Stand (fr_s) vor dem Start sichern
+- `e24c6bc` Sync schützt Cloud und lokale Daten vor stillem Überschreiben
+- `4d976ce` Fuck-Off-Zahl ohne Division durch 0, Runway-Stufe ohne Zeitangabe bei Ziel 0
+- `5473286` Historie zeigt je Monat einen Eintrag, Bearbeiten übernimmt keinen leeren Tag oder ungültigen Monat
+- `e13f69e` Tests für Parser, CSV-Import mit Rückgängig, Sparplan, Vorschau, Feed, Sankey, Job-Modell, Auto-Sicherungen und CSV-Parser-Dubletten (nur Tests)
+- `9356d78` Test für abgelaufene Sitzung im Sync (nur Tests)
+- `3f54188` Test für Verlaufs-Cache (nur Tests)
+- `93d11b7` Tests für passives Einkommen, Notgroschen und Meilenstein; Harness-Stub für `style.setProperty` (nur Tests)
+
+Die Commits laufen auf dem Branch `endkontrolle-2026-10-26`. Kein Push.
 
 ### 7.2 `git diff --stat backup-vor-endkontrolle-2026-10-26..HEAD`
 
@@ -541,19 +733,19 @@ Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 ## 8. Was nicht geprüft wurde, Abweichungen, Unsicherheiten
 
 - **Reihenfolge:** Die Phase-1-Artefakte (Fixtures, Inventar) wurden nach dem ersten Sicherheits-Commit angelegt. Der Auftrag verlangte Phase 1 zuerst. Der Inhalt ist unabhängig davon korrekt.
-- **Trailer:** Der Auftrag verlangte `Co-Authored-By: Claude Sonnet 5.5`. Die Commits tragen `Co-Authored-By: Claude Haiku 5.5`, weil das die Modellangabe dieses Laufs ist und die Attribution sonst unzutreffend wäre. Bei Bedarf in der Historie anpassen (lokal, nicht gepusht).
-- **Playwright nicht verwendet:** Ersatz über Chrome-Headless (Stichproben). Keine Screenshots, keine Matrix (Phase 4).
+- **Trailer:** Phase 1 und 2 tragen `Co-Authored-By: Claude Haiku 5.5` (Modellangabe dieses Laufs damals). Phase 3 trägt den vorgegebenen Trailer `Co-Authored-By: Claude Sonnet 5.5`. Die Historie ist lokal und nicht gepusht.
+- **Playwright nicht verwendet:** Ersatz über Chrome-Headless (Stichproben) in Phase 2, in Phase 3 nur der vm-Harness. Keine Screenshots, keine Matrix (Phase 4).
 - **Keine Browser-Tests der Bedienung:** Kernabläufe (Buchung, Backup, PIN, Import mit Rückgängig, Prognose) wurden nicht im Browser durchgeklickt. Die Logik wurde per Test oder Code-Lesung geprüft.
 - **Inventar:** Zweck kurz, Ein- und Ausgaben nicht vollständig typisiert. Die Testzuordnung ist grob (Namenstreffer).
-- **Berechnungen:** nicht geprüft (Phase 3). Die Dateien wurden nur auf Sicherheit gelesen.
+- **Berechnungen:** in Phase 3 geprüft (Abschnitt 3a), mit den Grenzen aus 3a.7.
 - **Live-Supabase, Vercel, Cache-Header:** nicht geprüft (kein Zugriff vorgesehen, Abschnitt 8 des Plans).
 - **Advisory-Abfrage:** nur Bulk-Endpunkt der npm-Registry. Keine GitHub-Advisory-Datenbank, keine Gewähr.
 - **PBKDF2-Iterationen (310.000):** Richtwert nach gängiger Empfehlung. Die Dauer auf älteren iPhones wurde nicht gemessen. Falls die PIN-Eingabe spürbar langsamer wirkt, Wert in `features.js` (`PIN_ITER`) senken.
-- **Wiederverwendung:** `features.js` `parseDate`/`parseCSV` sind tot, aber nicht gelöscht (Auftrag: nichts löschen, was nicht genannt ist).
+- **Wiederverwendung:** `features.js` `parseDate`/`parseCSV` sind tot, aber nicht gelöscht (Auftrag: nichts löschen, was nicht genannt ist). Phase 3 belegt das (B-29).
 - **Hook-Befund:** `dark-glow` in index.html nicht bearbeitet (Design, Phase 4).
 
 ## 9. Phasen 3 bis 5: noch offen (nicht beauftragt)
 
-- **Phase 3 (Funktionen, Berechnungen, Logik):** nicht begonnen. Schwerpunkte laut Plan: Gleitkomma (4.1), Datum (4.2, S-31), Sparquote und Feed (4.3), Vermögen (4.4), Krypto (4.5), Prognose und Steuer (4.6), Erweiterungen (4.7), Synchronisierung (4.8), Ladereihenfolge (4.9, S-30).
+- **Phase 3 (Funktionen, Berechnungen, Logik):** erledigt, Abschnitt 3a. Offene Entscheidungen für Henne: 3a.8.
 - **Phase 4 (UI):** nicht begonnen. Matrix Hell/Dunkel × 375, 390, 430, 768, 1280 px, Kontrast, Touch-Ziele, Labels (S-33), Inline-Styles.
 - **Phase 5 (Code, Performance, Prozesse):** nicht begonnen. Messungen mit der Extrem-Fixture, `defer` und `preconnect`, `validate.yml` erweitern (Syntaxschleife, Version-Prüfung), `tests/run-all.sh`, README/CHATGPT-ANLEITUNG, CHANGELOG.
