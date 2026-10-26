@@ -70,3 +70,19 @@ test('An CoinGecko gehen nur Coin-IDs und Parameter, keine Mengen oder Beträge'
     assert.ok(!/thehenne|@/.test(u), 'keine E-Mail-Adresse in der URL');
   }
 });
+
+test('Verlaufs-Cache: abgelaufener Eintrag wird neu geholt, frischer nicht', async () => {
+  const chart = () => ({ ok: true, status: 200, json: async () => ({ prices: [[Date.now() - 1e5, 1], [Date.now(), 2]] }), headers: { get: () => null } });
+  const app = loadApp({ now: NOW, tz: 'Europe/Berlin', fixture: base([]), fetch: async url => url.includes('market_chart') ? chart() : fetchWith([])(url) });
+  app.h.setLrg('7T');
+  const days = 7;
+  app.h.CH()['bitcoin:' + days] = { d: [[Date.parse(NOW) - 1e5, 1]], t: Date.parse(NOW) - 3 * 36e5 }; // älter als der Cache-Wert für 7 Tage
+  app.evalApp("series('bitcoin')");
+  await app.settle();
+  const chartCalls = app.calls.filter(c => c.url.includes('market_chart')).length;
+  assert.equal(chartCalls, 1, 'abgelaufener Verlauf wird neu abgerufen');
+  app.h.CH()['bitcoin:' + days] = { d: [[Date.parse(NOW), 2]], t: Date.parse(NOW) };
+  app.evalApp("series('bitcoin')");
+  await app.settle();
+  assert.equal(app.calls.filter(c => c.url.includes('market_chart')).length, 1, 'frischer Verlauf bleibt im Cache');
+});
