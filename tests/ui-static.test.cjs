@@ -85,7 +85,8 @@ test('reduzierte Bewegung ist in CSS abgeschaltet', () => {
 });
 
 test('Texte: keine englischen Bedienbegriffe im Deutschen Oberfläche', () => {
-  const forbidden = /Recurring|Fuck You|Save changes|Cancel\b/;
+  // ganze Wörter: Funktionsnamen wie autoRecurring zählen nicht als UI-Text
+  const forbidden = /\bRecurring\b|Fuck You|Save changes|\bCancel\b/;
   assert.doesNotMatch(all, forbidden);
 });
 
