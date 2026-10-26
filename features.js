@@ -17,7 +17,7 @@
     ['review','Monatsrückblick'], ['year','Jahresübersicht'], ['port','Portfolio & Risiko'],
     ['rebal','Rebalancing'], ['crypto','Krypto'], ['goals','Ziele & Sparrate'],
     ['tax','Steuer-Übersicht'], ['csv','CSV-Import'], ['sec','Sicherheit & PIN'],
-    ['acct','Konto & Sync'], ['data','Daten & Backup']
+    ['acct','Konto & Synchronisierung'], ['data','Daten & Backup']
   ].map(x => button(x[0], x[1])).join(''));
 
   /* Fuck-Off-Level und Runway */
