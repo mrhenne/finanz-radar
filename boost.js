@@ -12,7 +12,7 @@
   const addM = (ym, k) => { const [y, m] = ym.split('-').map(Number), d = new Date(y, m - 1 + k, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
   const monLabel = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('de-DE', { month: 'short' }).replace('.', ''); };
   const txOf = ym => S.tx.filter(x => x.d.startsWith(ym));
-  const fm1 = v => (Math.round(v * 10) / 10).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const fm1 = v => isFinite(v) ? ((Math.round(v * 10) / 10) || 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
   const nS = h => '<span class="n">' + h + '</span>';
   const go = k => "tab='" + k + "';render();scrollTo(0,0)";
   const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };

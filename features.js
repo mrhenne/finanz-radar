@@ -284,7 +284,7 @@ const tx=Math.max(0,tb-P.pb)*P.kt/100;tax+=tx;net+=gr-tx;gross+=gr;if(v<=.5&&dep
 return{ya,ok,vs,rows,tax,net,gross,dep,rest:Math.max(v,0)}}
 const atY=(rows,t)=>{if(t>=rows[rows.length-1][0])return rows[rows.length-1][1];for(let i=0;i<rows.length-1;i++){const a=rows[i],b=rows[i+1];if(t>=a[0]&&t<=b[0])return b[0]===a[0]?b[1]:a[1]+(b[1]-a[1])*(t-a[0])/(b[0]-a[0])}return rows[0][1]};
 const maxW=P=>{let lo=0,hi=P.v0+P.sr*600+1;for(let i=0;i<30;i++){const mid=(lo+hi)/2,r=fxSim(P.r,{...P,wm:mid});if(r.dep===null)lo=mid;else hi=mid}return lo};
-const fm=v=>v.toLocaleString('de-DE',{maximumFractionDigits:1});
+const fm=v=>isFinite(v)?v.toLocaleString('de-DE',{maximumFractionDigits:1}):'–';
 function fxHTML(){const P=fxP(),sp=2,N=fxSim(P.r,P),Pe=fxSim(P.r-sp,P),O=fxSim(P.r+sp,P),y0=new Date().getFullYear(),T=Math.ceil(Math.max(N.ya,Pe.ya,O.ya))+P.wy,yrsW=N.dep||P.wy,real=v=>v/Math.pow(1+P.inf/100,N.ya),mx=maxW(P),rate=N.vs?P.wm*12/N.vs*100:0;
 const rows=[];for(let t=0;t<=T;t++)rows.push(['Jahr '+t+' · '+(y0+t),atY(N.rows,t),atY(Pe.rows,t),atY(O.rows,t)]);
 const kp=(b,l,c)=>`<div class="k"><b class="${c||''}">${b}</b><span>${l}</span></div>`;
@@ -316,8 +316,8 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
   const PR_TF = [['Aktien-ETF 30 %',30],['Misch 15 %',15],['Keine 0 %',0]];
   const pe = id => $('pr_' + id);
   const pn = id => { const x = parseFloat(String(pe(id).value).replace(',', '.')); return isFinite(x) ? x : 0; };
-  const prE = x => x.toLocaleString('de-DE', {maximumFractionDigits:0}) + ' €';
-  const prP = x => x.toLocaleString('de-DE', {maximumFractionDigits:2}) + ' %';
+  const prE = x => isFinite(x) ? ((Math.round(x) || 0).toLocaleString('de-DE', {maximumFractionDigits:0}) + ' €') : '–';
+  const prP = x => isFinite(x) ? (((Math.round(x * 100) / 100) || 0).toLocaleString('de-DE', {maximumFractionDigits:2}) + ' %') : '–';
   const prPlans = () => Array.isArray(S.prPlans) ? S.prPlans : (S.prPlans = []);
   const prCorners = '<i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i>';
   const prPanel = h => '<div class="panel">' + prCorners + h + '</div>';

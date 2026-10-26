@@ -189,6 +189,8 @@ function loadApp(opts = {}) {
     /** Setzt die Uhr auf einen anderen Zeitpunkt (ISO-String). */
     setNow(iso) { nowMs = RealDate.parse(iso); },
     el: id => doc.getElementById(id),
+    /** Wertet einen Ausdruck im Kontext der App aus, auch für Top-Level-Namen wie eur() oder esc(). */
+    evalApp: expr => vm.runInContext(expr, ctx),
     /** Führt alle ausstehenden Timer aus (debounce, Wiederholungen). */
     runTimers() { const list = timers.splice(0); list.forEach(t => t.fn(...t.args)); return list.length; },
     pendingTimers: () => timers.length,
