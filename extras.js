@@ -303,7 +303,7 @@
       if (!S.tx.length && !S.as.length) return;
       const d = JSON.stringify(S); if (d.length > 900000) return;
       const a = bkGet(), day = ymdOf(), last = a[a.length - 1], rec = { t: new Date().toISOString(), n: S.tx.length, u: S.uid || '', d };
-      if (last && ymdOf(new Date(last.t)) === day) a[a.length - 1] = rec; else a.push(rec);
+      if (last && !last.k && ymdOf(new Date(last.t)) === day) a[a.length - 1] = rec; else a.push(rec); // Sicherungen mit k (Cloud-Abgleich) werden nie ersetzt
       while (a.length > 5) a.shift();
       localStorage.setItem(BK_K, JSON.stringify(a));
     } catch (e) { }

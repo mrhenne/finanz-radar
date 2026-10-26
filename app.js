@@ -54,17 +54,21 @@ const CFG=window.FR_CONFIG||{},SB_URL=CFG.url||'',SB_KEY=CFG.key||'';
 const sb=(SB_URL&&SB_KEY&&window.supabase)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 let user=null,syncMsg='',syncOk=null,tmr=null,authReady=!sb,recMode=false,busy=false,lem='';
 let legacyPending=false,legacyCheckError='',legacyCheckedUserId='';
+/* cloudReady: für diesen Nutzer ist der Cloud-Stand bekannt (erst dann darf hochgeladen werden). syncedTs: Stand der letzten Cloud-Fassung, die wir kennen. saveSeq: zählt lokale Änderungen. */
+let cloudReady='',syncedTs=0,saveSeq=0;
+/* Lokale Sicherung in der Liste 'Sicherungen' (Mehr → Datenschutz), bevor Cloud-Daten lokale ersetzen oder Cloud-Daten überschrieben werden. */
+function keepSnap(kind,d){try{const a=JSON.parse(localStorage.getItem('fr_bk')||'[]');const list=Array.isArray(a)?a:[];list.push({t:new Date().toISOString(),n:(d.tx||[]).length,u:d.uid||'',d:JSON.stringify(d),k:kind});while(list.length>5)list.shift();localStorage.setItem('fr_bk',JSON.stringify(list));return true}catch(e){return false}}
 const em=m=>({'Invalid login credentials':'E-Mail oder Passwort falsch.','Email not confirmed':'Bitte zuerst den Link in der Bestätigungs-Mail öffnen.','User already registered':'Diese E-Mail ist schon registriert: bitte anmelden.'}[m]||String(m||'Unbekannter Fehler'));
 function localSave(){try{localStorage.setItem('fr_s',JSON.stringify(S))}catch(e){}}
-function save(){localSave();if(sb&&user&&!legacyPending&&!legacyCheckError){syncOk=null;clearTimeout(tmr);tmr=setTimeout(push,1500)}}
-async function push(){if(!sb||!user||legacyPending||legacyCheckError)return;const ts=Date.now();S.ts=ts;S.uid=user.id;localSave();try{const{error}=await sb.from('finance_state').upsert({user_id:user.id,data:S,updated_at:new Date(ts).toISOString()});syncOk=!error;syncMsg=error?'Nicht synchronisiert: '+error.message:'Synchronisiert '+new Date().toLocaleTimeString('de-DE')}catch(e){syncOk=false;syncMsg='Nicht synchronisiert: '+(e.message||e)}}
+function save(){localSave();saveSeq++;try{localStorage.setItem('fr_dirty','1')}catch(e){}if(sb&&user&&!legacyPending&&!legacyCheckError){syncOk=null;clearTimeout(tmr);tmr=setTimeout(push,1500)}}
+async function push(){if(!sb||!user||legacyPending||legacyCheckError)return;if(cloudReady!==user.id)return pull(true);/* erst den Cloud-Stand kennen: ein leerer lokaler Stand darf die Cloud nicht überschreiben */const ts=Date.now(),seq=saveSeq;try{const cur=await sb.from('finance_state').select('data,updated_at').eq('user_id',user.id).maybeSingle();if(cur.error)throw new Error(cur.error.message||'Cloud-Stand nicht lesbar');if(cur.data&&cur.data.data&&new Date(cur.data.updated_at).getTime()>syncedTs&&!keepSnap('cloud',cur.data.data))throw new Error('Lokale Sicherung nicht möglich, Upload abgebrochen');S.ts=ts;S.uid=user.id;localSave();const{error}=await sb.from('finance_state').upsert({user_id:user.id,data:S,updated_at:new Date(ts).toISOString()});syncOk=!error;syncMsg=error?'Nicht synchronisiert: '+error.message:'Synchronisiert '+new Date().toLocaleTimeString('de-DE');if(!error){syncedTs=ts;if(seq===saveSeq){try{localStorage.removeItem('fr_dirty')}catch(e){}}}}catch(e){syncOk=false;syncMsg='Nicht synchronisiert: '+(e.message||e)}}
 async function pull(auto){
 if(!sb||!user)return;
 if(S.uid&&S.uid!==user.id){S={tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:S.th||'light',f:{wr:4,exp:'',r:6}}}
 let r;try{r=await sb.from('finance_state').select('data,updated_at').eq('user_id',user.id).maybeSingle()}catch(e){r={error:e}}
 if(r.error){syncOk=false;syncMsg='Nicht synchronisiert: '+(r.error.message||r.error);return render()}
 const data=r.data;
-if(data){legacyPending=false;legacyCheckError='';if(new Date(data.updated_at).getTime()>(S.ts||0)||!auto){S={...S,...data.data,ts:new Date(data.updated_at).getTime(),uid:user.id};localSave();syncOk=true;syncMsg='Aus Cloud geladen'}else{await push()}return render()}
+if(data){legacyPending=false;legacyCheckError='';cloudReady=user.id;const cts=new Date(data.updated_at).getTime();syncedTs=cts;if(cts>(S.ts||0)||!auto){if(localStorage.getItem('fr_dirty')&&(S.tx.length||S.as.length||S.goals.length||S.debts.length)&&!keepSnap('vor-cloud',S)){syncOk=false;syncMsg='Lokale Sicherung nicht möglich, Cloud-Stand nicht übernommen';return render()}S={...S,...data.data,ts:cts,uid:user.id};localSave();syncOk=true;syncMsg='Aus Cloud geladen'}else{await push()}return render()}
 // Before creating a new cloud row, check for the older app's schema.
 // It is intentionally kept intact; finance_state and user_state are different formats.
 if(legacyCheckedUserId!==user.id){
@@ -73,7 +77,7 @@ if(legacyCheckedUserId!==user.id){
   legacyCheckedUserId=user.id;
   if(old.data&&old.data.app_state){legacyPending=true;syncOk=null;syncMsg='Ältere Cloud-Daten gefunden. Bitte vor dem Start entscheiden.';return render()}
 }
-await push();render()
+cloudReady=user.id;await push();render()
 }
 async function continueWithCurrentData(){
 if(!sb||!user)return;
@@ -81,19 +85,19 @@ if(!confirm('Der vorhandene ältere Datensatz in user_state bleibt unverändert 
 const check=await sb.from('finance_state').select('user_id').eq('user_id',user.id).maybeSingle();
 if(check.error){alert('Cloud-Status konnte nicht geprüft werden. Es wurde nichts geschrieben.');return}
 if(check.data){legacyPending=false;legacyCheckError='';return pull(true)}
-legacyPending=false;legacyCheckError='';S.uid=user.id;localSave();clearTimeout(tmr);await push();render()
+legacyPending=false;legacyCheckError='';S.uid=user.id;localSave();clearTimeout(tmr);cloudReady=user.id;await push();render()
 }
 function legacyNotice(){
 if(legacyPending)return `<div class="panel" style="border-color:var(--or)"><h2>Älterer Cloud-Datenstand erkannt</h2><div class="note">In diesem Supabase-Konto liegt bereits ein älterer Datenstand in <b>user_state</b>. Er verwendet ein anderes Datenformat und wurde nicht verändert. Finanz-Radar synchronisiert erst, wenn du dich entscheidest. Sichere gegebenenfalls zuerst lokale Daten über Mehr → Daten & Backup.</div><button class="btn o" onclick="tab='data';render();scrollTo(0,0)">Lokales Backup öffnen</button><button class="btn" onclick="continueWithCurrentData()">Mit dem aktuellen Finanz-Radar-Datenstand starten</button></div>`;
 if(legacyCheckError)return `<div class="panel" style="border-color:var(--or)"><h2>Cloud-Synchronisierung pausiert</h2><div class="note">${esc(legacyCheckError)}</div><button class="btn o" onclick="pull(true)">Erneut prüfen</button><button class="btn" onclick="continueWithCurrentData()">Trotzdem mit lokalem Datenstand starten</button></div>`;
 return ''
 }
-async function initAuth(){if(!sb)return;try{const{data}=await sb.auth.getSession();user=data.session?data.session.user:null;sb.auth.onAuthStateChange((ev,ses)=>{const u=ses?ses.user:null,was=user;user=u;if(!u){legacyPending=false;legacyCheckError='';legacyCheckedUserId=''}if(ev==='PASSWORD_RECOVERY')recMode=true;if(u&&!was)setTimeout(()=>pull(true),0);else render()});if(user)await pull(true)}catch(e){syncMsg=em(e.message||e)}authReady=true;render()}
+async function initAuth(){if(!sb)return;try{const{data}=await sb.auth.getSession();user=data.session?data.session.user:null;sb.auth.onAuthStateChange((ev,ses)=>{const u=ses?ses.user:null,was=user;user=u;if(!u){legacyPending=false;legacyCheckError='';legacyCheckedUserId='';cloudReady=''}if(ev==='PASSWORD_RECOVERY')recMode=true;if(u&&!was)setTimeout(()=>pull(true),0);else render()});if(user)await pull(true)}catch(e){syncMsg=em(e.message||e)}authReady=true;render()}
 async function login(up){if(busy)return;const e=$('le').value.trim(),p=$('lp').value;lem=e;if(!e||p.length<6){syncMsg='E-Mail und Passwort (mind. 6 Zeichen) eingeben.';return render()}busy=true;let r;try{r=up?await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email:e,password:p})}catch(x){r={error:x}}busy=false;syncMsg=r.error?em(r.error.message):(up&&!(r.data&&r.data.session)?'Fast geschafft: Die Bestätigungs-Mail ist unterwegs. Bitte den Link öffnen und danach anmelden.':'');render()}
 async function magic(){const e=$('le').value.trim();lem=e;if(!e){syncMsg='Bitte E-Mail eingeben.';return render()}const r=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});syncMsg=r.error?em(r.error.message):'Login-Link wurde per E-Mail gesendet.';render()}
 async function forgot(){const e=$('le').value.trim();lem=e;if(!e){syncMsg='Bitte E-Mail eingeben.';return render()}const r=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname});syncMsg=r.error?em(r.error.message):'Link zum Zurücksetzen wurde per E-Mail gesendet.';render()}
 async function setPw(){const p=$('np').value;if(p.length<6){syncMsg='Mindestens 6 Zeichen.';return render()}const r=await sb.auth.updateUser({password:p});if(r.error)syncMsg=em(r.error.message);else{syncMsg='Passwort geändert.';recMode=false}render()}
-async function logout(wipe){await sb.auth.signOut();user=null;syncMsg='';if(wipe){try{localStorage.removeItem('fr_s');localStorage.removeItem('fr_bk');localStorage.removeItem('fr_exp')}catch(e){}location.reload();return}render()}
+async function logout(wipe){await sb.auth.signOut();user=null;syncMsg='';if(wipe){try{localStorage.removeItem('fr_s');localStorage.removeItem('fr_bk');localStorage.removeItem('fr_exp');localStorage.removeItem('fr_dirty');for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('fr_s_defekt'))localStorage.removeItem(k)}}catch(e){}location.reload();return}render()}
 function applyTh(){const t=S.th||'light';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=t;document.body.classList.toggle('hide',!!S.hide);const b=$('th');if(b)b.textContent=t==='light'?'☀':t==='dark'?'☾':'◐'}
 function blurNums(){
 const root=$('v');if(!root)return;blurHtml();
