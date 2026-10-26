@@ -1,6 +1,8 @@
 const $=i=>document.getElementById(i),eur=v=>{const n=Number(v);if(!isFinite(n))return '–';return (Math.sign(n)*Math.round(Math.abs(n))||0).toLocaleString('de-DE')+' €'},pct=v=>{const n=Number(v);if(!isFinite(n))return '–';return ((Math.round(n*10)/10)||0).toLocaleString('de-DE',{maximumFractionDigits:1})+' %'},uid=()=>Math.random().toString(36).slice(2,8);
 /* Kalendertage in Ortszeit. Nicht toISOString(): das liefert UTC und verschiebt Buchungen am 1. nach 00:00 Ortszeit in den Vormonat. */
 const ymdOf=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),ymOf=(d=new Date())=>ymdOf(d).slice(0,7),ldate=s=>{const[y,m,d]=String(s).slice(0,10).split('-').map(Number);return new Date(y,m-1,d)};
+/* Tag im Zielmonat: 31. im Februar wird zum 28./29. (kein Datum wie 31.02.) */
+const clampDay=(ym,dd)=>{const[y,m]=ym.split('-').map(Number),last=new Date(y,m,0).getDate();return String(Math.min(+dd,last)).padStart(2,'0')};
 const esc=s=>String(s||'').replace(/[&<>"'\x60]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','\x60':'&#96;'})[ch]);
 const clean=s=>String(s||'').replace(/[<>&"]/g,'');
 const IN=['Gehalt','Nebenjob','Sonstige Einnahmen'],OUT=['Wohnen','Lebensmittel','Mobilität','Freizeit','Versicherung','Abos','Sonstiges','Sparen/Invest'];
@@ -120,7 +122,7 @@ function moNav(){const[y,m]=mo.split('-');return`<div class="nav"><button class=
 function sh(d){const[y,m]=mo.split('-').map(Number),n=new Date(y,m-1+d,1);mo=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');render()}
 function del(k,id){S[k]=S[k].filter(x=>x.id!==id);save();render()}
 function applyRec(){S.rec.forEach(r=>{if(!S.tx.some(x=>x.r===r.id&&x.d.startsWith(mo)))S.tx.push({id:uid(),d:mo+'-01',c:r.c,a:r.a,n:r.n,r:r.id})});save();render()}
-function copyMo(){const[y,m]=mo.split('-').map(Number),pm=new Date(y,m-2,1),k=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');S.tx.filter(x=>x.d.startsWith(k)).forEach(x=>{if(!S.tx.some(z=>z.d.startsWith(mo)&&z.c===x.c&&z.a===x.a&&z.n===x.n))S.tx.push({...x,id:uid(),d:mo+x.d.slice(7)})});save();render()}
+function copyMo(){const[y,m]=mo.split('-').map(Number),pm=new Date(y,m-2,1),k=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');S.tx.filter(x=>x.d.startsWith(k)).forEach(x=>{if(!S.tx.some(z=>z.d.startsWith(mo)&&z.c===x.c&&z.a===x.a&&z.n===x.n))S.tx.push({...x,id:uid(),d:mo+'-'+clampDay(mo,x.d.slice(8))})});save();render()}
 function addDebt(){const a=N('da'),n=clean($('dn').value);if(!n||!(a>0))return;S.debts.push({id:uid(),n,a});save();render()}
 function setP(id,v){const a=S.as.find(x=>x.id===id);if(a){a.p=parseFloat(String(v).replace(',','.'))||0;save();render()}}
 const debtsHTML=()=>P('[Schulden] '+eur(dt()),S.debts.map(d=>`<div class="li" data-k="debts" data-id="${d.id}"><span><span class="hd">⠿</span>${esc(d.n)}</span><span class="neg">${eur(d.a)} <button class="btn x" onclick="ed={k:'debts',id:'${d.id}'};render();scrollTo(0,0)">✎</button> <button class="btn x" onclick="del('debts','${d.id}')">×</button></span></div>`).join('')+`<div class="row" style="margin-top:8px"><input id="dn" placeholder="Bezeichnung"><input id="da" type="number" inputmode="decimal" placeholder="Betrag €"></div><button class="btn o" onclick="addDebt()">Schuld hinzufügen</button>`);
