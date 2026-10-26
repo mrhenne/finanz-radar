@@ -30,10 +30,14 @@ for (const [name, make] of Object.entries(FIXTURES)) {
   });
 }
 
-test('Ansichten mit leerer Eingabe: Sparquote, Net Worth und Monatssummen zeigen "–" statt Fehlwerte', () => {
+test('leere Daten: Sparquote und Net Worth zeigen "–" bzw. "0 €", nie NaN', () => {
   const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: FIXTURES.leer() });
+  const state = app.h.S();
+  state.ui.hf = true; // Details (V.home) einblenden
+  app.h.setS(state);
   app.h.setTab('home');
-  const text = visible(app.render());
-  assert.match(text, /Sparquote/);
-  assert.doesNotMatch(text, /NaN/);
+  const html = app.render();
+  const spar = html.match(/<b>([^<]*)<\/b><span>Sparquote<\/span>/);
+  assert.equal(spar && spar[1], '–');
+  assert.ok(html.includes('<b>0 €</b><span>Net Worth</span>'));
 });

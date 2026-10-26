@@ -174,7 +174,7 @@
     const parts = mo.split('-').map(Number), prior = new Date(parts[0],parts[1]-2,1), pm = prior.getFullYear() + '-' + String(prior.getMonth()+1).padStart(2,'0');
     const now = S.tx.filter(x => x.d.startsWith(mo)), before = S.tx.filter(x => x.d.startsWith(pm));
     const inc=sm(now,'in'), out=sm(now,'out'), pinc=sm(before,'in'), pout=sm(before,'out');
-    const rate=inc?invSum(now)/inc*100:0, prate=pinc?invSum(before)/pinc*100:0, cats={};
+    const rate=inc?invSum(now)/inc*100:null, prate=pinc?invSum(before)/pinc*100:null, cats={};
     now.filter(x => !IN.includes(x.c) && x.c !== 'Sparen/Invest').forEach(x => cats[x.c]=(cats[x.c]||0)+x.a);
     const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0], big=now.filter(x=>!IN.includes(x.c) && x.c!=='Sparen/Invest').sort((a,b)=>b.a-a.a)[0];
     const compare = (a,b,lowerBad) => { const d=a-b, good=lowerBad?d<=0:d>=0; return '<small class="' + (good?'pos':'neg') + '">' + (d>=0?'+':'') + eur(d) + ' zum Vormonat</small>'; };
@@ -189,7 +189,7 @@
     if (breaches.length) highlights.push('Budget überschritten: <b class="neg">' + breaches.map(esc).join(', ') + '</b>');
     const verdict=!inc?'Noch keine Einnahmen in diesem Monat gebucht.':inc-out<0?'Mehr ausgegeben als eingenommen.':rate>=30?'Starker Monat: mehr als 30 % Sparquote.':rate>=15?'Solider Monat.':rate>0?'Wenig investiert.':'Diesen Monat nichts investiert.';
     const cmpP=(a,b)=>{const d=a-b;return '<small class="'+(d>=0?'pos':'neg')+'">'+(d>=0?'+':'')+d.toLocaleString('de-DE',{maximumFractionDigits:1})+' %-Pkt. zum Vormonat</small>';};
-    return bk() + card('Zeitraum',moNav()) + card('Monatsrückblick','<div class="k"><b>' + verdict + '</b></div><div class="g2"><div class="k"><b class="pos">' + eur(inc) + '</b><span>Einnahmen</span>' + compare(inc,pinc,false) + '</div><div class="k"><b class="neg">' + eur(out) + '</b><span>Ausgaben</span>' + compare(out,pout,true) + '</div><div class="k"><b>' + eur(inc-out) + '</b><span>Cashflow</span>' + compare(inc-out,pinc-pout,false) + '</div><div class="k"><b>' + pct(rate) + '</b><span>Sparquote · investiert</span>' + cmpP(rate,prate) + '</div></div>') + (highlights.length ? card('Highlights',highlights.map(h=>'<div class="li"><span>' + h + '</span></div>').join('')) : '');
+    return bk() + card('Zeitraum',moNav()) + card('Monatsrückblick','<div class="k"><b>' + verdict + '</b></div><div class="g2"><div class="k"><b class="pos">' + eur(inc) + '</b><span>Einnahmen</span>' + compare(inc,pinc,false) + '</div><div class="k"><b class="neg">' + eur(out) + '</b><span>Ausgaben</span>' + compare(out,pout,true) + '</div><div class="k"><b>' + eur(inc-out) + '</b><span>Cashflow</span>' + compare(inc-out,pinc-pout,false) + '</div><div class="k"><b>' + (rate==null?'–':pct(rate)) + '</b><span>Sparquote · investiert</span>' + (rate!=null&&prate!=null?cmpP(rate,prate):'') + '</div></div>') + (highlights.length ? card('Highlights',highlights.map(h=>'<div class="li"><span>' + h + '</span></div>').join('')) : '');
   };
 
   /* Budgets und Rebalancing */
