@@ -70,7 +70,7 @@
 
   W.piAdd = () => {
     const a = num($('pi_a').value); if (!(a > 0)) { toast('Bitte einen Betrag eingeben'); return; }
-    const k = PI_K[$('pi_k').value] ? $('pi_k').value : 'sonst', d = $('pi_d').value || today(), n = esc($('pi_n').value).trim().slice(0, 60) || PI_K[k];
+    const k = PI_K[$('pi_k').value] ? $('pi_k').value : 'sonst', d = $('pi_d').value || today(), n = clean($('pi_n').value).trim().slice(0, 60) || PI_K[k];
     const it = { id: uid(), d, k, n, a: Math.round(a * 100) / 100 };
     if ($('pi_tx').checked) { const tid = uid(); S.tx.push({ id: tid, d, c: 'Sonstige Einnahmen', a: it.a, n: 'Passiv: ' + n, r: null }); it.tx = tid; it.own = 1; }
     piS().items.push(it); save(); toast('+' + (S.hide ? '' : eur(it.a) + ' ') + 'passives Einkommen erfasst'); render();
@@ -122,7 +122,7 @@
       + '<div class="note">Brutto oder netto ist egal, bleib nur einheitlich. Wenn die Ausschüttung schon als Buchung im Cashflow steht, lass den Haken weg oder nutze „Übernehmen“ oben.</div>');
 
     const L = piItems().slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 15);
-    out += card('Passiv · Verlauf', (piBars() || '<span class="mut">Noch keine Einträge.</span>') + L.map(x => '<div class="li"><span>' + esc(x.n) + '<small>' + x.d.slice(8) + '.' + x.d.slice(5, 7) + '.' + x.d.slice(0, 4) + ' · ' + (PI_K[x.k] || 'Sonstiges') + (x.tx ? ' · im Cashflow' : '') + '</small></span><span class="pos">+' + eur(+x.a) + ' <button class="btn x" onclick="piDel(\'' + x.id + '\')">×</button></span></div>').join(''));
+    out += card('Passiv · Verlauf', (piBars() || '<span class="mut">Noch keine Einträge.</span>') + L.map(x => '<div class="li"><span>' + esc(x.n) + '<small>' + x.d.slice(8) + '.' + x.d.slice(5, 7) + '.' + x.d.slice(0, 4) + ' · ' + (PI_K[x.k] || 'Sonstiges') + (x.tx ? ' · im Cashflow' : '') + '</small></span><span class="pos">+' + eur(+x.a) + ' <button class="btn x" onclick="piDel(' + esc(JSON.stringify(x.id)) + ')">×</button></span></div>').join(''));
 
     out += card('Passiv · Annahmen Potenzial', '<div class="row"><div><label>Ausschüttung ETF/Aktien %</label><input type="number" step="0.1" inputmode="decimal" value="' + c.yd + '" onchange="piSetF(\'yd\',this.value)"></div><div><label>Zins Cash %</label><input type="number" step="0.1" inputmode="decimal" value="' + c.yz + '" onchange="piSetF(\'yz\',this.value)"></div></div><label>Mieteinnahmen netto €/Monat</label><input type="number" inputmode="decimal" value="' + (c.rent || '') + '" placeholder="0" onchange="piSetF(\'rent\',this.value)">'
       + '<div class="note">Potenzial = (ETF + Aktien) × Ausschüttung + Cash × Zins, pro Monat, plus Miete. Thesaurierende ETFs schütten nichts aus: dann ist das Potenzial eine Rechengröße, kein Geldeingang. Solange keine echten Einträge da sind, nutzt die App das Potenzial als Schätzung.</div>');
@@ -279,7 +279,7 @@
     const T = Object.values(c).reduce((a, b) => a + b, 0) || 1, ms = []; for (let i = -5; i <= 0; i++) ms.push(addM(mo, i));
     return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, v]) => {
       const tr = ms.map(m => txOf(m).filter(x => x.c === k).reduce((s, x) => s + x.a, 0)), pr = tr.slice(0, 5).filter(x => x > 0), av = pr.length ? pr.reduce((a, b) => a + b, 0) / pr.length : 0;
-      return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="flex:1">' + k + '</span><span class="bsp">' + spk(tr, 'var(--mut)') + '</span><b>' + eur(v) + '</b></div><div class="bar"><i style="width:' + (v / T * 100) + '%"></i></div><span class="mut">' + pct(v / T * 100) + (av ? ' · Ø Vormonate ' + eur(av) : '') + '</span></div>';
+      return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="flex:1">' + esc(k) + '</span><span class="bsp">' + spk(tr, 'var(--mut)') + '</span><b>' + eur(v) + '</b></div><div class="bar"><i style="width:' + (v / T * 100) + '%"></i></div><span class="mut">' + pct(v / T * 100) + (av ? ' · Ø Vormonate ' + eur(av) : '') + '</span></div>';
     }).join('') || '<span class="mut">Keine Einträge</span>';
   };
   const MS = [10000, 50000, 100000, 250000, 500000, 1000000];

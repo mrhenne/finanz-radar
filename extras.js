@@ -109,7 +109,7 @@
   wrap('cash', h => h.replace('<div class="panel" data-pk="cash:Neu', pvPanel() + '<div class="panel" data-pk="cash:Neu'));
 
   /* ---------- 4. Monatsabschluss (Rückblick) ---------- */
-  W.setMNote = v => { S.mnotes = S.mnotes || {}; const t = esc(v).trim().slice(0, 500); if (t) S.mnotes[mo] = t; else delete S.mnotes[mo]; save(); toast('Notiz gespeichert'); };
+  W.setMNote = v => { S.mnotes = S.mnotes || {}; const t = clean(v).trim().slice(0, 500); if (t) S.mnotes[mo] = t; else delete S.mnotes[mo]; save(); toast('Notiz gespeichert'); };
   function histPanel() {
     const rows = []; let best = null, worst = null;
     for (let i = -5; i <= 0; i++) {
@@ -172,7 +172,7 @@
   W.qClose = () => { const e = document.getElementById('qsh'); if (e) e.classList.remove('on'); };
   W.qSave = () => {
     const a = num($('q_a').value); if (!(a > 0)) { $('q_h').textContent = 'Bitte einen Betrag eingeben.'; return; }
-    const c = $('q_c').value, d = $('q_d').value || today(), n = esc($('q_n').value).trim().slice(0, 80);
+    const c = $('q_c').value, d = $('q_d').value || today(), n = clean($('q_n').value).trim().slice(0, 80);
     S.tx.push({ id: uid(), d, c, a, n }); save(); qClose(); render(); toast('Gebucht: ' + eur(a) + ' · ' + c);
   };
   function buildFab() {
@@ -235,7 +235,7 @@
     all.slice(hi + 1, hi + 1 + 1500).forEach(r => {
       const d = parseDate(r[cols.d]); let a = cols.a >= 0 ? parseAmount(r[cols.a]) : ((parseAmount(r[cols.h]) || 0) - (parseAmount(r[cols.s]) || 0));
       if (!d || a == null || a === 0) { skipped++; return; }
-      const n = esc(cols.t.map(k => (r[k] || '').trim()).filter(Boolean).join(' · ')).replace(/\s+/g, ' ').slice(0, 70), sign = a > 0 ? 1 : -1;
+      const n = clean(cols.t.map(k => (r[k] || '').trim()).filter(Boolean).join(' · ')).replace(/\s+/g, ' ').slice(0, 70), sign = a > 0 ? 1 : -1;
       let c = suggestCat(n, sign) || (sign > 0 ? 'Sonstige Einnahmen' : 'Sonstiges');
       const ac = Math.round(Math.abs(a) * 100), dup = S.tx.some(x => x.d === d && Math.round(x.a * 100) === ac && (IN.includes(x.c) === (sign > 0) || x.c === 'Sparen/Invest'));
       rows.push({ d, a: Math.abs(a), sign, n, c, dup, inc: !dup });
@@ -277,7 +277,7 @@
     const sel = IMP.rows.filter(r => r.inc), dups = IMP.rows.filter(r => r.dup).length, shown = IMP.rows.slice(0, 300);
     return '<div class="mut" style="margin-top:8px">' + esc(IMP.info) + ' ' + dups + ' mögliche Duplikate (abgewählt). Ausgewählt: ' + sel.length + '.</div>'
       + '<div class="row" style="margin-top:6px"><button class="btn o" style="margin:0" onclick="impAll(true)">Alle wählen</button><button class="btn o" style="margin:0" onclick="impAll(false)">Keine</button></div>'
-      + '<div style="margin-top:8px">' + shown.map((r, i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><label style="margin:0;display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input type="checkbox" style="width:auto" ' + (r.inc ? 'checked ' : '') + 'onchange="impSet(' + i + ',\'inc\',this.checked)"><span class="mut">' + r.d.slice(8) + '.' + r.d.slice(5, 7) + '.' + r.d.slice(2, 4) + '</span>' + (r.dup ? '<span class="neg">Duplikat?</span>' : '') + '</label><b class="' + (r.sign > 0 ? 'pos' : '') + '">' + (r.sign > 0 ? '+' : '−') + eur(r.a) + '</b></div><div class="mut" style="margin:4px 0">' + (r.n || '–') + '</div><select onchange="impSet(' + i + ',\'c\',this.value)">' + ALLC().map(c => '<option' + (c === r.c ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>').join('') + '</div>'
+      + '<div style="margin-top:8px">' + shown.map((r, i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><label style="margin:0;display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input type="checkbox" style="width:auto" ' + (r.inc ? 'checked ' : '') + 'onchange="impSet(' + i + ',\'inc\',this.checked)"><span class="mut">' + r.d.slice(8) + '.' + r.d.slice(5, 7) + '.' + r.d.slice(2, 4) + '</span>' + (r.dup ? '<span class="neg">Duplikat?</span>' : '') + '</label><b class="' + (r.sign > 0 ? 'pos' : '') + '">' + (r.sign > 0 ? '+' : '−') + eur(r.a) + '</b></div><div class="mut" style="margin:4px 0">' + (esc(r.n) || '–') + '</div><select onchange="impSet(' + i + ',\'c\',this.value)">' + ALLC().map(c => '<option' + (c === r.c ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>').join('') + '</div>'
       + (IMP.rows.length > 300 ? '<div class="note">Es werden die ersten 300 Zeilen angezeigt; alle ausgewählten Zeilen werden importiert (Auswahl der restlichen Zeilen ist per „Alle/Keine“ steuerbar).</div>' : '')
       + '<button class="btn" onclick="impGo()">' + sel.length + ' Buchungen importieren</button><button class="btn o" onclick="impClear()">Verwerfen</button>';
   }
