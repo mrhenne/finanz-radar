@@ -183,7 +183,7 @@
     if (big) highlights.push('Größte Einzelausgabe: <b>' + esc(big.n || big.c) + '</b> ' + eur(big.a));
     const saved=now.filter(x=>x.c==='Sparen/Invest').reduce((s,x)=>s+x.a,0);
     if (saved) highlights.push('Investiert/gespart: <b>' + eur(saved) + '</b>');
-    const currentHist=(S.hist||[]).find(x=>x.m===mo), prevHist=(S.hist||[]).find(x=>x.m===pm);
+    const currentHist=histPick(mo), prevHist=histPick(pm);
     if (currentHist && prevHist) highlights.push('Net Worth Veränderung: <b>' + eur(currentHist.nw-prevHist.nw) + '</b>');
     const breaches=Object.keys(S.bud||{}).filter(c => S.bud[c]>0 && (cats[c]||0)>S.bud[c]);
     if (breaches.length) highlights.push('Budget überschritten: <b class="neg">' + breaches.map(esc).join(', ') + '</b>');

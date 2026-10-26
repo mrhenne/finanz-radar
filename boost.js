@@ -229,7 +229,7 @@
   }
   V.home = () => {
     const n = nn(), F = fireF(), p = F > 0 ? n / F * 100 : 0, B = baseP(), y = F > 0 ? simYears(B.v0, B.sr, B.r, F) : null;
-    const H = (S.hist || []).slice().sort((a, b) => a.m.localeCompare(b.m)), cur = ymNow(), prev = H.filter(x => x.m < cur).pop(), d = prev ? n - prev.nw : null;
+    const H = histUniq().sort((a, b) => a.m.localeCompare(b.m)), cur = ymNow(), prev = H.filter(x => x.m < cur).pop(), d = prev ? n - prev.nw : null;
     const yT = !(F > 0) ? 'Zielzahl fehlt' : y == null ? 'nicht in Sicht' : y < 0.05 ? 'erreicht ✓' : fm1(y) + ' Jahren', yS = y != null && y >= 0.05 ? '<small>ca. ' + nS(yr0() + Math.ceil(y)) + '</small>' : '';
     let h = '<div class="hero">' + ring(p) + '<div class="hk"><div class="k big"><b>' + eur(n) + '</b><span>Net Worth</span></div>'
       + (d != null ? '<div class="' + (d >= 0 ? 'pos' : 'neg') + ' dl">' + (d >= 0 ? '▲ +' : '▼ ') + eur(d) + ' seit ' + monLabel(prev.m) + '</div>' : '')
