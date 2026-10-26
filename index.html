@@ -27,9 +27,9 @@
 <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="splash/750x1334-light.png">
 <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="splash/750x1334-dark.png">
 <link rel="stylesheet" href="styles.css"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"></head><body><div class="wrap">
-<div class="top"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span>Finanz/<b id="ttl">Home</b></span><span class="live"></span><span class="sp"></span><button class="btn x" onclick="hideN()" style="margin-right:6px">◉</button><button class="btn x" id="th" onclick="theme()" style="margin-right:6px">☀</button><span class="badge" id="bd"></span></div>
+<div class="top"><span class="dot" aria-hidden="true" style="background:#ff5f57"></span><span class="dot" aria-hidden="true" style="background:#febc2e"></span><span class="dot" aria-hidden="true" style="background:#28c840"></span><span>Finanz/<b id="ttl">Home</b></span><span class="live"></span><span class="sp"></span><button class="btn x" onclick="hideN()" aria-label="Zahlen ausblenden oder einblenden" title="Zahlen ausblenden oder einblenden" style="margin-right:6px">◉</button><button class="btn x" id="th" onclick="theme()" aria-label="Design wechseln: hell, dunkel, automatisch" title="Design wechseln" style="margin-right:6px">☀</button><span class="badge" id="bd"></span></div>
 <div id="v"></div></div>
-<div class="tabs" id="tb"></div>
+<div class="tabs" id="tb" role="tablist"></div>
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script src="features.js"></script>

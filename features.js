@@ -38,7 +38,7 @@
       return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + (done[i]?'✓':i===current?'▶':'○') + ' ' + esc(x[0]) + '</span><b>' + eur(x[1]) + '</b></div><div class="bar"><i style="width:' + p + '%"></i></div><div class="mut">' + (done[i]?'erreicht':pct(p) + ' · noch ' + eur(Math.max(0,x[1]-have(i))) + (y != null ? ' · ca. ' + y.toFixed(1).replace('.', ',') + ' Jahre' : '')) + '</div></div>';
     }).join('');
     html += runway5Edit
-      ? '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button><button class="btn o" onclick="cancelRunway5()">Abbrechen</button>'
+      ? '<div class="hatch"></div><label>Stufe 5 · Bezeichnung</label><input aria-label="Stufe 5 Bezeichnung" id="r5n" value="' + esc(customName) + '" maxlength="80"><label>Stufe 5 · Zielbetrag € (Standard: 10 Jahre Fixkosten)</label><input aria-label="Stufe 5 Zielbetrag in Euro" id="r5t" type="number" inputmode="decimal" value="' + customTarget + '"><button class="btn o" onclick="saveRunway5()">Stufe 5 speichern</button><button class="btn o" onclick="cancelRunway5()">Abbrechen</button>'
       : '<div class="hatch"></div><button class="btn o" onclick="editRunway5()">✎ Stufe 5 bearbeiten</button>';
     return card('Runway · Fuck-Off-Level', html + '<div class="note">Runway ist eine grobe Orientierung: liquide Mittel geteilt durch monatliche Fixkosten. ETF, Aktien, Gold und Krypto können im Verkaufszeitpunkt stark schwanken. Stufen 1 bis 3 vergleichen liquide Mittel, Stufe 4 und 5 den Net Worth.</div>');
   }
@@ -163,9 +163,9 @@
     const opts = sel => CSV.head.map((h,i) => '<option value="' + i + '"' + (i===sel?' selected':'') + '>' + esc(h || ('Spalte ' + (i+1))) + '</option>').join('');
     const categories = IN.concat(OUT);
     const fresh = CSV.rows.filter(r => !r.dup).length;
-    let html = '<input type="file" accept=".csv,.txt,text/csv" onchange="csvFile(this.files[0])"><label>Oder CSV-Text einfügen</label><textarea id="csvt" rows="3" placeholder="Buchungstag;Verwendungszweck;Betrag …"></textarea><button class="btn o" onclick="csvLoad($(\'csvt\').value)">Einlesen</button><div class="note">' + esc(CSV.msg) + ' CSV mit Semikolon oder Komma, Datum TT.MM.JJJJ und Betrag 1.234,56 werden unterstützt. Duplikate werden übersprungen.</div>';
-    if (CSV.head.length) html += card('Spalten', '<div class="row"><div><label>Datum</label><select onchange="csvSet(\'d\',this.value)">' + opts(CSV.col.d) + '</select></div><div><label>Betrag</label><select onchange="csvSet(\'a\',this.value)">' + opts(CSV.col.a) + '</select></div></div>');
-    if (CSV.rows.length) html += card('Vorschau', fresh + ' neu / ' + (CSV.rows.length-fresh) + ' Duplikate') + CSV.rows.slice(0,15).map((r,i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + r.d.slice(8) + '.' + r.d.slice(5,7) + '. ' + esc(r.n.slice(0,34)) + '</span><b class="' + (r.a>0?'pos':'neg') + '">' + eur(r.a) + '</b></div>' + (r.dup ? '<div class="mut">Duplikat, wird übersprungen</div>' : '<select onchange="csvCat(' + i + ',this.value)">' + categories.map(c => '<option' + (c===r.c?' selected':'') + '>' + c + '</option>').join('') + '</select>') + '</div>').join('') + '<button class="btn" onclick="csvGo()">' + fresh + ' Buchungen importieren</button>';
+    let html = '<input aria-label="CSV-Datei auswählen" type="file" accept=".csv,.txt,text/csv" onchange="csvFile(this.files[0])"><label>Oder CSV-Text einfügen</label><textarea aria-label="CSV-Text einfügen" id="csvt" rows="3" placeholder="Buchungstag;Verwendungszweck;Betrag …"></textarea><button class="btn o" onclick="csvLoad($(\'csvt\').value)">Einlesen</button><div class="note">' + esc(CSV.msg) + ' CSV mit Semikolon oder Komma, Datum TT.MM.JJJJ und Betrag 1.234,56 werden unterstützt. Duplikate werden übersprungen.</div>';
+    if (CSV.head.length) html += card('Spalten', '<div class="row"><div><label>Datum</label><select aria-label="Datumsspalte" onchange="csvSet(\'d\',this.value)">' + opts(CSV.col.d) + '</select></div><div><label>Betrag</label><select aria-label="Betragsspalte" onchange="csvSet(\'a\',this.value)">' + opts(CSV.col.a) + '</select></div></div>');
+    if (CSV.rows.length) html += card('Vorschau', fresh + ' neu / ' + (CSV.rows.length-fresh) + ' Duplikate') + CSV.rows.slice(0,15).map((r,i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between"><span>' + r.d.slice(8) + '.' + r.d.slice(5,7) + '. ' + esc(r.n.slice(0,34)) + '</span><b class="' + (r.a>0?'pos':'neg') + '">' + eur(r.a) + '</b></div>' + (r.dup ? '<div class="mut">Duplikat, wird übersprungen</div>' : '<select aria-label="Kategorie der Zeile" onchange="csvCat(' + i + ',this.value)">' + categories.map(c => '<option' + (c===r.c?' selected':'') + '>' + c + '</option>').join('') + '</select>') + '</div>').join('') + '<button class="btn" onclick="csvGo()">' + fresh + ' Buchungen importieren</button>';
     return bk() + card('CSV-Import · Kontoauszug', html);
   };
 
@@ -200,14 +200,14 @@
   const oldCash = V.cash;
   V.cash = () => oldCash() + card('Budgets · Monatslimits', OUT.filter(c => c !== 'Sparen/Invest').map(c => {
     const spent=mt().filter(x=>x.c===c).reduce((s,x)=>s+x.a,0), limit=budgets()[c]||0, p=limit?spent/limit*100:0;
-    return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>' + c + '</span><span class="' + (p>100?'neg p':p>85?'neg':'') + '">' + eur(spent) + ' / <input class="mini" type="number" inputmode="decimal" value="' + (limit||'') + '" placeholder="Limit" onchange="setBud(\'' + c + '\',this.value)"></span></div>' + (limit ? '<div class="bar"><i style="width:' + Math.min(100,p) + '%;' + (p>85?'background:#ff4d6d':'') + '"></i></div><div class="' + (p>100?'neg p':'mut') + '">' + (p>100?'Über Limit um '+eur(spent-limit):pct(p)+' genutzt · noch '+eur(limit-spent)) + '</div>' : '') + '</div>';
+    return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>' + c + '</span><span class="' + (p>100?'neg p':p>85?'neg':'') + '">' + eur(spent) + ' / <input class="mini" aria-label="Monatsbudget in Euro" type="number" inputmode="decimal" value="' + (limit||'') + '" placeholder="Limit" onchange="setBud(\'' + c + '\',this.value)"></span></div>' + (limit ? '<div class="bar"><i style="width:' + Math.min(100,p) + '%;' + (p>85?'background:#ff4d6d':'') + '"></i></div><div class="' + (p>100?'neg p':'mut') + '">' + (p>100?'Über Limit um '+eur(spent-limit):pct(p)+' genutzt · noch '+eur(limit-spent)) + '</div>' : '') + '</div>';
   }).join(''));
   V.rebal = () => {
     const t=allocation(), total=nw(), keys=Object.keys(KIND), sum=keys.reduce((s,k)=>s+(+t[k]||0),0), gaps=[];
     const rows=keys.map(k => {
       const actual=byK(k), target=+t[k]||0, delta=total*target/100-actual, weight=total?actual/total*100:0;
       if (delta>total*.02) gaps.push([k,delta]);
-      return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="color:' + COL[k] + '">■ ' + KIND[k] + '</span><span>Ist ' + pct(weight) + ' · Ziel <input class="mini" style="width:64px!important" type="number" inputmode="decimal" value="' + (t[k]!=null?t[k]:'') + '" placeholder="0" onchange="setAl(\'' + k + '\',this.value)"> %</span></div>' + ((target||actual) ? '<div class="' + (Math.abs(delta)<total*.02?'pos':'neg') + '">' + (Math.abs(delta)<total*.02?'im Zielbereich':(delta>0?'zukaufen ':'abbauen ')+eur(Math.abs(delta))) + '</div>' : '') + '</div>';
+      return '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="color:' + COL[k] + '">■ ' + KIND[k] + '</span><span>Ist ' + pct(weight) + ' · Ziel <input class="mini" aria-label="Zielanteil in Prozent" style="width:64px!important" type="number" inputmode="decimal" value="' + (t[k]!=null?t[k]:'') + '" placeholder="0" onchange="setAl(\'' + k + '\',this.value)"> %</span></div>' + ((target||actual) ? '<div class="' + (Math.abs(delta)<total*.02?'pos':'neg') + '">' + (Math.abs(delta)<total*.02?'im Zielbereich':(delta>0?'zukaufen ':'abbauen ')+eur(Math.abs(delta))) + '</div>' : '') + '</div>';
     }).join('');
     const sr=avg().s, gapTotal=gaps.reduce((s,x)=>s+x[1],0);
     return bk() + card('Rebalancing · Ziel-Aufteilung','<div class="mut">Summe der Ziele: <b class="' + (Math.abs(sum-100)<.01?'pos':'neg') + '">' + pct(sum) + '</b> (soll 100 %)</div>' + rows + '<div class="note">Zielwerte sind Planungswerte, keine automatische Handelsanweisung. Verkäufe können Steuern auslösen.</div>') + (gaps.length && sr>0 && gapTotal>0 ? card('Sparrate verteilen','<div class="mut">Ø Sparleistung ' + eur(sr) + ' / Monat</div>' + gaps.map(x=>'<div class="li"><span>' + KIND[x[0]] + '</span><b>' + eur(sr*x[1]/gapTotal) + '</b></div>').join('')) : '');
@@ -236,11 +236,11 @@
   let buffer='', locked=!!pinConfig(), hiddenAt=0, pinMessage='', pinTm=null;
   function lockUI() {
     let el=$('lk');
-    if (!locked || !pinConfig()) { if(el) el.remove(); return; }
-    if (!el) { el=document.createElement('div'); el.id='lk'; el.className='lk'; document.body.appendChild(el); }
+    if (!locked || !pinConfig()) { if(el) { el.remove(); document.querySelectorAll('.wrap,.tabs').forEach(x=>x.inert=false); } return; }
+    if (!el) { el=document.createElement('div'); el.id='lk'; el.className='lk'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label','App gesperrt'); document.body.appendChild(el); document.querySelectorAll('.wrap,.tabs').forEach(x=>x.inert=true); setTimeout(()=>{const k=el.querySelector('.pad button'); if(k) k.focus();},0); }
     const config=pinConfig(), wait=Date.now()<(config.u||0), secs=Math.ceil(((config.u||0)-Date.now())/1000);
     clearTimeout(pinTm); if (wait) pinTm=setTimeout(lockUI,1000);
-    el.innerHTML='<div style="font-size:12px;letter-spacing:.14em;color:var(--mut)">FINANZ/<b style="color:var(--ink)">GESPERRT</b></div><div class="dots">' + Array.from({length:config.n},(_,i)=>'<i class="' + (i<buffer.length?'f':'') + '"></i>').join('') + '</div><div class="mut">' + (wait?'Zu viele Versuche: bitte '+secs+' Sekunden warten':'PIN eingeben') + '</div><div class="pad">' + [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button onclick="pinKey(\''+k+'\')">'+k+'</button>').join('') + '</div>';
+    el.innerHTML='<div style="font-size:12px;letter-spacing:.14em;color:var(--mut)">FINANZ/<b style="color:var(--ink)">GESPERRT</b></div><div class="dots">' + Array.from({length:config.n},(_,i)=>'<i class="' + (i<buffer.length?'f':'') + '"></i>').join('') + '</div><div class="mut">' + (wait?'Zu viele Versuche: bitte '+secs+' Sekunden warten':'PIN eingeben') + '</div><div class="pad">' + [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button'+(k==='⌫'?' aria-label="Letzte Ziffer löschen"':'')+' onclick="pinKey(\''+k+'\')">'+k+'</button>').join('') + '</div>';
   }
   W.pinKey = async key => {
     const config=pinConfig(); if(!config){locked=false;return lockUI();}
@@ -270,7 +270,7 @@
   });
   V.sec = () => {
     const p=pinConfig();
-    return bk()+card('Sicherheit · PIN','<div class="' + (p?'pos':'mut') + '">' + (p?'PIN ist aktiv ('+p.n+' Stellen)':'Keine PIN gesetzt') + '</div><label>Neue PIN (4 bis 6 Ziffern)</label><input id="pn1" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>PIN wiederholen</label><input id="pn2" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>Automatisch sperren nach</label><select id="lm">' + [[0,'sofort beim Verlassen'],[1,'1 Minute'],[5,'5 Minuten'],[15,'15 Minuten']].map(x=>'<option value="'+x[0]+'" '+(p&&p.m===x[0]?'selected':'')+'>'+x[1]+'</option>').join('') + '</select><button class="btn" onclick="setPin()">PIN speichern</button>' + (p?'<button class="btn o" onclick="lockNow()">Jetzt sperren</button><button class="btn o" onclick="rmPin()">PIN entfernen</button>':'') + '<div class="note">' + esc(pinMessage) + ' Die PIN gilt pro Gerät und wird nicht in die Cloud übertragen. Sie schützt vor neugierigen Blicken, ersetzt aber keine Verschlüsselung der Daten.</div>');
+    return bk()+card('Sicherheit · PIN','<div class="' + (p?'pos':'mut') + '">' + (p?'PIN ist aktiv ('+p.n+' Stellen)':'Keine PIN gesetzt') + '</div><label>Neue PIN (4 bis 6 Ziffern)</label><input aria-label="Neue PIN" id="pn1" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>PIN wiederholen</label><input aria-label="PIN wiederholen" id="pn2" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><label>Automatisch sperren nach</label><select aria-label="Automatisch sperren nach" id="lm">' + [[0,'sofort beim Verlassen'],[1,'1 Minute'],[5,'5 Minuten'],[15,'15 Minuten']].map(x=>'<option value="'+x[0]+'" '+(p&&p.m===x[0]?'selected':'')+'>'+x[1]+'</option>').join('') + '</select><button class="btn" onclick="setPin()">PIN speichern</button>' + (p?'<button class="btn o" onclick="lockNow()">Jetzt sperren</button><button class="btn o" onclick="rmPin()">PIN entfernen</button>':'') + '<div class="note">' + esc(pinMessage) + ' Die PIN gilt pro Gerät und wird nicht in die Cloud übertragen. Sie schützt vor neugierigen Blicken, ersetzt aber keine Verschlüsselung der Daten.</div>');
   };
 /* ---------- 7. Fuck-Off-Rechner: Ansparen bis zur Zahl, dann Entnahme (Szenarien, Steuer) ---------- */
 let fxEdit=false,lastT=tab;
@@ -329,22 +329,22 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
   function prHTML() {
     prDefaults();
     const v = id => esc(String(PR.v[id])), ck = id => PR.c[id] ? ' checked' : '';
-    const inp = (id, label, unit, step, mode) => '<label>' + label + '</label><div class="row"><input type="number" id="pr_' + id + '" inputmode="' + (mode || 'decimal') + '" value="' + v(id) + '"' + (step ? ' step="' + step + '"' : '') + '><span class="u">' + unit + '</span></div>';
+    const inp = (id, label, unit, step, mode) => '<label>' + label + '</label><div class="row"><input type="number" aria-label="' + label + '" id="pr_' + id + '" inputmode="' + (mode || 'decimal') + '" value="' + v(id) + '"' + (step ? ' step="' + step + '"' : '') + '><span class="u">' + unit + '</span></div>';
     return '<div class="prw">'
       + prPanel('<h2>[Daten] Meine Zahlen</h2><div class="g2"><div class="k"><b>' + eur(nn()) + '</b><span>Net Worth</span></div><div class="k"><b>' + eur(avg().s) + '</b><span>Ø investiert / Monat</span></div></div><button class="btn" id="pr_fm">Plan aus meinen Zahlen</button><div class="note">Übernimmt Net Worth als Startkapital, Ø Investiertes als Sparrate sowie Rendite und Ausgaben aus dem Tab Fuck Off. Darunter siehst du, wann deine Stufen erreicht sind.</div>')
       + prPanel('<h2>[Eingabe] Kapital</h2>'
         + inp('s0', 'Startkapital', 'EUR') + inp('sm', 'Sparrate / Monat', 'EUR') + inp('dyn', 'Sparrate steigt jährlich um', '%', '0.5')
-        + '<label>Laufzeit · <span id="pr_yl">' + v('y') + '</span> Jahre</label><input type="range" id="pr_y" min="1" max="50" value="' + v('y') + '">'
+        + '<label>Laufzeit · <span id="pr_yl">' + v('y') + '</span> Jahre</label><input aria-label="Laufzeit in Jahren" type="range" id="pr_y" min="1" max="50" value="' + v('y') + '">'
         + '<div class="hatch"></div><h2>[Layer] Einmalzahlungen</h2>'
-        + '<div class="row"><input type="number" id="pr_ly" placeholder="Jahr" inputmode="numeric"><input type="number" id="pr_la" placeholder="± EUR" inputmode="decimal"><button class="chip on" id="pr_lb">+</button></div><div id="pr_ll"></div>'
+        + '<div class="row"><input aria-label="Jahr der Einmalzahlung" type="number" id="pr_ly" placeholder="Jahr" inputmode="numeric"><input aria-label="Betrag der Einmalzahlung in Euro" type="number" id="pr_la" placeholder="± EUR" inputmode="decimal"><button class="chip on" id="pr_lb" aria-label="Einmalzahlung hinzufügen">+</button></div><div id="pr_ll"></div>'
         + '<div class="hatch"></div><h2>[Layer] Rendite</h2><div class="chips" id="pr_pre"></div>'
         + inp('r', 'Erwartete Rendite p.a. (brutto)', '%', '0.1') + inp('ter', 'Kosten (TER) p.a.', '%', '0.05') + inp('sp', 'Szenario-Spanne (±)', '%', '0.5')
         + '<div class="hatch"></div><h2>[Layer] Inflation &amp; Steuer</h2>'
         + inp('inf', 'Inflation p.a.', '%', '0.1')
-        + '<label class="chk" style="margin-top:8px"><input type="checkbox" id="pr_tx"' + ck('tx') + '>Steuer berücksichtigen</label>'
+        + '<label class="chk" style="margin-top:8px"><input aria-label="Steuer berücksichtigen" type="checkbox" id="pr_tx"' + ck('tx') + '>Steuer berücksichtigen</label>'
         + '<div id="pr_txo">' + inp('tr', 'Steuersatz (Abgeltung+Soli)', '%', '0.001') + '<label>Teilfreistellung</label><div class="chips" id="pr_tf"></div>' + inp('fb', 'Sparerpauschbetrag (gesamt)', 'EUR') + '</div>')
-      + prPanel('<h2>[Phase 2] Entnahme</h2><label class="chk"><input type="checkbox" id="pr_ex"' + ck('ex') + '>Entnahmephase aktivieren</label>'
-        + '<div id="pr_exo" style="display:none">' + inp('wm', 'Entnahme / Monat (brutto)', 'EUR') + inp('wy', 'Entnahme-Dauer', 'Jahre', '', 'numeric') + '<label class="chk"><input type="checkbox" id="pr_wi"' + ck('wi') + '>Entnahme steigt mit Inflation</label></div>')
+      + prPanel('<h2>[Phase 2] Entnahme</h2><label class="chk"><input aria-label="Entnahmephase aktivieren" type="checkbox" id="pr_ex"' + ck('ex') + '>Entnahmephase aktivieren</label>'
+        + '<div id="pr_exo" style="display:none">' + inp('wm', 'Entnahme / Monat (brutto)', 'EUR') + inp('wy', 'Entnahme-Dauer', 'Jahre', '', 'numeric') + '<label class="chk"><input aria-label="Entnahme steigt mit Inflation" type="checkbox" id="pr_wi"' + ck('wi') + '>Entnahme steigt mit Inflation</label></div>')
       + prPanel('<h2>[Ergebnis] Normalfall</h2><div class="kpis">'
         + '<div class="k big hi"><b id="pr_o1">–</b><span>Endwert netto (nominal)</span></div>'
         + [['o2','Kaufkraft heute'],['o3','Eingezahlt'],['o4','Gewinn brutto'],['o5','Steuer'],['o6','Ø Rendite netto p.a.'],['o7','Real-Rendite p.a.'],['o8','Verdopplung nach']].map(x => '<div class="k"><b id="pr_' + x[0] + '">–</b><span>' + x[1] + '</span></div>').join('')
@@ -353,7 +353,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
       + prPanel('<h2>[Verlauf] Vermögen</h2><svg id="pr_ch" viewBox="0 0 360 200"></svg><div class="leg"><span><i style="background:var(--or)"></i>Normal</span><span><i style="background:var(--mut)"></i>Pess./Opt.</span><span><i style="background:var(--ink)"></i>Eingezahlt</span><span><i style="background:var(--or);opacity:.45"></i>Real</span></div><div class="hatch"></div><h2>[Szenarien] Endwert netto</h2><div class="tw"><table id="pr_sc"></table></div>')
       + prPanel('<h2 id="pr_fh">[Feed] Hinweise</h2><div id="pr_fd"></div>')
       + prPanel('<h2>[Replay] Jahresübersicht</h2><div class="tw"><table id="pr_tb"></table></div>')
-      + prPanel('<h2>[Pläne] Speichern &amp; Vergleichen</h2><div class="row"><input type="text" id="pr_pn" placeholder="Name, z. B. ETF 300 €"><button class="chip on" id="pr_ps">Speichern</button></div><div id="pr_pl"></div><div class="tw" style="margin-top:10px"><table id="pr_pc"></table></div>')
+      + prPanel('<h2>[Pläne] Speichern &amp; Vergleichen</h2><div class="row"><input aria-label="Name des Plans" type="text" id="pr_pn" placeholder="Name, z. B. ETF 300 €"><button class="chip on" id="pr_ps">Speichern</button></div><div id="pr_pl"></div><div class="tw" style="margin-top:10px"><table id="pr_pc"></table></div>')
       + '<p class="note">Modellannahmen: thesaurierender ETF, Sparrate am Monatsende, Rendite nach TER, Steuer einmalig am Ende auf den Gewinn (bei aktiver Entnahme anteilig je Entnahme; der Pauschbetrag gilt dann pro Jahr) (nach Teilfreistellung und Pauschbetrag). Vorabpauschale, Kirchensteuer und Währungseffekte nicht berücksichtigt. Startkapital und Sparrate sind aus Net Worth und Ø Investiert vorbelegt. Vergangene Renditen sind keine Garantie. Keine Anlageberatung.</p>'
       + '</div>';
   }
@@ -442,7 +442,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
     if (typeof blurNums === 'function') blurNums();
   }
   function prLumps() {
-    $('pr_ll').innerHTML = PR.lump.map((l, i) => '<div class="al"><small>Jahr ' + l.y + '</small>' + (l.a > 0 ? '+' : '') + prE(l.a) + '<button class="chip" data-i="' + i + '" style="float:right">×</button></div>').join('');
+    $('pr_ll').innerHTML = PR.lump.map((l, i) => '<div class="al"><small>Jahr ' + l.y + '</small>' + (l.a > 0 ? '+' : '') + prE(l.a) + '<button class="chip" aria-label="Löschen" data-i="' + i + '" style="float:right">×</button></div>').join('');
     $('pr_ll').querySelectorAll('button').forEach(b => b.onclick = () => { PR.lump.splice(+b.dataset.i, 1); prLumps(); prRun(); });
   }
   function prPlanUi() {
