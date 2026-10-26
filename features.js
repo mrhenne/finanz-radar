@@ -216,36 +216,48 @@
   /* Gerätesperre: Die PIN liegt lokal, nicht in der Cloud. */
   const PIN_KEY='fr_pin';
   const pinConfig=()=>{ try { return JSON.parse(localStorage.getItem(PIN_KEY)||'null'); } catch(e) { return null; } };
-  async function pinHash(pin) {
+  /* v2: PBKDF2-SHA-256 mit zufälligem Salt. Alte Einträge ohne v (ungesalzenes SHA-256) werden beim nächsten Entsperren umgestellt. */
+  const PIN_ITER=310000;
+  const hexOf=buf=>Array.from(new Uint8Array(buf)).map(v=>v.toString(16).padStart(2,'0')).join('');
+  const pinStore=c=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(c))}catch(e){}};
+  const pinBackoffMs=blocks=>Math.min(30000*Math.pow(2,Math.max(0,blocks-1)),900000);
+  async function pinKdf(pin,saltHex,iter){
+    const key=await W.crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+    const salt=new Uint8Array(saltHex.match(/../g).map(x=>parseInt(x,16)));
+    return hexOf(await W.crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},key,256));
+  }
+  async function pinHashLegacy(pin){
     const bytes=new TextEncoder().encode('fr-'+pin);
-    if (W.crypto && W.crypto.subtle) {
-      const digest=await W.crypto.subtle.digest('SHA-256',bytes);
-      return Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,'0')).join('');
-    }
+    if (W.crypto && W.crypto.subtle) return hexOf(await W.crypto.subtle.digest('SHA-256',bytes));
     let h=5381; for (const ch of 'fr-'+pin) h=(h*33+ch.charCodeAt(0))>>>0; return 'x'+h;
   }
-  let buffer='', locked=!!pinConfig(), failed=0, blockedUntil=0, hiddenAt=0, pinMessage='';
+  async function pinCheck(pin,c){ return c.v===2 ? (await pinKdf(pin,c.s,c.i))===c.h : (await pinHashLegacy(pin))===c.h; }
+  async function pinRecord(pin,m){ const s=hexOf(W.crypto.getRandomValues(new Uint8Array(16))); return {h:await pinKdf(pin,s,PIN_ITER),n:pin.length,m,v:2,s,i:PIN_ITER,f:0,b:0,u:0}; }
+  let buffer='', locked=!!pinConfig(), hiddenAt=0, pinMessage='', pinTm=null;
   function lockUI() {
     let el=$('lk');
     if (!locked || !pinConfig()) { if(el) el.remove(); return; }
     if (!el) { el=document.createElement('div'); el.id='lk'; el.className='lk'; document.body.appendChild(el); }
-    const config=pinConfig(), wait=Date.now()<blockedUntil;
-    el.innerHTML='<div style="font-size:12px;letter-spacing:.14em;color:var(--mut)">FINANZ/<b style="color:var(--ink)">GESPERRT</b></div><div class="dots">' + Array.from({length:config.n},(_,i)=>'<i class="' + (i<buffer.length?'f':'') + '"></i>').join('') + '</div><div class="mut">' + (wait?'Zu viele Versuche: bitte 30 Sekunden warten':'PIN eingeben') + '</div><div class="pad">' + [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button onclick="pinKey(\''+k+'\')">'+k+'</button>').join('') + '</div>';
+    const config=pinConfig(), wait=Date.now()<(config.u||0), secs=Math.ceil(((config.u||0)-Date.now())/1000);
+    clearTimeout(pinTm); if (wait) pinTm=setTimeout(lockUI,1000);
+    el.innerHTML='<div style="font-size:12px;letter-spacing:.14em;color:var(--mut)">FINANZ/<b style="color:var(--ink)">GESPERRT</b></div><div class="dots">' + Array.from({length:config.n},(_,i)=>'<i class="' + (i<buffer.length?'f':'') + '"></i>').join('') + '</div><div class="mut">' + (wait?'Zu viele Versuche: bitte '+secs+' Sekunden warten':'PIN eingeben') + '</div><div class="pad">' + [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button onclick="pinKey(\''+k+'\')">'+k+'</button>').join('') + '</div>';
   }
   W.pinKey = async key => {
-    if (Date.now()<blockedUntil) return;
     const config=pinConfig(); if(!config){locked=false;return lockUI();}
+    if(Date.now()<(config.u||0)) return lockUI();
     if(key==='⌫') buffer=buffer.slice(0,-1); else if(buffer.length<config.n) buffer+=key;
     if(buffer.length===config.n) {
-      const ok=await pinHash(buffer)===config.h; buffer='';
-      if(ok){locked=false;failed=0;} else if(++failed>=3){blockedUntil=Date.now()+30000;failed=0;setTimeout(lockUI,30100);}
+      const typed=buffer; buffer='';
+      let ok=false; try { ok=await pinCheck(typed,config); } catch(e) { ok=false; }
+      if(ok){ locked=false; try { pinStore(config.v===2?{...config,f:0,b:0,u:0}:await pinRecord(typed,config.m)); } catch(e) {} }
+      else { let f=(config.f||0)+1, b=config.b||0, u=0; if(f>=3){ b+=1; f=0; u=Date.now()+pinBackoffMs(b); } pinStore({...config,f,b,u}); }
     }
     lockUI();
   };
   W.setPin = async () => {
     const a=$('pn1').value, b=$('pn2').value;
     if(!/^\d{4,6}$/.test(a)||a!==b){pinMessage='Bitte dieselbe PIN mit 4 bis 6 Ziffern zweimal eingeben.';return render();}
-    try { localStorage.setItem(PIN_KEY,JSON.stringify({h:await pinHash(a),n:a.length,m:+$('lm').value})); pinMessage='PIN gespeichert.'; }
+    try { localStorage.setItem(PIN_KEY,JSON.stringify(await pinRecord(a,+$('lm').value))); pinMessage='PIN gespeichert.'; }
     catch(e) { pinMessage='PIN konnte auf diesem Gerät nicht gespeichert werden.'; }
     render();
   };
