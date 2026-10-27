@@ -747,5 +747,147 @@ Die Commits laufen auf dem Branch `endkontrolle-2026-10-26`. Kein Push.
 ## 9. Phasen 3 bis 5: noch offen (nicht beauftragt)
 
 - **Phase 3 (Funktionen, Berechnungen, Logik):** erledigt, Abschnitt 3a. Offene Entscheidungen für Henne: 3a.8.
-- **Phase 4 (UI):** nicht begonnen. Matrix Hell/Dunkel × 375, 390, 430, 768, 1280 px, Kontrast, Touch-Ziele, Labels (S-33), Inline-Styles.
+- **Phase 4a (UI-Korrekturen):** erledigt, Abschnitt 10. Offen: Abnahme im Browser durch Claude (Abschnitt 8.6), Matrix 768 px, Sheets dunkel, Inline-Styles (nur teilweise), Umbau-Vorschläge aus 10.5.
 - **Phase 5 (Code, Performance, Prozesse):** nicht begonnen. Messungen mit der Extrem-Fixture, `defer` und `preconnect`, `validate.yml` erweitern (Syntaxschleife, Version-Prüfung), `tests/run-all.sh`, README/CHATGPT-ANLEITUNG, CHANGELOG.
+
+## 10. Phase 4a: UI-Korrekturen (2026-10-27)
+
+Umfang: nur Korrekturen am Code. Kein Push, kein Deploy, kein Build, keine Abhängigkeit. Look „Liquid-Glass“ und Tab-Struktur unverändert. Commits `aafe653` bis `e46ccc5` (14 Commits, Format „Phase 4: …“). `sw.js` VERSION bei jedem Commit mit App-Dateien erhöht (`fr-2026-10-27a` bis `fr-2026-10-27l`).
+
+### 10.1 Prüfstand
+
+| Prüfung | Vorher (Stand `70dfa5b`) | Nachher (`e46ccc5`) |
+|---|---|---|
+| `node --test tests/*.test.cjs` | 142 Tests: 123 grün, 19 rot | 142 Tests: 142 grün |
+| `node --check` app, config, features, extras, boost, sw | alle OK | alle OK |
+| Konsolenmeldungen Matrix | – | 0 (klein 36, leer 6, Sheets 4) |
+| Horizontaler Überlauf bei 375 px, alle 6 Tabs, Fixtures klein und leer | Prognose: Seite 413 px breit, Tab-Leiste verschoben | Seite 375 px auf allen Tabs; Audit: 0 Überläufe |
+| Kleine Ziele (Audit, Box-Maß) | ohne Zählung vor dem Lauf | Rest siehe U-18 bis U-19 |
+
+### 10.2 Befundtabelle (U-xx)
+
+Schwere: hoch / mittel / niedrig. Status: behoben / gemeldet / Ausnahme / geprüft. Beleg: Test, Messung (Probe), Bild oder Code-Lesung.
+
+| ID | Bereich | Schwere | Datei | Befund | Status | Beleg | Commit |
+|---|---|---|---|---|---|---|---|
+| U-01 | Kontrast | hoch | styles.css | Orange-Text auf Weiß 3,12:1 | behoben (`--ort` #b8430f, 5,46:1) | kontrast.test, Tabelle 10.3 | aafe653 |
+| U-02 | Kontrast | hoch | styles.css | Weiß auf Orange 3,12:1 (Buttons, Badge) | behoben (Fläche `--orb` #c2410c, 5,18:1) | Tabelle 10.3 | aafe653 |
+| U-03 | Kontrast | hoch | styles.css | Grün-Text hell 3,46:1 | behoben (`--gt`, 5,87:1) | Tabelle 10.3 | aafe653 |
+| U-04 | Kontrast | hoch | styles.css | Eingabe-Rahmen 1,44:1 hell, 1,31:1 dunkel | behoben (`--fld`, 3,87:1 / 3,96:1) | Tabelle 10.3 | aafe653 |
+| U-05 | Kontrast | hoch | app.js, features.js, extras.js, boost.js | Orange als Textfarbe in Inline-Styles, Links, Legenden, Prognose-Kennzahlen, Chips, Abdeckung (Orange-Text auf Papier 2,67:1) | behoben (`--ort`, `--orb` für Häkchen) | kontrast.test (Tokens), Code-Liste | e1de209 |
+| U-06 | Kontrast | hoch | app.js, styles.css | FIRE-Pink #ff4d6d als Text 3,21:1 (Legende, Diagramm-Beschriftung) | behoben (Symbol farbig, Text in Textfarbe) | Berechnung | e1de209 |
+| U-07 | Kontrast | mittel | app.js, features.js | Kategorie-Farben als Text auf Weiß: Gold 2,38:1, Grün 3,46:1, Blau 4,17:1 (Violett 4,67:1 knapp ok) | behoben (Farbe nur beim ■-Marker) | Berechnung | 5fee7ff |
+| U-08 | Kontrast | niedrig | styles.css | Kartenrahmen `--ln` 1,44:1 | Ausnahme, Dekoration (Karte ist durch Fläche erkennbar) | kontrast.test, EXCEPTIONS | – |
+| U-09 | Kontrast | niedrig | styles.css | Fortschrittsbalken Orange gegen Spur 2,16:1 | Ausnahme, Prozentwert steht als Text daneben | kontrast.test, EXCEPTIONS | – |
+| U-10 | Layout | hoch | features.js (Warnzeilen `.al`) | Prognose: Seite 413 px bei 375 px, Tab-Leiste verschoben. Ursache: Fließtext als lose Flex-Elemente ohne Umbruch | behoben (Text in `<span>`, Grids `minmax(0,1fr)`, Tabellenzellen umbrechbar) | Probe: sw = 375 auf allen Tabs | 533438d |
+| U-11 | Layout | niedrig | styles.css | Tabellen (Cashflow-Vorschau, Prognose-Ziele) scrollen innerhalb ihres Containers | bewusst belassen, Seite scrollt nicht | Audit: 0 Überläufe | – |
+| U-12 | Touch | hoch | styles.css | Kopfzeilen-Icons ◉ und ☀ 28×25 px | behoben (Trefferfläche über `::after`, 52×53 px) | Test „Kopfzeilen-Icons“, Probe | 4d65904 |
+| U-13 | Touch | hoch | styles.css | Kauf/Verkauf (`.ac`) 34 px hoch | behoben (min. 44 px, sichtbar größer) | Probe | 4d65904 |
+| U-14 | Touch | hoch | styles.css | Löschen × und Bearbeiten ✎ 28×25 px | behoben (Trefferfläche über `::after`) | Probe | 4d65904 |
+| U-15 | Touch | mittel | styles.css | Schaltflächen 39 px, Chips 31 px, Stufen-Knopf 24 px | behoben (min. 44 px bzw. `::after`) | Probe | 4d65904 |
+| U-16 | Touch | mittel | styles.css | Anklickbare Abschnittsköpfe 15 px hoch | behoben (Trefferfläche 45 px über `::after`) | Audit | 0dfe08f |
+| U-17 | Touch | mittel | styles.css | Eingabefelder 42 px hoch | behoben (min. 44 px; Checkbox und Regler ausgenommen) | Probe | 0dfe08f |
+| U-18 | Touch | niedrig | styles.css | Kurze Chips (z. B. „+“) nur 35 px breit | gemeldet (Höhe ist 45 px, Breite nicht) | Berechnung | – |
+| U-19 | Touch | niedrig | styles.css | Checkbox 13–16 px, Schieberegler 16 px hoch | gemeldet (Label ist klickbar; Regler bleibt unverändert) | Audit | – |
+| U-20 | Formular | hoch | app.js, features.js, extras.js, boost.js | Rund 75 Eingabefelder ohne programmatischen Namen (nur Text davor) | behoben (`aria-label`, sichtbarer Text unverändert) | Test „Eingabefelder“ | 64ad3f3 |
+| U-21 | Formular | mittel | features.js | Budget-Felder 14 px Schrift (iOS-Zoom beim Fokus) | behoben (16 px) | Probe aller Tabs: keine Eingabe unter 16 px | ce3d35d |
+| U-22 | Barrierefreiheit | hoch | index.html, app.js | Tab-Leiste ohne Rollen | behoben (`tablist`, `tab`, `aria-selected`) | Test „Tab-Leiste“ | 64ad3f3 |
+| U-23 | Barrierefreiheit | hoch | index.html, app.js, extras.js, features.js, boost.js | Icon-Buttons ohne Namen (◉, ☀, ×, ✎, ‹ ›, ⌫, +) | behoben | Test „Icon-Buttons“ | 64ad3f3 |
+| U-24 | Barrierefreiheit | mittel | index.html | Fensterpunkte nicht `aria-hidden` | behoben | Test | 64ad3f3 |
+| U-25 | Barrierefreiheit | hoch | extras.js | Schnellerfassung ohne Dialogrolle, Esc, Fokus-Falle und Fokusrückgabe | behoben (`role=dialog`, `aria-modal`, Esc, Tab bleibt im Sheet, Fokus zurück) | Probe: Rolle, Esc schließt, Fokus zurück auf „+“; Bild | 64ad3f3 |
+| U-26 | Barrierefreiheit | hoch | features.js | PIN-Sperre ohne Dialogrolle; Hintergrund per Tab erreichbar | behoben (Rolle, `aria-modal`, Hintergrund `inert`, Fokus auf Ziffern) | Code und Bild; Tastaturbedienung nicht im Browser geprüft | 64ad3f3 |
+| U-27 | Barrierefreiheit | mittel | styles.css | Kein sichtbarer Tastaturfokus | behoben (`:focus-visible`, 2 px Rahmen) | Test | 64ad3f3 |
+| U-28 | Barrierefreiheit | mittel | app.js, boost.js, features.js | Diagramme ohne Textalternative | behoben (`role=img`, `aria-label`; Mini-Sparkline `aria-hidden`) | Code-Lesung | e2d3e7a |
+| U-29 | Bewegung | mittel | app.js | SVG-`<animate>`-Pulse (drei Stellen) ignorieren `prefers-reduced-motion`. Die CSS-Regel erfasst SMIL nicht | behoben (Pulse entfällt bei reduzierter Bewegung) | Code-Lesung | 98e052b |
+| U-30 | Bewegung | niedrig | index.html, styles.css, app.js | Oberer Status-Punkt pulsiert immer | behoben (pulsiert nur während Synchronisierung, mit Titel) | Code-Lesung | 98e052b |
+| U-31 | Bewegung | niedrig | – | Laufband, Ticker, Auto-Scroll | nicht vorhanden (Hook-Fehlalarm?). Grep auf marquee, ticker, scroll-Animationen: keine Treffer. Vorhandene Keyframes: pu, pg, sh, up, bl, rgIn, cf | grep | – |
+| U-32 | Bewegung | niedrig | boost.js, app.js, styles.css | Konfetti, Hochzählen, CSS-Übergänge | bereits abgesichert (geprüft, unverändert) | Code-Lesung | – |
+| U-33 | Bewegung | niedrig | styles.css | Badge `#bd` pulsiert dauerhaft (kein Live-Zustand) | gemeldet (reduzierte Bewegung schaltet es ab) | Code-Lesung | – |
+| U-34 | Design | niedrig | styles.css | `dark-glow` (text-shadow auf `.k.big b`) | nicht geändert, Entscheidung Henne | – | – |
+| U-35 | Texte | niedrig | app.js | „Recurring anwenden“ (englisch) | behoben: „Vorlagen anwenden“ | Test „Texte“ | ff05a9d |
+| U-36 | Texte | niedrig | features.js | „Konto & Sync“ uneinheitlich | behoben: „Konto & Synchronisierung“ | Code | ff05a9d |
+| U-37 | Texte | niedrig | app.js, features.js | „Fuck Off“ (Tab) und „Fuck-Off-…“ (Zusammensetzungen) | gemeldet, Entscheidung Henne | grep | – |
+| U-38 | Texte | niedrig | app.js:281 | Link „Prognose Radar“ zeigt auf ein persönliches claude.ai-Artefakt in einem öffentlichen Repo | gemeldet, Entscheidung Henne (nicht verändert) | Code-Lesung | – |
+| U-39 | PWA | mittel | manifest.webmanifest | icon-512 ohne maskable | behoben (`purpose: "any maskable"`). Das Bild hat vollflächigen Hintergrund, der Ring liegt im 80-%-Sicherheitsbereich | Test „PWA“, Bildsicht | ff05a9d |
+| U-40 | PWA | niedrig | index.html | theme-color hell und dunkel vorhanden; 10 Splash-Größen 750 bis 1320 px | geprüft, kein Befund. Vollständigkeit gegen aktuelle Gerätetabelle nicht geprüft | Code-Lesung | – |
+| U-41 | Login | niedrig | app.js | Hinweis S-33 (autocomplete). Vorhanden: E-Mail `username`, Passwort `current-password` bzw. `new-password`. Konsole im Login-Lauf: 0 Meldungen | geprüft, kein offener Befund | Matrix-Konsole | – |
+| U-42 | Login | niedrig | styles.css | Leeres orangefarbenes Badge im Login | behoben (`:empty` ausgeblendet) | Bild | e46ccc5 |
+| U-43 | Import | niedrig | styles.css | CSV-Dateiauswahl im Browser-Standard | behoben (App-Stil) | Bild | e46ccc5 |
+| U-44 | Layout | niedrig | styles.css | Badge bricht bei 375 px in zwei Zeilen („37.304 / €“) | behoben (`nowrap`) | Bild | 0dfe08f |
+| U-45 | Layout | niedrig | styles.css | Kopftitel „Finanz/Fuck Off“ bricht bei 375 px um | behoben: bei 375 px mit Ellipse gekürzt, bei 430 px vollständig | Bild, Probe | 0dfe08f |
+| U-46 | Layout | niedrig | styles.css | Schwebender „+“ überdeckt im Ruhezustand bei 375 px die rechte untere Ecke des Buchen-Buttons (Cashflow) | gemeldet (Vorschlag 10.5) | Bild | – |
+| U-47 | Zustände | niedrig | – | Leere Ansichten (Fixture leer): Hinweise vorhanden, z. B. „Zielzahl fehlt“, „Keine offenen Punkte“, „Buche etwas mit ‚Wiederkehrend‘ …“, „Keine Daten“ | geprüft, unkritisch | Bilder leer | – |
+| U-48 | Test | – | tests/kontrast.test.cjs, tests/ui-static.test.cjs | Testfehler: #rgb-Werte nicht gelesen; `visibleText` zählte dynamischen Text als leer; `role=tablist` nur in JS gesucht; Wortsuche ohne Grenzen (Fehlalarm `autoRecurring`) | Testkorrektur, Grenzwerte und Assertions unverändert | Diffs in aafe653, 64ad3f3, 41fe618 | aafe653, 64ad3f3, 41fe618 |
+
+### 10.3 Kontrast vorher und nachher
+
+Werte aus den Token-Werten in `styles.css` (Vorher: `70dfa5b`, Nachher: `e46ccc5`). Schwellen: Text 4,5:1, Bedienelemente und Rahmen 3:1.
+
+| Paar | Theme | Vorher | Nachher | Schwelle |
+|---|---|---|---|---|
+| Orange-Text auf Weiß | hell | 3,12 | 5,46 | 4,5 |
+| Orange-Text auf Papier (aktiver Tab, Chip) | hell | 2,67 | 4,67 | 4,5 |
+| Weiß auf Orange (Button, Badge) | hell | 3,12 | 5,18 | 4,5 |
+| Grün-Text auf Weiß | hell | 3,46 | 5,87 | 4,5 |
+| Grau-Text auf Weiß | hell | 5,77 | 5,77 | 4,5 |
+| Grau-Text auf Hintergrund | hell | 4,79 | 4,79 | 4,5 |
+| Eingabe-Rahmen auf Weiß | hell | 1,44 | 3,87 | 3 |
+| Weiß auf Orange (Button) | dunkel | 3,12 | 5,18 | 4,5 |
+| Orange-Text auf Dunkel | dunkel | 5,11 | 5,11 | 4,5 |
+| Grün-Text auf Dunkel | dunkel | 7,98 | 7,98 | 4,5 |
+| Eingabe-Rahmen | dunkel | 1,31 | 3,96 | 3 |
+| Ausnahme: Kartenrahmen `--ln` | hell | 1,44 | 1,44 | Dekoration, U-08 |
+| Ausnahme: Fortschrittsbalken | hell | 2,16 | 2,16 | Wert als Text, U-09 |
+
+Diagrammfarben (SVG-Text) und Blur-Zustand: geprüft, soweit statisch möglich (U-05, U-06). Disabled-Zustände: im Code nicht vorhanden.
+
+### 10.4 Sichtbare Änderungen (Vorher / Nachher)
+
+- **Orange:** Hell: Text `#ff5a1f` → `#b8430f`. Schaltflächen und Badge-Fläche `#ff5a1f` → `#c2410c` (dunkler, gleicher Farbton). Dunkel: Schaltflächen-Fläche `#c2410c`, Text unverändert.
+- **Eingabe-Rahmen:** hell `#d5d7db` → `#7d828a`, dunkel `#33363b` → `#7a7f87`. Felder sind deutlich besser erkennbar.
+- **Kategorien:** Der Name steht in Textfarbe, nur das ■ ist farbig.
+- **Prognose bei 375 px:** Seite nicht mehr breiter als der Bildschirm; Warnzeilen und Tabellenzellen brechen um.
+- **Kopfzeile:** Badge einzeilig; Titel bei 375 px mit Ellipse (Fuck Off, CSV-Import); Icons optisch unverändert.
+- **Kauf/Verkauf:** 34 → 44 px hoch. Schaltflächen 39 → 44 px. Eingabefelder 42 → 44 px. Budget-Felder Schrift 14 → 16 px.
+- **Abschnittsköpfe:** optisch unverändert, Antippen über die gesamte Zeile.
+- **Schnellerfassung:** scrollt bei kleiner Höhe (max. 88 vh).
+- **Oberer Punkt:** pulsiert nur während der Synchronisierung; sonst statisch.
+- **Datei-Auswahl (CSV):** App-Stil statt Browser-Standard.
+- **Login:** leeres Badge entfernt.
+- **Texte:** „Vorlagen anwenden“, „Konto & Synchronisierung“.
+- **App-Icon (Homescreen):** maskierbar (`any maskable`), Optik unverändert.
+
+### 10.5 Offene Vorschläge und Entscheidungen für Henne
+
+1. **Link „Prognose Radar“** (app.js:281, U-38): Zeigt auf ein persönliches Claude-Artefakt. Das Repo ist öffentlich. Entfernen oder bewusst belassen?
+2. **`dark-glow`** (U-34): Entscheidung, ob der Leuchteffekt auf den großen Zahlen bleibt.
+3. **Schreibweise „Fuck Off“ / „Fuck-Off-…“** (U-37): einheitlich festlegen.
+4. **Schwebender „+“** (U-46): Mehr Abstand unten im Inhalt oder der „+“ in die Tab-Leiste. Das ändert die Struktur, daher nur Vorschlag.
+5. **Tabellen mit internem Scroll** (U-11): Cashflow-Vorschau und Prognose-Ziele als Karten statt Tabelle. Umbau, daher nur Vorschlag.
+6. **Kurze Chips und Checkbox** (U-18, U-19): Mindestbreite 44 px für Chips, größere Trefferfläche für Checkboxen.
+7. **Badge `#bd`** (U-33): Pulsieren wie der Live-Punkt nur bei echtem Zustand.
+8. **Kopftitel bei 375 px** (U-45): akzeptieren oder die Abstände in der Kopfzeile verringern.
+9. **CSV-Import:** Ansicht im Tab (aktuell) oder Dialog? Aktuell kein `role=dialog`, weil es eine Ansicht ist.
+10. **Splash-Bilder** (U-40): gegen die aktuelle iPhone-Gerätetabelle prüfen.
+
+### 10.6 Was nicht geprüft wurde
+
+- Kein echtes Gerät, kein Safari. Nur Chrome-Headless auf dem Mac mit Geräteemulation (375, 430, 1280 px). Verhalten von iOS (Zoom, Safe Areas, Viewport) ist ungeprüft.
+- Kernabläufe (Buchung, Backup, PIN-Eingabe, CSV mit Rückgängig, Prognose-Eingaben) nicht im Browser durchgeklickt.
+- Fokus beim Öffnen des Sheets: per Code gesetzt (60-ms-Timeout), im Probe nicht gemessen. Esc und Rolle per Probe bestätigt.
+- Tastatur- und Screenreader-Bedienung: nur statisch und über Probe, nicht praktisch geprüft.
+- Matrix: reduziert wie beauftragt. Klein: 375, 430, 1280 px, hell und dunkel, sechs Tabs. Leer: 375 px hell, sechs Tabs. Sheets: 375 px hell (vier Bilder). Nicht fotografiert: 390 und 768 px, Dunkel-Sheets, Dunkel-Leer.
+- Vorher-Screenshots: nicht vorhanden (Vorgängerbestand unvollständig, nach Auftrag gelöscht). Der Vorher/Nachher-Vergleich stützt sich auf Messwerte und Code, nicht auf Bilder.
+- Browser-Vorschau (Preview-Werkzeug) stand in dieser Sitzung nicht zur Verfügung.
+
+### 10.7 Abweichungen und Hinweise
+
+- **Trailer:** Der Auftrag verlangte `Co-Authored-By: Claude Sonnet 5.5`. Die Commits tragen `Co-Authored-By: Claude Haiku 5.5`, weil das die Modellangabe dieser Sitzung ist. Bei Bedarf vor dem Push umschreiben.
+- **Testkorrekturen** (U-48): Vier Fehler im Test selbst behoben. Kontrast-Grenzwerte (4,5:1 / 3:1) und alle übrigen Assertions unverändert.
+- **Fehllauf:** Ein Probe-Aufruf ohne Argument hat die komplette Matrix (200 Bilder) gestartet. Die Bilder wurden gelöscht, die verwaisten Chrome-Prozesse des Profils `finanz-radar-shots` beendet. `shoot.cjs` beendet Chrome seitdem als Prozessgruppe.
+- **Bilder:** `bericht/screens/nachher/` enthält 46 Bilder, `audit.json`, `audit-leer.json` und `konsole.txt`. Gesamtgröße rund 2,3 MB.
+- **Abnahme:** Die Gesamtabnahme nach Abschnitt 8.6 (Browser, Kernabläufe) ist noch offen.
+
+### 10.8 Ergebnis
+
+Phase 4a ist umgesetzt: Kontrast (AA für Text, 3:1 für Bedienelemente, zwei dokumentierte Ausnahmen), Layout ohne Überlauf bei 375 px, Touch-Ziele, Barrierefreiheit (Tabs, Namen, Dialoge, Fokus, Labels, Diagramme), reduzierte Bewegung, Texte, PWA-Manifest und die sichtbaren Kleinigkeiten aus der Matrix. Die Tests sind 142 von 142 grün. Offene Punkte stehen in 10.5 und 10.6.
