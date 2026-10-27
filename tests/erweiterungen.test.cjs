@@ -145,18 +145,17 @@ test('Job: Netto bei Teilzeit ist eine Näherung (86 % des Brutto-Anteils), bei 
 });
 
 // --- 4.9 Ladereihenfolge und doppelte Parser ---
-const fp = {};
-vm.runInNewContext(slice(features, 'function parseCSV(text) {', 'const rules = [') + '\nthis.f=parseCSV;', fp, { timeout: 2000 });
 const ep = {};
 vm.runInNewContext(slice(extras, 'function parseCSV(text, d) {', 'const normH') + '\nthis.e=parseCSV;', ep, { timeout: 2000 });
-test('parseCSV: zwei Versionen (features.js: toter Pfad, extras.js: aktiv) liefern für Semikolon-Dateien dasselbe', () => {
-  const text = 'a;b\n"x;y";1\r\n\n"quote ""q""";2\n';
-  assert.deepEqual(JSON.parse(JSON.stringify(fp.f(text))), JSON.parse(JSON.stringify(ep.e(text, ';'))));
+// Der zweite Parser in features.js war toter Code und ist entfernt (Phase 5, B-29). Der Test sichert, dass er nicht zurückkommt.
+test('parseCSV: nur eine Version (extras.js), features.js hat keinen CSV-Pfad mehr', () => {
+  assert.doesNotMatch(features, /function parseCSV\(/);
+  assert.doesNotMatch(features, /csvLoad|csvGo|csvFile/);
+  assert.deepEqual(JSON.parse(JSON.stringify(ep.e('a;b\n"x;y";1\r\n\n"quote ""q""";2\n', ';'))), [['a', 'b'], ['x;y', '1'], ['quote "q"', '2']]);
 });
-test('parseCSV: Tab-Trennung wird nur von der aktiven Version (extras.js) erkannt', () => {
+test('parseCSV: Tab-Trennung wird erkannt (extras.js)', () => {
   const text = 'a\tb\n1\t2\n';
   assert.equal(ep.e(text, '\t')[0].length, 2);
-  assert.equal(fp.f(text)[0].length, 1, 'die tote Version kennt kein Tab');
 });
 
 test('Ladereihenfolge: config, app, features, extras, boost laufen ohne Fehler im gemeinsamen Gültigkeitsbereich', () => {
@@ -164,7 +163,7 @@ test('Ladereihenfolge: config, app, features, extras, boost laufen ohne Fehler i
   assert.deepEqual(a.logsOfErrors(), []);
   assert.equal(typeof a.ctx.impText, 'function', 'extras.js geladen');
   assert.equal(typeof a.ctx.piAdd, 'function', 'boost.js geladen');
-  assert.equal(typeof a.ctx.csvLoad, 'function', 'features.js geladen');
+  assert.equal(typeof a.ctx.lockNow, 'function', 'features.js geladen');
 });
 
 // --- 4.7 Passives Einkommen, Notgroschen, Meilenstein (Hilfsfunktionen aus dem Gültigkeitsbereich der App) ---
