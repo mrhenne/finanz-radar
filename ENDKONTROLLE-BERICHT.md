@@ -1,14 +1,16 @@
 # Endkontrolle Finanz-Radar: Bericht
 
-Stand: 2026-10-26 · Basis: Commit `e4e1ff9` (Tag `backup-vor-endkontrolle-2026-10-26`) · Arbeitsbranch: `endkontrolle-2026-10-26` · Repo: `~/Developer/finanz-radar-endkontrolle`
+Stand: 2026-10-27 (Phase 5 abgeschlossen) · Basis: Commit `e4e1ff9` (Tag `backup-vor-endkontrolle-2026-10-26`) · Arbeitsbranch: `endkontrolle-2026-10-26` · Repo: `~/Developer/finanz-radar-endkontrolle`
 
 ## 0. Kurzfassung
 
-- **Erledigt:** Phase 1 (Baseline, Inventur, Fixtures), Phase 2 (Sicherheit, Abschnitte 3.1 bis 3.9) und Phase 3 (Berechnungen und Logik, Abschnitt 3a mit Befunden B-01 bis B-29).
-- **Nicht begonnen:** Phase 4 (UI), Phase 5 (Performance und Prozesse).
-- **Tests:** Phase 1 und 2: vorher 11, nachher 28 grün. Phase 3: 121 grün (+93). Alle `node --check` grün.
-- **Nicht getan (wie vorgegeben):** kein Push, kein Deploy, kein Zugriff auf die Live-Supabase, keine echten Daten, keine neuen Abhängigkeiten, nichts installiert.
-- **Abweichungen:** siehe Abschnitt 8.
+- **Erledigt:** Phase 1 bis 5. Phase 5 (Performance, Laden, Codequalität, Prozesse) steht in den Abschnitten 11 bis 13. Phase 2 bis 4 unverändert (Abschnitte 3, 3a, 10).
+- **Tests:** Start Phase 5: 142 grün. Ende Phase 5: **150 grün**, alle Testdateien inkl. Unterordner (`sh tests/run-all.sh`). Baseline des Auftrags: 11.
+- **Performance** (Extrem-Fixture, 5.000 Buchungen). Node: Start 114,5 → 26,2 ms, Fuck-Off-Ansicht 51,8 → 6,0 ms, Home 24,5 → 1,3 ms. Chrome (Median aus 3 Läufen): Fuck Off 45,1 → 5,6 ms, Home 32,6 → 1,8 ms, Prognose 24,6 → 3,6 ms. Ursache der großen Stelle: `avg()` (quadratisch), behoben.
+- **Entfernt (toter Code, belegt):** `plan()` und `pcalc()` in app.js, `theme()` und `bars()` in app.js (von boost.js ersetzt), CSV-Pfad in features.js (Parser, Hilfsfunktionen, Ansicht). **Korrektur zu S-29:** `cu()` und `applyTh()` in app.js sind nicht tot. Beide laufen beim ersten Render, bevor boost.js geladen ist. Sie bleiben.
+- **Offen:** Entscheidungen für Henne priorisiert in Abschnitt 13.1. Kein Push, kein Deploy, keine Live-Prüfung.
+- **Nicht getan (wie vorgegeben):** kein Push, kein Deploy, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt, `schema.sql` unverändert, Datenmodell `S` unverändert, kein Zugriff auf Live-Supabase.
+- **Abweichung:** Die Commits tragen `Co-Authored-By: Claude Haiku 5.5`, nicht `Sonnet 5.5` wie im Auftrag. Begründung in Abschnitt 12.7.
 
 ## 1. Prüfprotokoll
 
@@ -748,7 +750,7 @@ Die Commits laufen auf dem Branch `endkontrolle-2026-10-26`. Kein Push.
 
 - **Phase 3 (Funktionen, Berechnungen, Logik):** erledigt, Abschnitt 3a. Offene Entscheidungen für Henne: 3a.8.
 - **Phase 4a (UI-Korrekturen):** erledigt, Abschnitt 10. Offen: Abnahme im Browser durch Claude (Abschnitt 8.6), Matrix 768 px, Sheets dunkel, Inline-Styles (nur teilweise), Umbau-Vorschläge aus 10.5.
-- **Phase 5 (Code, Performance, Prozesse):** nicht begonnen. Messungen mit der Extrem-Fixture, `defer` und `preconnect`, `validate.yml` erweitern (Syntaxschleife, Version-Prüfung), `tests/run-all.sh`, README/CHATGPT-ANLEITUNG, CHANGELOG.
+- **Phase 5 (Code, Performance, Prozesse):** erledigt, Abschnitte 11 bis 13. Offen für Henne: Abschnitt 13.1.
 
 ## 10. Phase 4a: UI-Korrekturen (2026-10-27)
 
@@ -891,3 +893,546 @@ Diagrammfarben (SVG-Text) und Blur-Zustand: geprüft, soweit statisch möglich (
 ### 10.8 Ergebnis
 
 Phase 4a ist umgesetzt: Kontrast (AA für Text, 3:1 für Bedienelemente, zwei dokumentierte Ausnahmen), Layout ohne Überlauf bei 375 px, Touch-Ziele, Barrierefreiheit (Tabs, Namen, Dialoge, Fokus, Labels, Diagramme), reduzierte Bewegung, Texte, PWA-Manifest und die sichtbaren Kleinigkeiten aus der Matrix. Die Tests sind 142 von 142 grün. Offene Punkte stehen in 10.5 und 10.6.
+
+## 11. Phase 5: Messung und Performance (6.1)
+
+### 11.1 Verfahren
+
+- **Node:** `node tests/perf/measure.cjs`. Extrem-Fixture (5.000 Buchungen, 20 Krypto-Positionen, 144 Historienpunkte, erfundene Werte), DOM-Stub aus `tests/harness`, Median aus 5 Läufen. Die Werte sind Vergleichswerte vor und nach Änderungen, keine Browser-Zeiten.
+- **Chrome headless:** `tests/ui/shoot.cjs --probe` mit einer Probe (Skript im Scratchpad, nicht im Repo). Gleiche Fixture, 390 px, hell, Median aus 3 Läufen. Ein Lauf startet Chrome neu und lädt die App frisch.
+- **Vorher:** Commit `0527d6b` (Ende Phase 4). **Nachher:** Endstand (Commit `e982957` und Vorgänger).
+- Blur (`blurNums`, `blurHtml`) braucht einen echten DOM-Baum. Deshalb nur im Browser gemessen.
+
+### 11.2 Node: Vorher / Nachher
+
+| Messung | Vorher | Nachher | Bemerkung |
+|---|---|---|---|
+| Start (Skripte laden inkl. erstem Render) | 114,5 ms | 26,2 ms | avg() |
+| `localSave()` | 0,8 ms | 0,8 ms | fr_s 430.814 Bytes |
+| Buchung anlegen bis Anzeige (`addTx`) | 3,1 ms | 3,3 ms | unverändert, Schwankung |
+| Sankey (Monat 2026-10, 35 Buchungen) | 0,0 ms | 0,0 ms | unter Auflösung |
+| Prognose-Ansicht (alle Szenarien) | 8,2 ms | 0,3 ms | avg(), pcalc entfernt |
+| CSV-Import 1.500 Zeilen | 3,2 ms | 3,6 ms | Parser unverändert, Schwankung |
+| CSV-Import 5.000 Zeilen (Limit wirkt) | 3,8 ms | 4,1 ms | Parser unverändert, Schwankung |
+| querySelectorAll je `pointermove` | 1 | 0 | P5-03 |
+| Lecktest, 50 Renders (Tab Prognose) | +0 Listener, +0 Timer | +0 Listener, +0 Timer | kein Leck |
+
+Pro Ansicht (Node, Median aus 5 Läufen):
+
+| Ansicht | Node vorher (ms) | Node nachher (ms) | DOM-Knoten | Inline-Handler | Listener je Render | querySelectorAll je Render (vorher → nachher) |
+|---|---|---|---|---|---|---|
+| home | 24,5 | 1,3 | 51 | 7 | 0 | 2 → 2 |
+| cash | 1,9 | 1,7 | 378 | 102 | 0 | 2 → 2 |
+| assets | 9,2 | 0,9 | 336 | 98 | 0 | 2 → 2 |
+| fire | 51,8 | 6,0 | 202 | 19 | 0 | 2 → 2 |
+| plan | 13,2 | 1,7 | 198 | 0 | 18 | 7 → 6 |
+| more | 0,0 | 0,0 | 33 | 17 | 0 | 2 → 2 |
+| goals | 0,0 | 0,0 | 25 | 6 | 0 | 2 → 2 |
+| tax | 0,1 | 0,1 | 61 | 13 | 0 | 2 → 2 |
+| data | 0,0 | 0,0 | 18 | 8 | 0 | 2 → 2 |
+| year | 6,9 | 6,9 | 123 | 6 | 0 | 2 → 2 |
+| port | 0,1 | 0,1 | 40 | 6 | 0 | 2 → 2 |
+| crypto | 0,9 | 0,9 | 357 | 41 | 0 | 2 → 2 |
+| acct | 0,0 | 0,0 | 8 | 3 | 0 | 2 → 2 |
+| review | 1,2 | 1,1 | 119 | 14 | 0 | 2 → 2 |
+| rebal | 5,5 | 0,3 | 52 | 10 | 0 | 2 → 2 |
+| csv | 0,0 | 0,0 | 10 | 4 | 0 | 2 → 2 |
+| sec | 0,5 | 0,6 | 46 | 11 | 0 | 2 → 2 |
+| passive | 5,3 | 0,3 | 67 | 15 | 0 | 2 → 2 |
+| job | 6,6 | 1,7 | 22 | 6 | 0 | 2 → 2 |
+
+Die Ansichten mit DOM-Knoten und Inline-Handlern haben sich nicht geändert. Die Zählung der Listener zeigt: Nur die Prognose hängt Listener an neu gerenderte Eingaben (18 je Render). Der Lecktest zeigt keinen Anstieg.
+
+### 11.3 Chrome: Vorher / Nachher
+
+| Messung (Chrome headless, Extrem-Fixture, 390 px hell, Median aus 3 Läufen) | Vorher (ms) | Nachher (ms) |
+|---|---|---|
+| Render home | 32,6 | 1,8 |
+| Render cash | 3,6 | 3,6 |
+| Render assets | 9,4 | 3,0 |
+| Render fire | 45,1 | 5,6 |
+| Render plan | 24,6 | 3,6 |
+| Render more | 0,4 | 0,3 |
+| Buchung anlegen bis Anzeige (addTx) | 3,7 | 4,1 |
+| localSave() | 0,6 | 0,5 |
+| pointermove, 500 Ereignisse | 1,1 | 1,1 |
+| Blur blurHtml + blurNums, größter Tab | 0,6 | 0,5 |
+| DOMContentLoaded (Navigation) | 197,0 | 105,0 |
+
+Die Probe läuft mit lokalem Server ohne Supabase-Zugang (`config.js` leer). DOMContentLoaded enthält das CDN-Skript von Supabase, das im Netz geladen wird.
+
+Zusatzprüfung Cashflow: In einer früheren Serie (3 Läufe) lag Cashflow nachher bei 7,2 ms, in der Abschlussserie bei 3,6 ms. Isoliert (je sieben Renders) liegt Cashflow vorher bei 2,4 bis 2,8 ms und nachher bei 2,2 bis 3,1 ms. Der Code von Cashflow ist unverändert. Kein Befund.
+
+### 11.4 Maßnahmen und Entscheidungen
+
+- **P5-02 avg() (behoben):** Jeder Monat wurde mit allen Buchungen gefiltert. Neu: eine Summierung je Monatsschlüssel, gleiche Reihenfolge der Summen. Test `tests/perf/avg-monat.test.cjs` vergleicht mit dem alten Verfahren (vier Fixtures inkl. leer). Abweichung nur bei Buchungsdaten mit weniger als sieben Zeichen (Backup-Import ungeprüft, S-17): Das alte Verfahren zählte solche Buchungen in jedem Monat mit gleichem Präfix mit, das neue zählt sie einmal im eigenen Schlüssel. Gültige Daten sind identisch.
+- **P5-03 pointermove (behoben):** Das Hinweis-Element wird über eine Referenz entfernt. Test `tests/perf/tooltip.test.cjs` prüft Erscheinen, Ersetzen, Verschwinden und keinen Aufruf von querySelectorAll.
+- **Geprüft, nicht geändert:**
+  - `localSave()`: 0,8 ms bei 430 KB. Je Speichern ein `JSON.stringify(S)`. Der Upload ist entprellt (1,5 s), dabei wird der Stand im Client erneut serialisiert. Kein Problem gemessen.
+  - Listener in `prInit` (P5-16): 18 je Plan-Render, kein Leck.
+  - Blur (P5-17): unter 0,6 ms je Tab.
+  - Jahresübersicht: 6,9 ms, unter der Schwelle von 50 ms.
+  - CSV-Import: 3 bis 4 ms.
+- **Keine Optimierung ohne Messwert:** Jede Änderung in Abschnitt 11.4 folgt auf eine Messung in 11.2 oder 11.3.
+
+## 12. Phase 5: Laden, Codequalität, Prozesse, Befunde (6.2 bis 6.4)
+
+### 12.1 Laden (6.2)
+
+- **Skripte mit `defer`:** Supabase-Skript und die fünf App-Skripte. Die Reihenfolge bleibt erhalten. Test `tests/boost.test.cjs` prüft Reihenfolge und `defer`. Die CI prüft `defer` und SRI.
+- **`preconnect`** zu `cdn.jsdelivr.net` und zur Supabase-Projekt-Adresse.
+- **Supabase nicht blockierend:** `app.js` ruft beim Laden `window.supabase.createClient` auf. Deshalb nur `defer`, nicht `async`. Mit `async` wäre der Client `null`, und die Anmeldung fiele aus. Der Start wartet weiter auf das CDN-Skript (P5-18). Ein lazy erzeugter Client wäre die echte Lösung (Vorschlag 13.1).
+- **Service-Worker-Precache:** 11 Dateien (`./`, index, styles, config, app, features, extras, boost, Manifest, zwei Icons), alle benötigt. Splash-Bilder werden nicht vorab geladen (P5-20). Keine Änderung nötig.
+- **Cache-Regeln** (`vercel.json`): Icons und Splash `public, max-age=604800`. Code, HTML und Manifest `public, max-age=0, must-revalidate`. `sw.js` bleibt `no-cache`. Test `tests/cache-header.test.cjs` prüft, dass jede Code-Datei im Wurzelverzeichnis eine Regel hat. **Die Wirkung bei Vercel ist nicht geprüft** (S-34).
+- **Start-Messung** (Chrome, Median aus 3 Läufen): DOMContentLoaded 197 → 105 ms.
+- **Browser-Test:** Lokaler Server mit den Headern aus `vercel.json` und leerem `config.js`, Chrome headless `--dump-dom`: vier Läufe mit dem Endstand, drei mit dem Vorher-Stand. Ergebnis: sechs Tabs gerendert, kein CSP-Verstoß. Im Endstand gab es einen einmaligen CORS-Hinweis (P5-19), in drei weiteren Läufen keinen. Matrix `tests/ui/shoot.cjs --only extrem` (24 Bilder): 0 Konsolenmeldungen, 0 Überläufe.
+
+### 12.2 Codequalität (6.3)
+
+**Entfernt, mit Beleg:**
+
+| Entfernt | Datei | Beleg | Commit |
+|---|---|---|---|
+| `plan()` (Grundfassung von `V.plan`), `pcalc()`, Aufruf in `render()` samt `oninput`-Zuweisung | app.js | `V.plan = prHTML` in features.js. `#po` wird nur in `plan()` erzeugt. Grep ohne Treffer. Snapshot identisch. | 874c3ce |
+| `theme()` | app.js | `W.theme` in boost.js (`W` ist `window`). Einziger Aufrufer ist der Klick in index.html. | 694ab06 |
+| `bars()` | app.js | `W.bars` in boost.js. Einziger Aufrufer `cash()`, läuft erst nach dem Laden. | 694ab06 |
+| CSV-Zustand, `parseDate`, `parseCSV`, `guessCategory`, `memoKey`, `buildCSVRows`, `csvLoad`, `csvFile`, `csvSet`, `csvCat`, `csvGo`, `V.csv` | features.js | Grep ohne Treffer außerhalb des Blocks (die beiden Treffer „CSV“ sind Beschriftungen). extras.js überschreibt `V.csv`. Tests: Tab-Trennung und Einzelversion. | b4d35f3 |
+
+Die `parseCSV` und `parseDate` in extras.js bleiben: Sie sind aktiv.
+
+**Nicht entfernt (Korrektur zu S-29):** `cu()` und `applyTh()` in app.js. Beide laufen beim ersten Render in app.js, bevor boost.js geladen ist. `applyTh()` wird von boost.js gewrappt. Das Entfernen würde den Start ändern.
+
+**Benannte Konstanten (Werte unverändert, Commit f75fbde):** Abgeltungsteuer 26,375 %, Sparer-Pauschbetrag 1.000 €, Freigrenze Spekulation 1.000 €, Teilfreistellung ETF (Faktor 0,7), Standard-Entnahmerate 4 %, Sync-Verzögerung 1.500 ms, PIN-Wartezeit (30 s Basis, 15 min Obergrenze), CSV-Zeilenlimit 1.500 (inkl. Meldung), Tagessicherung (900.000 Zeichen, alle 5 Minuten, Erststart 20 s), Auto-Sperre (15 s). Bereits benannt waren `PIN_ITER` und `K_NET`.
+
+**Bewusst nicht benannt:** Import-Grenzen in app.js (2 MB, 5.000 Zeichen, 20.000 Listeneinträge, 500 Felder, Tiefe 12). Der Test `import-safety.test.cjs` und `security.test.cjs` schneiden genau diesen Abschnitt aus dem Quelltext. Eine Konstante außerhalb würde den Test brechen. Ebenso bewusst nicht benannt: Layoutzahlen in SVG und die Standardwerte in boost.js (6 % Rendite, Passiv-Annahmen 1,8 % und 2 %). Offen als P5-11.
+
+**Stille `catch`-Blöcke:** 18 leere Blöcke und zwei `.catch(() => null)` in sw.js haben jetzt einen Kommentar mit dem Grund (Speicher, Cache, Netz, PIN). Verhalten unverändert (Commit 44a41af).
+
+**Kopfkommentare:** Jede App-Datei nennt Zweck, Abhängigkeiten und Ladereihenfolge (5a68cf9). `config.js` hat einen Ladehinweis.
+
+**Dichte Einzeiler:** Nicht umformatiert (Vorgabe: kein Komplett-Reformat, Diff prüfbar). Neue Funktionen im Stil der Datei.
+
+### 12.3 Prozesse (6.4)
+
+- **Neue Dateien:** `tests/run-all.sh` (Syntax, alle Tests inkl. Unterordner, Secret-Scan), `tests/check-syntax.sh`, `tests/check-secrets.sh`, `tests/check-sw-version.sh`. Die CI nutzt dieselben Skripte.
+- **`.github/workflows/validate.yml`:** neun Schritte: Checkout mit `fetch-depth: 0`, Node 22, Syntax-Schleife, alle Tests inkl. Unterordner, CDN-Erreichbarkeit, SRI-Hash, Konfigurationsprüfung (jetzt mit `defer` und Skript-Reihenfolge), Secret-Scan, VERSION-Prüfung (bei Pull Requests gegen die Basis, bei Push gegen den vorherigen Commit).
+- **Lokale Simulation jedes CI-Schritts** (Befehle und Ausdrücke aus der YAML-Datei, `${{ … }}` durch Pull-Request-Werte mit Basis = Backup-Tag ersetzt; PyYAML fehlt, daher Ruby für die YAML-Prüfung):
+
+| CI-Schritt | Lokaler Lauf | Ergebnis |
+|---|---|---|
+| YAML gültig | `ruby -ryaml` | gültig, 9 Schritte |
+| Syntax | `sh tests/check-syntax.sh` | exit 0, alle Dateien OK |
+| Tests | `node --test $(find tests -name '*.test.cjs')` | 150 von 150 grün |
+| CDN erreichbar | `curl --fail …` | exit 0 |
+| SRI-Hash | Hash aus index.html gegen CDN | identisch: `sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp` |
+| Konfiguration | Heredoc aus der YAML-Datei | „Critical configuration and security checks passed.“ |
+| Secret-Scan | `sh tests/check-secrets.sh` | keine Treffer (122 Dateien bei der Simulation, 124 im Abschlusslauf) |
+| VERSION | `sh tests/check-sw-version.sh <Backup-Tag>` | `fr-2026-10-21b` → `fr-2026-10-27v` |
+
+- **Negativtests der Prüfungen** (Wegwerf-Repo bzw. Probedateien im Scratchpad): VERSION-Prüfung mit geänderter App-Datei ohne Bump → Fehler (exit 1). Mit Bump → OK. Ohne gültige Basis → übersprungen. Secret-Muster: vier Probefälle gemeldet (`sb_secret_`, JWT-Form, `service_role` mit Wert, privater Schlüssel). Publishable Key und der bloße Begriff `service_role` in Text werden nicht gemeldet.
+- **Nicht geprüft:** der Lauf auf GitHub selbst (kein Push).
+
+### 12.4 Befunde Phase 5
+
+| ID | Bereich | Schwere | Befund | Status | Commit |
+|---|---|---|---|---|---|
+| P5-01 | Werkzeug | niedrig | Extrem-Fixture gab beim direkten Aufruf eine Textzeile aus; shoot.cjs las sie als JSON und brach ab. Die Extrem-Matrix war nicht lauffähig. | behoben | 6eee2c7 |
+| P5-02 | Performance | mittel | avg() filterte für jeden Monat alle Buchungen (quadratisch). Fuck Off und Home lagen über der Schwelle. | behoben, Test mit 4 Fällen | c542df5 |
+| P5-03 | Performance | niedrig | pointermove suchte bei jeder Bewegung mit querySelectorAll im ganzen Dokument nach Hinweis-Elementen. | behoben, Test | 98f7b51 |
+| P5-04 | Code | niedrig | render() rief pcalc() je Plan-Render auf und setzte oninput auf alle Eingaben. pcalc kehrte ohne Wirkung zurück (#po fehlt). | behoben (mit plan/pcalc entfernt) | 874c3ce |
+| P5-05 | Laden | mittel | Supabase-Skript blockierte das HTML-Parsen (kein defer), App-Skripte ohne defer. | behoben: defer, Reihenfolge erhalten | 3d412a8 |
+| P5-06 | Auslieferung | niedrig | vercel.json hatte keine Cache-Regeln für Icons, Splash und Code. | behoben, Live-Wirkung nicht geprüft | 15bcb74 |
+| P5-07 | Prozesse | mittel | CI prüfte Tests nur im Wurzelverzeichnis, ohne Secret-Scan und ohne VERSION-Prüfung. | behoben | f68e199 |
+| P5-08 | Befund-Korrektur | – | S-29 führte cu() und applyTh() als tot. Beide laufen beim ersten Render in app.js, bevor boost.js geladen ist. | Korrektur, nicht entfernt | 694ab06 |
+| P5-09 | Tests | niedrig | Zwei Tests hingen an Tag-Text (defer) bzw. am toten CSV-Pfad. Umgestellt, Anzahl unverändert, Prüfung verschärft. | behoben | 3d412a8, b4d35f3 |
+| P5-10 | Code | niedrig | Achtzehn leere catch-Blöcke und zwei .catch in sw.js ohne Begründung. | behoben: Kommentar mit Grund | 44a41af |
+| P5-11 | Code | niedrig | Fachliche Zahlen im Code (Steuern, Freibeträge, Fristen, Limits). | teilweise: benannt; Import-Grenzen und Standardwerte in boost.js offen | f75fbde |
+| P5-12 | Doku | niedrig | Dateien ohne Kopf mit Zweck, Abhängigkeiten, Ladereihenfolge. | behoben | 5a68cf9 |
+| P5-13 | Doku | niedrig | README: config.js als leer beschrieben (S-22). ChatGPT-Anleitung beschrieb das alte Update. | behoben | e982957 |
+| P5-14 | Messwerkzeug | – | Eigenes Messskript: addTx ohne Wirkung ab dem zweiten Lauf (0,0 ms), Dokument-Zähler fehlten. Browser-Probe: Betrag mit Komma im type=number-Feld leer, daher Punkt. | vor Auswertung behoben | 605e7a6, ee3d0a0 |
+| P5-15 | UI-Audit | – | Der Audit misst die Box, nicht die Trefferfläche über ::after. Icons ◉ und ☀ (28×25 px), Pfeil ▾ (7×14 px) und Chips zählen als klein. Summe 608 Treffer in 24 Bildern (Mehrfachzählung über Bilder). | gemeldet (Methodik), keine Änderung | – |
+| P5-16 | Performance | – | prInit hängt 18 Listener je Plan-Render an neu erzeugte Elemente. Lecktest: +0 Dokument-Listener, +0 Timer. | unkritisch, nicht geändert | – |
+| P5-17 | Performance | – | Blur (blurHtml, blurNums) braucht je Tab unter 0,6 ms im Browser. | unkritisch | – |
+| P5-18 | Laden | mittel | Supabase-Client entsteht beim Laden von app.js (window.supabase.createClient). Das Skript muss vor app.js laufen; der Start wartet deshalb weiter auf das CDN. Nur das HTML-Parsen ist frei. | gemeldet, Vorschlag (lazy Client) | – |
+| P5-19 | Test (lokal) | niedrig | Ein Chrome-Lauf zeigte einmal einen CORS-Hinweis zum CoinGecko-Abruf (Origin 127.0.0.1). In drei weiteren Läufen nicht. Kein CSP-Verstoß. | unkritisch (lokaler Test) | – |
+| P5-20 | Laden | niedrig | SW-Precache: 11 Dateien, alle benötigt. Splash-Bilder nicht vorab geladen. | geprüft, kein Befund | – |
+| P5-21 | Prozesse | – | Secret-Scan über alle versionierten Dateien: keine Treffer. Das Muster wurde mit Probefällen geprüft; der publishable Key wird nicht gemeldet. | geprüft, kein Befund | – |
+
+### 12.5 Befundtabelle komplett (Stand Ende Phase 5)
+
+Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. Spalte „Status (Endstand)“: Phase-5-Änderungen eingetragen, sonst unverändert. Insgesamt 111 (S-: 34, B-: 29, U-: 48) Einträge, dazu P5-01 bis P5-21 in 12.4.
+
+| ID | Bereich | Schwere | Status (Endstand) | Commit |
+|---|---|---|---|---|
+| S-01 | Sicherheit | hoch | behoben | 1454d01 |
+| S-02 | Sicherheit | hoch | behoben | 1454d01 |
+| S-03 | Sicherheit | mittel | behoben | 1454d01 |
+| S-04 | Sicherheit | mittel | behoben | 1454d01 |
+| S-05 | Sicherheit | niedrig | behoben | 1454d01 |
+| S-06 | Sicherheit | mittel | behoben: toter Code entfernt (Phase 5) | b4d35f3 |
+| S-07 | Header | mittel | behoben | 19ecab5 |
+| S-08 | Supply Chain | mittel | behoben | 19ecab5 |
+| S-09 | PIN | mittel | behoben | 8bbab07 |
+| S-10 | PIN | mittel | behoben | 8bbab07 |
+| S-11 | Datenschutz | niedrig | gemeldet | – |
+| S-12 | Login | niedrig | gemeldet | – |
+| S-13 | Sitzung | niedrig | gemeldet | – |
+| S-14 | Login | niedrig | gemeldet | – |
+| S-15 | Import | mittel | behoben | 3af32d3 |
+| S-16 | Import | niedrig | behoben | 3af32d3 |
+| S-17 | Import | niedrig | gemeldet | – |
+| S-18 | Export | niedrig | gemeldet | – |
+| S-19 | CSV-Export | – | unkritisch | – |
+| S-20 | Secrets | – | unkritisch | – |
+| S-21 | Öffentliches Repo | niedrig | gemeldet | – |
+| S-22 | Doku | niedrig | behoben: README korrigiert (Phase 5) | e982957 |
+| S-23 | Doku | niedrig | gemeldet (Hinweis) | – |
+| S-24 | Schema | mittel | gemeldet | 707cff1 |
+| S-25 | Supabase | offen | nicht geprüft | – |
+| S-26 | Service Worker | niedrig | unkritisch | – |
+| S-27 | Service Worker | niedrig | gemeldet | – |
+| S-28 | Konsole | – | unkritisch | – |
+| S-29 | Code | niedrig | teilweise behoben: plan, pcalc, theme, bars entfernt; cu und applyTh sind nicht tot (P5-08) | 874c3ce, 694ab06 |
+| S-30 | Code | niedrig | behoben: Kopie in features.js entfernt, aktiv bleibt extras.js | b4d35f3 |
+| S-31 | Datum | mittel | behoben: lokale Datumsbildung (R-05) | 83816a9 |
+| S-32 | Design | niedrig | gemeldet (Phase 4) | – |
+| S-33 | UI | niedrig | gemeldet (Phase 4) | – |
+| S-34 | Header | offen | teilweise: Cache-Regeln in vercel.json, live nicht geprüft | 15bcb74 |
+| B-01 | Sync | hoch | behoben | e24c6bc |
+| B-02 | Sync | hoch | behoben (Eintrag in „Sicherungen“, Art `vor-cloud`) | e24c6bc |
+| B-03 | Sync | mittel | behoben als Sicherung (Art `cloud`); Last-Write-Wins bleibt, Entscheidung Henne (3a.8) | e24c6bc |
+| B-04 | Datenhaltung | hoch | behoben (Sicherung unter `fr_s_defekt`) | e9f3c3f |
+| B-05 | Berechnung | mittel | behoben (SÄ-9) | 785af24 |
+| B-06 | Anzeige | mittel | behoben (SÄ-1, SÄ-2) | ecae92f |
+| B-07 | Anzeige | mittel | behoben (SÄ-3 bis SÄ-5) | 7701b0a |
+| B-08 | Anzeige | mittel | behoben (SÄ-6) | 7701b0a |
+| B-09 | Datum | mittel | behoben (SÄ-11) | 02c9c7b |
+| B-10 | Logik | mittel | behoben (SÄ-13) | 429de13 |
+| B-11 | Anzeige | niedrig | behoben | 429de13 |
+| B-12 | Berechnung | niedrig | behoben (SÄ-12) | 4d976ce |
+| B-13 | Anzeige | niedrig | behoben (SÄ-7) | 4d976ce |
+| B-14 | Datenintegrität | mittel | behoben (SÄ-8) | 5473286 |
+| B-15 | Datenintegrität | mittel | behoben (SÄ-14) | 5473286 |
+| B-16 | Kennzahl | mittel | gemeldet, Entscheidung Henne | – |
+| B-17 | Annahme | mittel | gemeldet, teilweise offengelegt | – |
+| B-18 | Modell | niedrig | gemeldet, teilweise offengelegt | – |
+| B-19 | Fehlende Funktion | mittel | gemeldet (Vorschlag) | – |
+| B-20 | Logik | niedrig | gemeldet (Verhalten) | – |
+| B-21 | Fehlende Funktion | niedrig | gemeldet | – |
+| B-22 | Text | niedrig | gemeldet (Phase 4, Texte) | – |
+| B-23 | Datenschutz | niedrig | gemeldet (Restrisiko) | – |
+| B-24 | Sync | niedrig | gemeldet (Vorschlag) | – |
+| B-25 | Sync, Datenschutz | mittel | gemeldet, Entscheidung Henne | – |
+| B-26 | Text | niedrig | gemeldet (Phase 4) | – |
+| B-27 | Testlücke | niedrig | gemeldet | – |
+| B-28 | Testlücke | niedrig | gemeldet (Phase 4) | – |
+| B-29 | Code | niedrig | behoben, außer cu und applyTh (P5-08) | 874c3ce, 694ab06, b4d35f3 |
+| U-01 | Kontrast | hoch | behoben (`--ort` #b8430f, 5,46:1) | aafe653 |
+| U-02 | Kontrast | hoch | behoben (Fläche `--orb` #c2410c, 5,18:1) | aafe653 |
+| U-03 | Kontrast | hoch | behoben (`--gt`, 5,87:1) | aafe653 |
+| U-04 | Kontrast | hoch | behoben (`--fld`, 3,87:1 / 3,96:1) | aafe653 |
+| U-05 | Kontrast | hoch | behoben (`--ort`, `--orb` für Häkchen) | e1de209 |
+| U-06 | Kontrast | hoch | behoben (Symbol farbig, Text in Textfarbe) | e1de209 |
+| U-07 | Kontrast | mittel | behoben (Farbe nur beim ■-Marker) | 5fee7ff |
+| U-08 | Kontrast | niedrig | Ausnahme, Dekoration (Karte ist durch Fläche erkennbar) | – |
+| U-09 | Kontrast | niedrig | Ausnahme, Prozentwert steht als Text daneben | – |
+| U-10 | Layout | hoch | behoben (Text in `<span>`, Grids `minmax(0,1fr)`, Tabellenzellen umbrechbar) | 533438d |
+| U-11 | Layout | niedrig | bewusst belassen, Seite scrollt nicht | – |
+| U-12 | Touch | hoch | behoben (Phase 4); Audit misst die Box, siehe P5-15 | 4d65904 |
+| U-13 | Touch | hoch | behoben (min. 44 px, sichtbar größer) | 4d65904 |
+| U-14 | Touch | hoch | behoben (Trefferfläche über `::after`) | 4d65904 |
+| U-15 | Touch | mittel | behoben (min. 44 px bzw. `::after`) | 4d65904 |
+| U-16 | Touch | mittel | behoben (Trefferfläche 45 px über `::after`) | 0dfe08f |
+| U-17 | Touch | mittel | behoben (min. 44 px; Checkbox und Regler ausgenommen) | 0dfe08f |
+| U-18 | Touch | niedrig | gemeldet (Höhe ist 45 px, Breite nicht) | – |
+| U-19 | Touch | niedrig | gemeldet (Label ist klickbar; Regler bleibt unverändert) | – |
+| U-20 | Formular | hoch | behoben (`aria-label`, sichtbarer Text unverändert) | 64ad3f3 |
+| U-21 | Formular | mittel | behoben (16 px) | ce3d35d |
+| U-22 | Barrierefreiheit | hoch | behoben (`tablist`, `tab`, `aria-selected`) | 64ad3f3 |
+| U-23 | Barrierefreiheit | hoch | behoben | 64ad3f3 |
+| U-24 | Barrierefreiheit | mittel | behoben | 64ad3f3 |
+| U-25 | Barrierefreiheit | hoch | behoben (`role=dialog`, `aria-modal`, Esc, Tab bleibt im Sheet, Fokus zurück) | 64ad3f3 |
+| U-26 | Barrierefreiheit | hoch | behoben (Rolle, `aria-modal`, Hintergrund `inert`, Fokus auf Ziffern) | 64ad3f3 |
+| U-27 | Barrierefreiheit | mittel | behoben (`:focus-visible`, 2 px Rahmen) | 64ad3f3 |
+| U-28 | Barrierefreiheit | mittel | behoben (`role=img`, `aria-label`; Mini-Sparkline `aria-hidden`) | e2d3e7a |
+| U-29 | Bewegung | mittel | behoben (Pulse entfällt bei reduzierter Bewegung) | 98e052b |
+| U-30 | Bewegung | niedrig | behoben (pulsiert nur während Synchronisierung, mit Titel) | 98e052b |
+| U-31 | Bewegung | niedrig | nicht vorhanden (Hook-Fehlalarm?). Grep auf marquee, ticker, scroll-Animationen: keine Treffer. Vorhandene Keyframes: pu, pg, sh, up, bl, rgIn, cf | – |
+| U-32 | Bewegung | niedrig | bereits abgesichert (geprüft, unverändert) | – |
+| U-33 | Bewegung | niedrig | gemeldet (reduzierte Bewegung schaltet es ab) | – |
+| U-34 | Design | niedrig | nicht geändert, Entscheidung Henne | – |
+| U-35 | Texte | niedrig | behoben: „Vorlagen anwenden“ | ff05a9d |
+| U-36 | Texte | niedrig | behoben: „Konto & Synchronisierung“ | ff05a9d |
+| U-37 | Texte | niedrig | gemeldet, Entscheidung Henne | – |
+| U-38 | Texte | niedrig | gemeldet, Entscheidung Henne (nicht verändert) | – |
+| U-39 | PWA | mittel | behoben (`purpose: "any maskable"`). Das Bild hat vollflächigen Hintergrund, der Ring liegt im 80-%-Sicherheitsbereich | ff05a9d |
+| U-40 | PWA | niedrig | geprüft, kein Befund. Vollständigkeit gegen aktuelle Gerätetabelle nicht geprüft | – |
+| U-41 | Login | niedrig | geprüft, kein offener Befund | – |
+| U-42 | Login | niedrig | behoben (`:empty` ausgeblendet) | e46ccc5 |
+| U-43 | Import | niedrig | behoben (App-Stil) | e46ccc5 |
+| U-44 | Layout | niedrig | behoben (`nowrap`) | 0dfe08f |
+| U-45 | Layout | niedrig | behoben: bei 375 px mit Ellipse gekürzt, bei 430 px vollständig | 0dfe08f |
+| U-46 | Layout | niedrig | gemeldet (Vorschlag 10.5) | – |
+| U-47 | Zustände | niedrig | geprüft, unkritisch | – |
+| U-48 | Test | – | Testkorrektur, Grenzwerte und Assertions unverändert | aafe653, 64ad3f3, 41fe618 |
+
+### 12.6 Prüfprotokoll vorher und nachher
+
+| Prüfung | Befehl bzw. Werkzeug | Vorher | Nachher (Endstand) |
+|---|---|---|---|
+| Syntax | `node --check` (App-Dateien, sw.js), `sh tests/check-syntax.sh` (inkl. Tests) | alle OK | alle OK, 36 Dateien |
+| Tests | `node --test` über alle Testdateien inkl. Unterordner | 142 grün (Start Phase 5) | **150 grün**, 0 rot, 0 übersprungen |
+| Regressions-Snapshot | Scratchpad-Skript: HTML aller 19 Ansichten × 4 Fixtures, Buchung über das Formular, Zustand `S` | Referenz (Commit 0527d6b) | identisch nach jedem Commit mit App-Änderung und im Endstand |
+| Browser-Matrix | `tests/ui/shoot.cjs --only extrem` (24 Bilder) bzw. `--only klein` (6 Bilder) | Phase 4: klein ohne Fehler, extrem nicht lauffähig (P5-01) | extrem 24 Bilder, 0 Konsolenmeldungen, 0 Überläufe; klein 6 Bilder, 0 Fehler |
+| CSP-Lauf | lokaler Server mit `vercel.json`-Headern, Chrome `--dump-dom`, Vorher 3 Läufe, Endstand 4 Läufe | 0 Verstöße (Phase 2) und 0 Konsolenmeldungen in 3 Läufen | 0 Verstöße, 6 Tabs; in 4 Läufen je 0 Konsolenmeldungen außer einem CORS-Hinweis (P5-19) |
+| Secret-Scan | `sh tests/check-secrets.sh` | nicht vorhanden | 0 Treffer in 124 Dateien |
+| Messung Node | `node tests/perf/measure.cjs` | nicht gemessen (Phase 3 nur Information) | Tabelle 11.2 |
+| Messung Chrome | Probe, 3 Läufe je Stand | nicht gemessen | Tabelle 11.3 |
+| Stellen mit neuem `innerHTML` | `git diff` seit 0527d6b | – | eine geänderte Zeile (Tooltip, Text per `esc()`), keine neue ungeschützte Senke |
+
+### 12.7 Abweichungen in Phase 5
+
+- **Trailer:** `Co-Authored-By: Claude Haiku 5.5`, nicht Sonnet 5.5. Das Modell dieser Sitzung ist Haiku 5.5; die Attribution der Harness-Vorgabe wurde übernommen. Vor einem Push kann die Angabe umgeschrieben werden.
+- **Tests umgestellt:** `boost.test.cjs` (Muster mit `defer`, Prüfung verschärft), `erweiterungen.test.cjs` (Vergleich zweier Parser wird Test der einzigen Version). Anzahl unverändert. Zwei neue Testdateien (`cache-header`, `perf/*`).
+- **Import-Grenzen nicht benannt** (P5-11, Begründung in 12.2).
+- **CSV-Import:** gemessen mit 1.500 Zeilen (Auftrag) und zusätzlich 5.000 Zeilen (Limit wirkt).
+- **Werkzeugfehler** im eigenen Messskript und in der Extrem-Fixture gefunden und behoben (P5-01, P5-14), vor der Auswertung.
+
+## 13. Abschluss
+
+### 13.1 Offene Vorschläge und Entscheidungen für Henne (priorisiert)
+
+Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne Freigabe umsetzen. Punkte aus Phase 2 bis 4 sind mit Quelle geführt.
+
+| # | Punkt | Quelle | Nutzen | Aufwand | Empfehlung |
+|---|---|---|---|---|---|
+| 1 | Supabase live prüfen (Advisors, Policies, `user_state`-RLS) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
+| 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | eigener Auftrag, je Ansicht |
+| 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | Entscheidung |
+| 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | Entscheidung |
+| 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | Entscheidung (Datenschutz abwägen) |
+| 6 | Neuversuch bei Upload-Fehlern (Timer mit Obergrenze) | B-24, 5.14 | mittel | klein | empfohlen |
+| 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden | S-24, 5.7, `vorschlaege/` | mittel | klein, Live-Prüfung nötig | nach Punkt 1 |
+| 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | Entscheidung |
+| 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | zuerst ausweisen |
+| 10 | Schulden mit Zins und Restlaufzeit | B-19, 3a.8.5, 5.12 | mittel | groß, Datenmodell | nur nach Freigabe |
+| 11 | Wiederkehrende Buchungen pausieren und beenden | B-20 | mittel | mittel | Entscheidung |
+| 12 | Supabase-Client erst bei Bedarf erzeugen (Start unabhängig vom CDN) | P5-18 | mittel | mittel, app.js | nach Punkt 2 |
+| 13 | Sperr-Overlay vor dem ersten Render | S-11, 5.2 | niedrig bis mittel (Sichtschutz beim Start) | klein | empfohlen |
+| 14 | `fr_pin` beim Löschen der lokalen Daten mitlöschen | S-13, 5.8 | niedrig bis mittel | klein | Entscheidung |
+| 15 | Login-Meldung neutral formulieren, E-Mail-Bestätigung prüfen | S-12, S-14, 5.6 | mittel | klein | Entscheidung |
+| 16 | Vercel-Cache-Regeln live prüfen (Muster in `vercel.json`) | P5-06, S-34 | niedrig | klein | vor dem Deploy |
+| 17 | Live-Kurs-Fehlertext und „Kurs veraltet“ | B-21, B-22, 5.17 | niedrig | klein | empfohlen |
+| 18 | Konsolenhinweis im Login-Formular | S-33 | niedrig | klein | empfohlen |
+| 19 | Audit misst Trefferfläche statt Box | P5-15 | niedrig (Messung) | klein | empfohlen |
+| 20 | Harness-Lücken schließen (Feed-Filter, Schnellerfassung, Prognose-Pläne, Blur ausführen) | B-27, B-28 | niedrig bis mittel | mittel | empfohlen |
+| 21 | Link „Prognose Radar“ auf persönliches claude.ai-Artefakt | U-38, 10.5.1 | niedrig (öffentliches Repo) | klein | entfernen oder bewusst lassen |
+| 22 | Private E-Mail in den Commit-Metadaten | S-21, 5.9 | niedrig | keine Umschreibung; GitHub-Einstellung | Entscheidung |
+| 23 | Import-Grenzen benennen (Test-Ausschnitt anpassen), Standardwerte in boost.js | P5-11 | niedrig | klein | optional |
+| 24 | Sicherungen-Hinweistext passt nicht mehr ganz | B-26 | niedrig | klein | empfohlen |
+| 25 | `dark-glow` auf großen Zahlen | U-34, 10.5.2 | niedrig | – | Entscheidung |
+| 26 | Schreibweise „Fuck Off“ (Tab) und „Fuck-Off-…“ | U-37, 10.5.3 | niedrig | klein | Entscheidung |
+| 27 | Schwebender „+“ überdeckt den Buchen-Button bei 375 px | U-46, 10.5.4 | niedrig | klein bis mittel | Abstand im Inhalt |
+| 28 | Tabellen mit internem Scroll als Karten | U-11, 10.5.5 | niedrig | mittel, Umbau | Skizze vorlegen |
+| 29 | Kurze Chips und Checkbox auf 44 px | U-18, U-19, 10.5.6 | niedrig | klein | empfohlen |
+| 30 | Kopftitel bei 375 px | U-45, 10.5.8 | niedrig | klein | Entscheidung |
+| 31 | CSV-Import als Tab oder Dialog | 10.5.9 | niedrig | mittel | Entscheidung |
+| 32 | Splash-Bilder gegen aktuelle iPhone-Tabelle | U-40, 10.5.10 | niedrig | klein | vor Veröffentlichung |
+| 33 | Badge `#bd` pulsiert dauerhaft | U-33, 10.5.7 | niedrig | klein | empfohlen |
+
+### 13.2 Restrisiken (Stand Ende Phase 5)
+
+- **`'unsafe-inline'`** in `script-src` und `style-src`. Der XSS-Schutz hängt an `esc()`. Phase 5 hat keine ungeschützte Senke hinzugefügt (Diff geprüft, 12.6).
+- **PIN nur Sichtschutz.** Die Daten liegen unverschlüsselt in `localStorage`.
+- **Last-Write-Wins bei zwei Geräten.** Zeitstempel kommen vom Client (B-03).
+- **Backup-Import** prüft Strukturen und Limits, aber nicht Datumsfelder und Textbeträge (S-17).
+- **Service Worker:** geöffnete Tabs können kurz mit neuem SW und altem Stand arbeiten. Eine fehlende Datei bei der Installation bricht die Installation nicht ab (S-27).
+- **Supabase live** (S-25) und **Cache-Header live** (S-34) nicht geprüft.
+- **Kontowechsel** verwirft ungesyncte Daten des alten Kontos (B-25).
+- **Ausschnitts-Tests:** Einige Tests lesen Funktionen per Zeichenkette aus dem Quelltext. Umbauten brechen sie, das ist gewollt, macht Änderungen aber aufwendiger.
+- **Messungen** in Node und Chrome auf dem Mac, nicht auf einem iPhone. Der Audit misst Boxen (P5-15).
+
+### 13.3 Änderungsliste
+
+`git diff --stat backup-vor-endkontrolle-2026-10-26..HEAD` (Stand vor dem Bericht-Commit):
+
+```
+ .github/workflows/validate.yml                     |  38 +-
+ CHANGELOG.md                                       |  92 +++
+ CHATGPT-ANLEITUNG.md                               |  70 +-
+ ENDKONTROLLE-BERICHT.md                            | 893 +++++++++++++++++++++
+ README.md                                          | 103 ++-
+ app.js                                             | 191 +++--
+ bericht/screens/nachher/audit-leer.json            |  77 ++
+ bericht/screens/nachher/audit.json                 | 458 +++++++++++
+ .../screens/nachher/cash__dark__1280__klein.png    | Bin 0 -> 58379 bytes
+ bericht/screens/nachher/cash__dark__375__klein.png | Bin 0 -> 47476 bytes
+ bericht/screens/nachher/cash__dark__430__klein.png | Bin 0 -> 51477 bytes
+ .../screens/nachher/cash__light__1280__klein.png   | Bin 0 -> 59354 bytes
+ .../screens/nachher/cash__light__375__klein.png    | Bin 0 -> 47913 bytes
+ bericht/screens/nachher/cash__light__375__leer.png | Bin 0 -> 40438 bytes
+ .../screens/nachher/cash__light__430__klein.png    | Bin 0 -> 52172 bytes
+ .../nachher/csv-import__light__375__klein.png      | Bin 0 -> 33729 bytes
+ .../screens/nachher/fuckoff__dark__1280__klein.png | Bin 0 -> 87707 bytes
+ .../screens/nachher/fuckoff__dark__375__klein.png  | Bin 0 -> 70729 bytes
+ .../screens/nachher/fuckoff__dark__430__klein.png  | Bin 0 -> 72407 bytes
+ .../nachher/fuckoff__light__1280__klein.png        | Bin 0 -> 91819 bytes
+ .../screens/nachher/fuckoff__light__375__klein.png | Bin 0 -> 74470 bytes
+ .../screens/nachher/fuckoff__light__375__leer.png  | Bin 0 -> 63238 bytes
+ .../screens/nachher/fuckoff__light__430__klein.png | Bin 0 -> 76181 bytes
+ .../screens/nachher/home__dark__1280__klein.png    | Bin 0 -> 50857 bytes
+ bericht/screens/nachher/home__dark__375__klein.png | Bin 0 -> 45107 bytes
+ bericht/screens/nachher/home__dark__430__klein.png | Bin 0 -> 45470 bytes
+ .../screens/nachher/home__light__1280__klein.png   | Bin 0 -> 56063 bytes
+ .../screens/nachher/home__light__375__klein.png    | Bin 0 -> 47598 bytes
+ bericht/screens/nachher/home__light__375__leer.png | Bin 0 -> 33273 bytes
+ .../screens/nachher/home__light__430__klein.png    | Bin 0 -> 48391 bytes
+ bericht/screens/nachher/konsole.txt                |   1 +
+ .../screens/nachher/login__light__375__klein.png   | Bin 0 -> 16929 bytes
+ .../screens/nachher/mehr__dark__1280__klein.png    | Bin 0 -> 39454 bytes
+ bericht/screens/nachher/mehr__dark__375__klein.png | Bin 0 -> 34376 bytes
+ bericht/screens/nachher/mehr__dark__430__klein.png | Bin 0 -> 34254 bytes
+ .../screens/nachher/mehr__light__1280__klein.png   | Bin 0 -> 41744 bytes
+ .../screens/nachher/mehr__light__375__klein.png    | Bin 0 -> 36323 bytes
+ bericht/screens/nachher/mehr__light__375__leer.png | Bin 0 -> 35835 bytes
+ .../screens/nachher/mehr__light__430__klein.png    | Bin 0 -> 36218 bytes
+ bericht/screens/nachher/pin__light__375__klein.png | Bin 0 -> 10380 bytes
+ .../nachher/prognose__dark__1280__klein.png        | Bin 0 -> 57426 bytes
+ .../screens/nachher/prognose__dark__375__klein.png | Bin 0 -> 45556 bytes
+ .../screens/nachher/prognose__dark__430__klein.png | Bin 0 -> 47667 bytes
+ .../nachher/prognose__light__1280__klein.png       | Bin 0 -> 58092 bytes
+ .../nachher/prognose__light__375__klein.png        | Bin 0 -> 45657 bytes
+ .../screens/nachher/prognose__light__375__leer.png | Bin 0 -> 43517 bytes
+ .../nachher/prognose__light__430__klein.png        | Bin 0 -> 48052 bytes
+ .../schnellerfassung__light__375__klein.png        | Bin 0 -> 52269 bytes
+ .../nachher/vermoegen__dark__1280__klein.png       | Bin 0 -> 57561 bytes
+ .../nachher/vermoegen__dark__375__klein.png        | Bin 0 -> 45750 bytes
+ .../nachher/vermoegen__dark__430__klein.png        | Bin 0 -> 46070 bytes
+ .../nachher/vermoegen__light__1280__klein.png      | Bin 0 -> 58311 bytes
+ .../nachher/vermoegen__light__375__klein.png       | Bin 0 -> 46113 bytes
+ .../nachher/vermoegen__light__375__leer.png        | Bin 0 -> 43248 bytes
+ .../nachher/vermoegen__light__430__klein.png       | Bin 0 -> 46459 bytes
+ boost.js                                           |  35 +-
+ config.js                                          |   1 +
+ extras.js                                          |  94 ++-
+ features.js                                        | 214 ++---
+ index.html                                         |  18 +-
+ manifest.webmanifest                               |   2 +-
+ styles.css                                         |  69 +-
+ sw.js                                              |   6 +-
+ tests/boost.test.cjs                               |   4 +-
+ tests/buchungen.test.cjs                           |  60 ++
+ tests/cache-header.test.cjs                        |  36 +
+ tests/check-secrets.sh                             |  17 +
+ tests/check-sw-version.sh                          |  24 +
+ tests/check-syntax.sh                              |  15 +
+ tests/coingecko-daten.test.cjs                     |  88 ++
+ tests/csv-import.test.cjs                          |  73 ++
+ tests/dates.test.cjs                               |  92 +++
+ tests/erweiterungen.test.cjs                       | 193 +++++
+ tests/fixtures/edge.json                           |  32 +
+ tests/fixtures/empty.json                          |  12 +
+ tests/fixtures/extreme.cjs                         |  27 +
+ tests/fixtures/small.json                          |  39 +
+ tests/fuckoff.test.cjs                             |  37 +
+ tests/harness/fake-supabase.cjs                    |  70 ++
+ tests/harness/load-app.cjs                         | 217 +++++
+ tests/kennzahlen.test.cjs                          |  81 ++
+ tests/kontrast.test.cjs                            |  85 ++
+ tests/krypto.test.cjs                              | 115 +++
+ tests/numbers.test.cjs                             |  49 ++
+ tests/perf/avg-monat.test.cjs                      |  40 +
+ tests/perf/measure.cjs                             | 124 +++
+ tests/perf/tooltip.test.cjs                        |  30 +
+ tests/pin.test.cjs                                 |  57 ++
+ tests/prognose.test.cjs                            | 130 +++
+ tests/reference/forecast.cjs                       | 104 +++
+ tests/run-all.sh                                   |  12 +
+ tests/security.test.cjs                            |  70 ++
+ tests/speicher.test.cjs                            |  23 +
+ tests/sync.test.cjs                                | 197 +++++
+ tests/ui-static.test.cjs                           |  97 +++
+ tests/ui/README.md                                 |  65 ++
+ tests/ui/shoot.cjs                                 | 244 ++++++
+ tests/vermoegen.test.cjs                           |  57 ++
+ tests/views-smoke.test.cjs                         |  43 +
+ vercel.json                                        | 126 ++-
+ vorschlaege/schema-haertung.sql                    |  34 +
+ 101 files changed, 4792 insertions(+), 389 deletions(-)
+```
+
+`git log --oneline backup-vor-endkontrolle-2026-10-26..HEAD` (Stand vor dem Bericht-Commit, neueste zuletzt):
+
+```
+e982957 Phase 5: README, ChatGPT-Anleitung und CHANGELOG aktualisiert (6.4)
+f68e199 Phase 5: CI-Workflow und tests/run-all.sh mit Syntax, allen Tests, Secret-Scan und VERSION-Prüfung (6.4)
+5a68cf9 Phase 5: Kopfkommentare mit Zweck, Abhängigkeiten und Ladereihenfolge (6.3)
+44a41af Phase 5: stille catch-Blöcke mit Grund kommentiert (6.3)
+f75fbde Phase 5: Steuer-, Freibetrags-, Standard- und Timer-Werte als benannte Konstanten (6.3)
+b4d35f3 Phase 5: toten CSV-Pfad aus features.js entfernt (S-06, S-30, B-29) (6.3)
+694ab06 Phase 5: theme() und bars() aus app.js entfernt, boost.js ersetzt beide (6.3)
+874c3ce Phase 5: toten Prognose-Code in app.js entfernt (plan, pcalc, Aufruf in render) (6.3)
+15bcb74 Phase 5: Cache-Header für Icons und Splash (7 Tage) und must-revalidate für Code (6.2)
+3d412a8 Phase 5: Skripte mit defer, preconnect zu jsDelivr und Supabase (6.2)
+ee3d0a0 Phase 5: Messskript zählt auch document.addEventListener und document.querySelectorAll
+98f7b51 Phase 5: Diagramm-Hinweis entfernt nur das eigene Element statt querySelectorAll bei jedem pointermove (6.1)
+c542df5 Phase 5: Monatsdurchschnitt avg() in einem Durchlauf statt je Monat filtern
+6eee2c7 Phase 5: Extrem-Fixture gibt beim direkten Aufruf nur JSON aus
+605e7a6 Phase 5: Messskript tests/perf/measure.cjs für Laufzeiten mit der Extrem-Fixture (6.1)
+0527d6b Phase 4: Bericht Abschnitt 10 (Befunde U-01 bis U-48, Kontrast, Vorher/Nachher)
+cbee597 Phase 4: Matrix-Bilder nach den Korrekturen (bericht/screens/nachher)
+e46ccc5 Phase 4: leeres Badge ausblenden, Datei-Auswahl im App-Stil
+0ccb134 Phase 4: UI-Matrix-Werkzeug tests/ui (Screenshots, Audit, Filter)
+0dfe08f Phase 4: Kopfzeile ohne Umbruch, anklickbare Abschnittsköpfe und Eingaben 44 px
+5fee7ff Phase 4: Kategorie-Farben nur als Marker, Text in Textfarbe
+ce3d35d Phase 4: Eingabefelder mindestens 16 px (kein Zoom in iOS)
+e2d3e7a Phase 4: Diagramme mit role=img und Beschreibung
+98e052b Phase 4: Bewegung: Reduced Motion für SVG-Pulse, Live-Punkt nur bei Sync
+41fe618 Phase 4: Test für englische Begriffe prüft ganze Wörter
+ff05a9d Phase 4: englische Reste und PWA-Manifest
+64ad3f3 Phase 4: Barrierefreiheit (Rollen, Namen, Labels, Dialog-Fokus)
+4d65904 Phase 4: Touch-Ziele auf mindestens 44 px
+533438d Phase 4: Prognose ohne horizontalen Überlauf bei 375 px
+e1de209 Phase 4: Akzent-Textfarben auf Textton (AA) umstellen
+aafe653 Phase 4: Kontrast-Tokens nach WCAG AA (Hell und Dunkel)
+70dfa5b Phase 3: Bericht mit Abschnitt 3a, Befunden B-01 bis B-29 und Änderungsliste
+93d11b7 Phase 3: Tests für passives Einkommen, Notgroschen und Meilenstein; Harness-Stub für style.setProperty
+3f54188 Phase 3: Test für Verlaufs-Cache (abgelaufen wird neu geholt, frisch nicht)
+9356d78 Phase 3: Test für abgelaufene Sitzung im Sync
+e13f69e Phase 3: Tests für Parser, CSV-Import mit Rückgängig, Sparplan, Vorschau, Feed, Sankey, Job-Modell, Auto-Sicherungen und CSV-Parser-Dubletten
+5473286 Phase 3: Historie zeigt je Monat einen Eintrag, Bearbeiten übernimmt keinen leeren Tag oder ungültigen Monat
+4d976ce Phase 3: Fuck-Off-Zahl ohne Division durch 0, Runway-Stufe ohne Zeitangabe bei Ziel 0
+e24c6bc Phase 3: Sync schützt Cloud und lokale Daten vor stillem Überschreiben
+e9f3c3f Phase 3: kaputten lokalen Stand (fr_s) vor dem Start sichern
+429de13 Phase 3: CoinGecko-Marktdaten validieren, Coin-IDs kodieren, Mini-Verlauf ohne NaN
+785af24 Phase 3: Haltefrist kalendarisch (mehr als ein Jahr), Anzeige nennt das späteste Ende
+0212afa Phase 3: Prognose, Entnahme und Fuck-Off-Rechner gegen unabhängige Referenz auf den Cent geprüft
+02c9c7b Phase 3: Monat übernehmen setzt den Tag 29 bis 31 auf den letzten Tag des Zielmonats
+ecae92f Phase 3: Sparquote zeigt '–' ohne Einnahmen, Kennzahlen per Test über alle Ansichten abgeglichen
+7701b0a Phase 3: Beträge und Prozente zeigen bei ungültigen Werten '–', kein Minus-Null, doppeltes Vorzeichen bei Erstattungen behoben
+83816a9 Phase 3: Kalendertage in Ortszeit statt UTC (S-31)
+3213d2b Phase 3: Test-Harness lädt die echte App per vm mit DOM-Stubs, Ansichten-Smoke-Test
+abc4c6c Phase 1: Endkontroll-Bericht mit Inventar, Prüfprotokoll und Befunden
+ef0ca9e Phase 1: Testdaten (Fixtures) für klein, leer, Grenzfälle und Extremfall
+707cff1 Phase 2: Schema-Härtungsvorschlag abgelegt (nicht ausgeführt)
+3af32d3 Phase 2: CSV-Import prüft Kalenderdaten und meldet gekürzte Dateien
+8bbab07 Phase 2: PIN mit Salt und PBKDF2 hashen, Fehlversuche dauerhaft bremsen
+19ecab5 Phase 2: Sicherheitsheader und SRI für Supabase-Skript
+1454d01 Phase 2: XSS-Ausgabe über echtes HTML-Escaping absichern
+```
+
+Der Bericht-Commit selbst ist in der Liste nicht enthalten.
+
+### 13.4 Nicht geprüft
+
+- **Live-Supabase:** Policies, Advisors, `user_state`-RLS (S-25). Kein Zugriff, wie vorgegeben.
+- **Vercel:** Header und Cache-Regeln im Live-System, Deployment (S-34, P5-06).
+- **iPhone und Safari:** Zoom, Safe Areas, Service-Worker-Update, Splash-Bilder. Geprüft nur Chrome headless auf dem Mac.
+- **Kernabläufe per Klick:** Buchung nur über eine Probe (`addTx`). Backup-Export und -Import, PIN-Eingabe, CSV mit Rückgängig, Prognose-Eingaben und Sync-Szenarien wurden nicht im Browser durchgeklickt.
+- **Blur visuell:** Zeiten gemessen, Darstellung nicht geprüft.
+- **Playwright:** nicht verwendet, nicht installiert.
+- **Tastatur und Screenreader** (Phase 4): nicht praktisch geprüft.
+- **Steuerrecht 2026, PBKDF2-Dauer auf älteren Geräten** (Phase 2 und 3): nicht gegen aktuelle Quellen bzw. Geräte geprüft.
+- **GitHub-Action:** nur lokal simuliert, kein Push, kein Lauf auf GitHub.
+- **Abnahme nach Plan Abschnitt 8:** Die Gesamtabnahme durch Claude steht aus. Der Executer hat die Nachweise geliefert.
+- **Design-Hook:** meldete erneut `dark-glow` (U-34). Nicht geändert, Entscheidung Henne.
