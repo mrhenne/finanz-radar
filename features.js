@@ -119,9 +119,10 @@
   const pinConfig=()=>{ try { return JSON.parse(localStorage.getItem(PIN_KEY)||'null'); } catch(e) { return null; } };
   /* v2: PBKDF2-SHA-256 mit zufälligem Salt. Alte Einträge ohne v (ungesalzenes SHA-256) werden beim nächsten Entsperren umgestellt. */
   const PIN_ITER=310000;
+  const PIN_BASE_WAIT_MS=30000, PIN_MAX_WAIT_MS=900000;
   const hexOf=buf=>Array.from(new Uint8Array(buf)).map(v=>v.toString(16).padStart(2,'0')).join('');
   const pinStore=c=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(c))}catch(e){}};
-  const pinBackoffMs=blocks=>Math.min(30000*Math.pow(2,Math.max(0,blocks-1)),900000);
+  const pinBackoffMs=blocks=>Math.min(PIN_BASE_WAIT_MS*Math.pow(2,Math.max(0,blocks-1)),PIN_MAX_WAIT_MS);
   async function pinKdf(pin,saltHex,iter){
     const key=await W.crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
     const salt=new Uint8Array(saltHex.match(/../g).map(x=>parseInt(x,16)));
@@ -176,7 +177,7 @@
 /* ---------- 7. Fuck-Off-Rechner: Ansparen bis zur Zahl, dann Entnahme (Szenarien, Steuer) ---------- */
 let fxEdit=false,lastT=tab;
 const LQ=['cash','etf','aktie','crypto','gold'];
-const fxP=()=>{const f=S.f,a=avg(),exp=parseFloat(f.exp)||fixk();return{r:(f.r!=null&&f.r!=='')?+f.r:6,inf:f.inf!=null?+f.inf:2,wm:+f.wm||exp,wy:+f.wy||30,wi:f.wi!==false,kt:f.kt!=null?+f.kt:26.375,pb:f.pb!=null?+f.pb:1000,sr:Math.max(0,a.s),v0:Math.max(0,nn()),F:fireF(),b0:S.as.filter(x=>LQ.includes(x.k)).reduce((s,x)=>s+((x.k==='cash'||!x.c)?val(x):x.c),0)}};
+const fxP=()=>{const f=S.f,a=avg(),exp=parseFloat(f.exp)||fixk();return{r:(f.r!=null&&f.r!=='')?+f.r:6,inf:f.inf!=null?+f.inf:2,wm:+f.wm||exp,wy:+f.wy||30,wi:f.wi!==false,kt:f.kt!=null?+f.kt:TAX_KAP_PCT,pb:f.pb!=null?+f.pb:FREIBETRAG_KAP,sr:Math.max(0,a.s),v0:Math.max(0,nn()),F:fireF(),b0:S.as.filter(x=>LQ.includes(x.k)).reduce((s,x)=>s+((x.k==='cash'||!x.c)?val(x):x.c),0)}};
 function fxSim(rg,P){const m=Math.pow(1+rg/100,1/12)-1,rows=[[0,P.v0]];let v=P.v0,b=Math.min(P.b0,P.v0),k=0,tax=0,net=0,gross=0,dep=null;
 while(v<P.F&&k<720){v=v*(1+m)+P.sr;b+=P.sr;k++;if(k%12===0)rows.push([k/12,v])}
 const ya=k/12,ok=v>=P.F,vs=v;if(k%12)rows.push([ya,v]);
@@ -194,7 +195,7 @@ const msg=!N.ok?`<div class="neg p">Die Zielzahl ${eur(P.F)} wird in 60 Jahren n
 return P_('[Entnahme] Fuck-Off-Rechner',`<div class="g2">${kp(N.ok?fm(N.ya)+' J.':'–','bis Fuck-Off-Zahl (ca. '+(N.ok?y0+Math.ceil(N.ya):'–')+')')}${kp(eur(N.vs),'Kapital bei Start · real '+eur(real(N.vs)))}${kp(eur(N.net/(12*yrsW)),'Ø Entnahme netto / Monat','pos')}${kp(eur(N.tax),'Steuer in der Entnahme')}${kp(N.dep?'leer in Jahr '+fm(N.ya+N.dep):'reicht ✓','Kapital',N.dep?'neg':'pos')}${kp(eur(N.rest),'Restkapital nach '+P.wy+' J.')}${kp(eur(mx),'max. nachhaltige Entnahme/Mon. (brutto)')}${kp(fm(rate)+' %','Entnahmerate zu Beginn',rate>4?'neg':'pos')}</div>`+msg+lc(rows,['Normal','Pessimistisch','Optimistisch'],['var(--or)','var(--mut)','var(--mut)'],{dash:1})+`<div class="mut" style="margin-top:6px">Vermögen über die Zeit: erst Ansparen (Ø Sparleistung ${eur(P.sr)}/Mon.), ab Erreichen der Zielzahl Entnahme. Szenarien ±${sp} % Rendite. Tippen/Ziehen zeigt Jahr und Werte.</div>`+`<div class="hatch"></div>`+`<table style="border-collapse:collapse;width:100%;font-size:11px"><tr><th align="left">Szenario</th><th align="right">Rendite</th><th align="right">Start nach</th><th align="right">Rest</th></tr>${[['Pessimistisch',P.r-sp,Pe],['Normal',P.r,N],['Optimistisch',P.r+sp,O]].map(([n,r,x])=>`<tr><td style="padding:6px 4px;border-bottom:1px solid var(--ln)">${n}</td><td align="right" style="border-bottom:1px solid var(--ln)">${fm(r)} %</td><td align="right" style="border-bottom:1px solid var(--ln)">${x.ok?fm(x.ya)+' J.':'–'}</td><td align="right" style="border-bottom:1px solid var(--ln)" class="${x.dep?'neg':''}">${x.dep?'leer J. '+fm(x.ya+x.dep):eur(x.rest)}</td></tr>`).join('')}</table>`+`<div class="hatch"></div>`+edit+`<div class="note">Vereinfachung: Rendite nach Kosten, Steuer nur auf den Gewinnanteil jeder Entnahme (Pauschbetrag ${eur(P.pb)}/Jahr), keine Vorabpauschale/Kirchensteuer. Keine Anlageberatung.</div>`)}
 const P_=P;
 W.fxToggle=v=>{fxEdit=v;render()};
-W.setFx=()=>{const g=i=>parseFloat(String($(i).value).replace(',','.')),f=S.f;f.exp=$('fe').value;f.wr=g('fw')||4;f.r=isFinite(g('fr'))?g('fr'):6;f.wm=g('fm')||0;f.wy=Math.max(1,Math.min(80,g('fy')||30));f.inf=isFinite(g('fi'))?g('fi'):2;f.fireTarget=g('ftarget')>0?g('ftarget'):'';f.wi=$('fx_wi').checked;fxEdit=false;save();render()};
+W.setFx=()=>{const g=i=>parseFloat(String($(i).value).replace(',','.')),f=S.f;f.exp=$('fe').value;f.wr=g('fw')||DEFAULT_WR_PCT;f.r=isFinite(g('fr'))?g('fr'):6;f.wm=g('fm')||0;f.wy=Math.max(1,Math.min(80,g('fy')||30));f.inf=isFinite(g('fi'))?g('fi'):2;f.fireTarget=g('ftarget')>0?g('ftarget'):'';f.wi=$('fx_wi').checked;fxEdit=false;save();render()};
 const _fire2=V.fire;V.fire=()=>_fire2().replace(/<div class="hatch"><\/div><div class="row"><div><label>Ausgaben\/Mon\. €<\/label>[\s\S]*?onclick="setF\(\)">Übernehmen<\/button>/,'')+fxHTML();
 const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab}_render2()};
 
@@ -225,7 +226,7 @@ const _render2=render;W.render=function(){if(tab!==lastT){fxEdit=false;lastT=tab
 
   function prDefaults() {
     if (PR.v) return;
-    PR.v = { s0: Math.max(0, Math.round(nn())), sm: Math.max(0, Math.round(avg().s)) || 300, dyn: 0, y: 20, r: 7, ter: 0.2, sp: 2, inf: 2, tr: 26.375, fb: 1000, wm: 1500, wy: 25 };
+    PR.v = { s0: Math.max(0, Math.round(nn())), sm: Math.max(0, Math.round(avg().s)) || 300, dyn: 0, y: 20, r: 7, ter: 0.2, sp: 2, inf: 2, tr: TAX_KAP_PCT, fb: FREIBETRAG_KAP, wm: 1500, wy: 25 };
   }
   function prHTML() {
     prDefaults();

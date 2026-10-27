@@ -2,6 +2,8 @@
 (function () {
   'use strict';
   const W = window;
+  /* Zeitabstände und Größen der Tagessicherung und der Auto-Sperre (Phase 5: benannt, Werte unverändert). */
+  const AUTOSNAP_MAX_CHARS = 900000, AUTOSNAP_EVERY_MS = 300000, AUTOSNAP_FIRST_MS = 20000, AUTOLOCK_CHECK_MS = 15000;
   const card = (t, h) => P('[' + t + ']', h);
   const num = v => { const x = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; };
   const pad = n => String(n).padStart(2, '0');
@@ -195,6 +197,8 @@
 
   /* ---------- 7. CSV-Import ---------- */
   const IMP = { rows: [], info: '' };
+// Zeilenlimit des CSV-Imports; die Vorschau meldet, wenn mehr Zeilen in der Datei stehen.
+const CSV_MAX_ROWS = 1500;
   function parseCSV(text, d) {
     const rows = []; let row = [], cur = '', q = false;
     for (let i = 0; i < text.length; i++) {
@@ -247,7 +251,7 @@
     }
     if (!cols) throw new Error('Keine Spalten für Datum und Betrag gefunden. Erwartet werden z. B. „Buchungstag“ und „Betrag“ in der Kopfzeile.');
     const rows = []; let skipped = 0;
-    all.slice(hi + 1, hi + 1 + 1500).forEach(r => {
+    all.slice(hi + 1, hi + 1 + CSV_MAX_ROWS).forEach(r => {
       const d = parseDate(r[cols.d]); let a = cols.a >= 0 ? parseAmount(r[cols.a]) : ((parseAmount(r[cols.h]) || 0) - (parseAmount(r[cols.s]) || 0));
       if (!d || a == null || a === 0) { skipped++; return; }
       const n = clean(cols.t.map(k => (r[k] || '').trim()).filter(Boolean).join(' · ')).replace(/\s+/g, ' ').slice(0, 70), sign = a > 0 ? 1 : -1;
@@ -256,7 +260,7 @@
       rows.push({ d, a: Math.abs(a), sign, n, c, dup, inc: !dup });
     });
     const rest = Math.max(0, all.length - hi - 1501);
-    IMP.rows = rows; IMP.info = rows.length + ' Zeilen erkannt' + (skipped ? ', ' + skipped + ' übersprungen' : '') + '.' + (rest ? ' Nur die ersten 1500 Zeilen wurden gelesen, ' + rest + ' weitere nicht.' : '');
+    IMP.rows = rows; IMP.info = rows.length + ' Zeilen erkannt' + (skipped ? ', ' + skipped + ' übersprungen' : '') + '.' + (rest ? ' Nur die ersten ' + CSV_MAX_ROWS + ' Zeilen wurden gelesen, ' + rest + ' weitere nicht.' : '');
     return rows.length;
   }
   W.impUndo = () => {
@@ -314,7 +318,7 @@
     lastSnap = Date.now();
     try {
       if (!S.tx.length && !S.as.length) return;
-      const d = JSON.stringify(S); if (d.length > 900000) return;
+      const d = JSON.stringify(S); if (d.length > AUTOSNAP_MAX_CHARS) return;
       const a = bkGet(), day = ymdOf(), last = a[a.length - 1], rec = { t: new Date().toISOString(), n: S.tx.length, u: S.uid || '', d };
       if (last && !last.k && ymdOf(new Date(last.t)) === day) a[a.length - 1] = rec; else a.push(rec); // Sicherungen mit k (Cloud-Abgleich) werden nie ersetzt
       while (a.length > 5) a.shift();
@@ -351,7 +355,7 @@
     const s = secGet(); if (!(s.idle > 0) || document.hidden) return;
     let pin = null; try { pin = localStorage.getItem('fr_pin'); } catch (e) { }
     if (pin && !document.querySelector('.lk') && Date.now() - lastAct >= s.idle * 60000 && W.lockNow) { W.lockNow(); lastAct = Date.now(); }
-  }, 15000);
+  }, AUTOLOCK_CHECK_MS);
 
   /* ---------- Einbindung ---------- */
   const _render = W.render;
@@ -359,9 +363,9 @@
     _render();
     buildFab(); buildCover();
     const fab = document.getElementById('qfab'); if (fab) fab.style.display = $('tb') && $('tb').innerHTML ? '' : 'none';
-    if (Date.now() - lastSnap > 300000) autoSnap();
+    if (Date.now() - lastSnap > AUTOSNAP_EVERY_MS) autoSnap();
   };
-  setTimeout(autoSnap, 20000);
+  setTimeout(autoSnap, AUTOSNAP_FIRST_MS);
   W.__fr_extras = { suggestCat, importText, IMP };
   render();
 })();
