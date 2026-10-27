@@ -64,6 +64,16 @@ Kontrast nach WCAG AA, Touch-Ziele 44 px, Barrierefreiheit (Rollen, Namen, Fokus
 - `cbee597` Matrix-Bilder nach den Korrekturen (bericht/screens/nachher)
 - `0527d6b` Bericht Abschnitt 10 (Befunde U-01 bis U-48, Kontrast, Vorher/Nachher)
 
+Nachabnahme im Browser durch Claude (27.10.2026), sechs Restpunkte:
+
+- `8cce667` Kategorie-Legende: nur der Marker ■ in Farbe, Name in Textfarbe (Mix, Verteilung, Portfolio)
+- `220e965` Eingabefelder mit programmatischem Namen (Datum, Suche, Steuer, Krypto, Notgroschen und weitere)
+- `db53b04` Krypto-Kurseingabe auf 16 px (kein Zoom in iOS)
+- `b8ed9d2` Trefferflächen Kopfzeile (◉, ☀), Abschnittskopf „[Vorschau]“ und Chip auf mindestens 44 px
+- `b86393a` Vorschau-Tabelle bei 375 bis 430 px ohne inneren Scroll (ab 431 px unverändert)
+- `55ed500` Tests: Namen, Inline-Farben und Schrift gerendert und statisch geprüft (150 auf 157 Tests)
+- `7204417` Schema-Vorschlag: REVOKE TRUNCATE, REFERENCES, TRIGGER für authenticated (nicht ausgeführt)
+
 ### Phase 5: Code, Performance, Prozesse
 
 - **Performance (gemessen, Extrem-Fixture mit 5.000 Buchungen, Node mit DOM-Stub):** Start 114 ms → 26 ms, Fuck-Off-Ansicht 52 ms → 6 ms, Home 25 ms → 1,3 ms, Prognose 8 ms → 0,2 ms. Ursache: `avg()` filterte für jeden Monat alle Buchungen. Browser-Werte im Bericht, Abschnitt 11.
@@ -89,4 +99,4 @@ Kontrast nach WCAG AA, Touch-Ziele 44 px, Barrierefreiheit (Rollen, Namen, Fokus
 - `5a68cf9` Kopfkommentare mit Zweck, Abhängigkeiten und Ladereihenfolge (6.3)
 - `f68e199` CI-Workflow und tests/run-all.sh mit Syntax, allen Tests, Secret-Scan und VERSION-Prüfung (6.4)
 
-Ungeprüft im Live-System: Cache-Header bei Vercel, Supabase-Policies (Advisors), Verhalten auf einem iPhone. Details im Bericht, Abschnitt 13.
+Ungeprüft im Live-System: Cache-Header bei Vercel, RLS von `user_state`, Verhalten auf einem iPhone. Supabase-Advisors und Policies von `finance_state` sind am 27.10.2026 geprüft (Bericht, Abschnitt 3.8). Details im Bericht, Abschnitt 13.
