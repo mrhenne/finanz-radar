@@ -23,4 +23,5 @@ function makeExtreme() {
   return { tx, as, goals: [], rec: [], debts: [], hist, sales: [], ui: { c: {}, o: {} }, th: 'light', f: { wr: 4, exp: '2500', r: 6 } };
 }
 module.exports = { makeExtreme };
-if (require.main === module) console.log('bytes (JSON):', JSON.stringify(makeExtreme()).length, 'tx:', makeExtreme().tx.length);
+// Direkter Aufruf gibt nur das JSON aus (tests/ui/shoot.cjs liest genau diese Ausgabe).
+if (require.main === module) process.stdout.write(JSON.stringify(makeExtreme()));
