@@ -418,7 +418,9 @@ Jede Teilziffer hat einen Status: **behoben**, **gemeldet** oder **unkritisch**.
 - **Geprüft in `schema.sql`:** `enable row level security` ✓, `revoke all … from anon, PUBLIC` ✓, `grant select, insert, update, delete … to authenticated` ✓, vier Policies mit `(select auth.uid()) = user_id` ✓ (`using` und `with check`).
 - **Fehlt (S-24):** Größenlimit für `data`, Vorbelegung `user_id` mit `auth.uid()`, optionaler `updated_at`-Trigger (mit Warnung: die App nutzt Client-Zeitstempel für Last-Write-Wins).
 - **Vorschlag:** `vorschlaege/schema-haertung.sql` (nicht ausgeführt). Commit `707cff1`.
-- **Nicht geprüft (S-25):** Live-Policies, Advisors, `user_state`-RLS. Das ist Aufgabe von Claude (Abschnitt 8).
+- **Live-Prüfung durch Claude am 27.10.2026:** Supabase-Advisor: einzige Warnung „Leaked Password Protection disabled“ (Dashboard-Einstellung, Henne). Performance-Advisor ohne Befund. RLS-Policies von `finance_state` bestätigt, `anon` ohne Rechte.
+- **Neu (Nachabnahme):** `authenticated` hat auf `finance_state` die Rechte TRUNCATE, REFERENCES und TRIGGER. RLS greift bei TRUNCATE nicht, und die Data API bietet TRUNCATE nicht an. Risiko daher niedrig, Entziehen ist Best Practice. Der Vorschlag enthält dafür `revoke truncate, references, trigger on table public.finance_state from authenticated;` (Commit `7204417`, nicht ausgeführt). Gilt analog für `user_state` (nur im Kommentar erwähnt).
+- **Teilweise geprüft (S-25):** Advisors und Policies von `finance_state` am 27.10.2026 (siehe oben). Nicht geprüft: `user_state`-RLS.
 
 ### 3.9 Öffentliches Repo: gemeldet
 
@@ -894,6 +896,36 @@ Diagrammfarben (SVG-Text) und Blur-Zustand: geprüft, soweit statisch möglich (
 
 Phase 4a ist umgesetzt: Kontrast (AA für Text, 3:1 für Bedienelemente, zwei dokumentierte Ausnahmen), Layout ohne Überlauf bei 375 px, Touch-Ziele, Barrierefreiheit (Tabs, Namen, Dialoge, Fokus, Labels, Diagramme), reduzierte Bewegung, Texte, PWA-Manifest und die sichtbaren Kleinigkeiten aus der Matrix. Die Tests sind 142 von 142 grün. Offene Punkte stehen in 10.5 und 10.6.
 
+### 10.9 Nachabnahme durch Claude (27.10.2026)
+
+Claude hat die UI im Browser abgenommen. Die Messwerte der Abnahme stammen von dort. Diese Ausführung hat sie nicht neu gemessen; die Matrix unten ist ein eigener Lauf.
+
+- **Abnahme (Claude):** 13 Ansichten × Hell/Dunkel × Breiten 375, 390, 768 und 1280 px: kein horizontaler Überlauf. Dialoge: Fokusfalle, Esc und Rollen in Ordnung.
+- **Eigener Lauf dieser Ausführung:** Matrix `tests/ui/shoot.cjs` mit Fixture „klein“, Breiten 375, 390, 768 und 1280 px, Hell und Dunkel, die 6 Tabs und die Sheets Schnellerfassung, CSV-Import und PIN (zusammen 72 Bilder). Ergebnis: 0 Überläufe, 0 Konsolenmeldungen. Der Audit misst Boxen; die ◉-Box bleibt 28 × 25 px, die Trefferfläche ist 51 × 52 px (Probe, siehe Restpunkt 4).
+
+Restpunkte aus der Abnahme und ihr Fix:
+
+| # | Befund vor dem Fix | Fix | Commit |
+|---|---|---|---|
+| 1 | Kategorie-Text in Cashflow (Mix), Vermögen (Verteilung) und Krypto mit Inline-Farbe auf dem ganzen Eintrag (z. B. „■ Wohnen“ in `#ff5a1f`, 3,12:1 hell). Ein „■ Fixture Coin“ fand sich im Quelltext nicht; die Stellen mit Farbe auf Text liegen alle in der Kategorie-Legende. | Nur der Marker ■ ist farbig und `aria-hidden`, der Name steht in `--ink`. Gilt für Mix, Verteilung und Portfolio (app.js, features.js). | `8cce667` |
+| 2 | Eingabefelder ohne Namen: Datum der Schnellbuchung (`#td`), Suche (`#fq`, nur Platzhalter), Vermögen, Portfolio, Krypto, Steuer (3 Felder). Der Quelltext-Scan fand zusätzlich Notgroschen, Trade-Preis, Bearbeiten-Formular, FIRE- und Fuck-Off-Annahmen und das Login-E-Mail-Feld. Die alte Prüfung hatte Felder mit `${…}` übersprungen. | `aria-label` mit dem sichtbaren Text. Sichtbarer Text unverändert. | `220e965` |
+| 3 | Krypto-Kurseingabe 14 px (Zoom in iOS) | 16 px | `db53b04` |
+| 4 | Trefferflächen (`elementFromPoint`, Chrome, Cashflow): ◉ 43 px breit, Abschnittskopf „[Vorschau]“ 41 px hoch, Chip 44 px hoch (Grenze). | ◉ 51 × 52 px, ☀ 49 × 52 px, Abschnittskopf 47 px hoch, Chip 46 px hoch. Boxen und Optik unverändert. | `b8ed9d2` |
+| 5 | Vorschau-Tabelle 362 px breit, Container 325 px (375 px) bzw. 340 px (390 px): Spalte „Cash“ abgeschnitten, innerer Scroll. | Bis 430 px: Schrift 10 px, Innenabstand 4 px links und rechts, Kopf-Laufweite 0,04 em. Passt bei 375, 390 und 430 px ohne Scroll. Ab 431 px unverändert. Der Verlauf nutzt dieselbe Tabelle und ändert sich mit. | `b86393a` |
+| 6 | `authenticated` hat auf `finance_state` TRUNCATE, REFERENCES und TRIGGER. | `revoke …` als Vorschlag, nicht ausgeführt (Abschnitt 3.8). | `7204417` |
+
+Tests: 150 vorher, 157 nachher (`55ed500`). Neu: Namen und Inline-Farben in allen gerenderten Ansichten und in den Zuständen Bearbeiten und Nachkauf (`tests/ui-render.test.cjs`). Verschärft: Eingabefelder ohne Ausnahme, Schrift 16 px, Trefferflächen, Marker-Muster (`tests/ui-static.test.cjs`). Gegenprobe: auf dem Stand `b8ce6c3` schlagen 8 dieser Prüfungen fehl.
+
+Neue Befunde aus der Nachabnahme:
+
+- **N-01 (Entscheidung für Henne):** Die Ausgaben-Palette `PAL` (app.js) nutzt `#222` als zweiten Farbton. Im Dunkel-Modus liegt das bei rund 1,1:1 gegen den Hintergrund: Der Marker ist dort kaum sichtbar. Der Name ist jetzt lesbar. Im Bild nicht geprüft (die Matrix zeigt den Mix-Abschnitt nicht). Palette nicht geändert, weil das eine Designfrage ist. Das Kreisdiagramm im Mix nutzt dieselbe Farbe, das Segment ist im Dunkel-Modus ebenso kaum sichtbar.
+- **N-02 (Grenze):** Monatswerte mit sechs Ziffern (z. B. 912.346 €) lassen die Vorschau bei 375 px um rund 6 px breiter werden. Dann scrollt sie innen. Bei fünfstelligen Werten passt sie.
+
+Abweichungen und Nicht geprüft:
+
+- **Trailer:** Der Auftrag verlangte `Co-Authored-By: Claude Sonnet 5.5`. Die Commits tragen `Claude Haiku 5.5`, wie in 10.7.
+- **Nicht geprüft in dieser Ausführung:** Die Messwerte der Abnahme (13 Ansichten, Dialoge) und die Dialoge selbst. Die Mix-Legende im Dunkel-Modus (N-01). iPhone und Safari (wie 10.6). Kernabläufe im Browser. Kein Push, kein Deploy, kein Build, keine Abhängigkeit.
+
 ## 11. Phase 5: Messung und Performance (6.1)
 
 ### 11.1 Verfahren
@@ -1206,13 +1238,13 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 
 | # | Punkt | Quelle | Nutzen | Aufwand | Empfehlung |
 |---|---|---|---|---|---|
-| 1 | Supabase live prüfen (Advisors, Policies, `user_state`-RLS) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
+| 1 | Supabase live: `user_state`-RLS prüfen (Advisors und `finance_state`-Policies am 27.10.2026 erledigt, 3.8) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
 | 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | eigener Auftrag, je Ansicht |
 | 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | Entscheidung |
 | 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | Entscheidung |
 | 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | Entscheidung (Datenschutz abwägen) |
 | 6 | Neuversuch bei Upload-Fehlern (Timer mit Obergrenze) | B-24, 5.14 | mittel | klein | empfohlen |
-| 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden | S-24, 5.7, `vorschlaege/` | mittel | klein, Live-Prüfung nötig | nach Punkt 1 |
+| 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden (REVOKE-Zeile seit 27.10.2026 im Vorschlag) | S-24, 5.7, `vorschlaege/` | mittel | klein, Testkonto nötig | nach Punkt 1 |
 | 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | Entscheidung |
 | 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | zuerst ausweisen |
 | 10 | Schulden mit Zins und Restlaufzeit | B-19, 3a.8.5, 5.12 | mittel | groß, Datenmodell | nur nach Freigabe |
@@ -1239,6 +1271,8 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 | 31 | CSV-Import als Tab oder Dialog | 10.5.9 | niedrig | mittel | Entscheidung |
 | 32 | Splash-Bilder gegen aktuelle iPhone-Tabelle | U-40, 10.5.10 | niedrig | klein | vor Veröffentlichung |
 | 33 | Badge `#bd` pulsiert dauerhaft | U-33, 10.5.7 | niedrig | klein | empfohlen |
+| 34 | „Leaked Password Protection“ im Supabase-Dashboard aktivieren (einzige Advisor-Warnung, 27.10.2026) | 3.8 | mittel | klein, Dashboard | Henne |
+| 35 | Kategorie-Palette im Dunkel-Modus: Marker `#222` kaum sichtbar (rund 1,1:1) | N-01, 10.9 | niedrig | klein | Entscheidung |
 
 ### 13.2 Restrisiken (Stand Ende Phase 5)
 
@@ -1247,7 +1281,7 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 - **Last-Write-Wins bei zwei Geräten.** Zeitstempel kommen vom Client (B-03).
 - **Backup-Import** prüft Strukturen und Limits, aber nicht Datumsfelder und Textbeträge (S-17).
 - **Service Worker:** geöffnete Tabs können kurz mit neuem SW und altem Stand arbeiten. Eine fehlende Datei bei der Installation bricht die Installation nicht ab (S-27).
-- **Supabase live** (S-25) und **Cache-Header live** (S-34) nicht geprüft.
+- **Supabase live:** `user_state`-RLS nicht geprüft; Advisors und `finance_state`-Policies am 27.10.2026 geprüft (3.8). **Cache-Header live** (S-34) nicht geprüft.
 - **Kontowechsel** verwirft ungesyncte Daten des alten Kontos (B-25).
 - **Ausschnitts-Tests:** Einige Tests lesen Funktionen per Zeichenkette aus dem Quelltext. Umbauten brechen sie, das ist gewollt, macht Änderungen aber aufwendiger.
 - **Messungen** in Node und Chrome auf dem Mac, nicht auf einem iPhone. Der Audit misst Boxen (P5-15).
