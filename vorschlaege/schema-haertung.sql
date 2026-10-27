@@ -32,3 +32,10 @@ alter table public.finance_state
 
 -- 4) Hinweis zu Funktionen im Schema public: Die Funktion oben nutzt search_path = '' und
 --    vollqualifizierte Namen. Für neue Funktionen dasselbe Muster verwenden.
+
+-- 5) Rechte der Rolle authenticated, die RLS nicht abdeckt.
+--    Live-Prüfung durch Claude am 27.10.2026: authenticated hat auf public.finance_state die Rechte
+--    TRUNCATE, REFERENCES und TRIGGER. RLS greift bei TRUNCATE nicht, und die Data API bietet TRUNCATE
+--    nicht an. Das Risiko ist daher niedrig; das Entziehen ist Best Practice.
+--    Gilt analog für public.user_state (dort nicht angefasst, nur hier erwähnt).
+revoke truncate, references, trigger on table public.finance_state from authenticated;
