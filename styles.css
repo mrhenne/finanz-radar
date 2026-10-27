@@ -53,7 +53,7 @@ svg[data-pts]{touch-action:pan-y;cursor:crosshair}.panel h2{display:flex;align-i
 
 /* Erweiterungen: Chips, Tabellen, Schnellerfassung, Verdecken, Toast */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font:inherit;font-size:11px;padding:7px 9px;border:1px solid var(--ln);background:transparent;color:var(--ink);border-radius:0;cursor:pointer;width:auto;margin:0;position:relative}.chip::after{content:"";position:absolute;inset:-7px -4px}
+.chip{font:inherit;font-size:11px;padding:7px 9px;border:1px solid var(--ln);background:transparent;color:var(--ink);border-radius:0;cursor:pointer;width:auto;margin:0;position:relative}.chip::after{content:"";position:absolute;inset:-8px -4px}
 .chip.on{border-color:var(--or);background:var(--orl);color:var(--ort)}
 .chk{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin:8px 0}
 .chk input{width:16px;height:16px;padding:0;flex:none;accent-color:var(--or)}
@@ -130,7 +130,9 @@ svg.spk{width:100%;height:18px;display:block;overflow:visible}
 @media (max-width:360px){.hero{flex-direction:column;align-items:flex-start}.hk .k.big b{font-size:24px}.tile>b{font-size:15px}}
 .pvt.cmp th,.pvt.cmp td{padding:6px 5px}
 /* Touch: anklickbare Abschnittsköpfe und Eingabefelder mindestens 44 px hoch */
-.panel h2>span[onclick]{position:relative}.panel h2>span[onclick]::after{content:"";position:absolute;inset:-15px -6px}
+.panel h2>span[onclick]{position:relative}.panel h2>span[onclick]::after{content:"";position:absolute;inset:-22px -6px}
+/* Kopfzeile: ◉ reicht nach links, ☀ nach rechts; so werden beide Trefferflächen mindestens 44 px breit, ohne sich zu überlappen */
+.top .x:not(#th)::after{inset:-14px 0 -14px -22px}#th::after{inset:-14px -20px -14px 0}
 input:not([type=checkbox]):not([type=range]),select{min-height:44px}
 /* Datei-Auswahl im Stil der Schaltflächen */
 input[type=file]::file-selector-button{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;margin-right:10px;border:1px solid var(--orb);background:var(--orb);color:#fff;border-radius:0;cursor:pointer}
