@@ -129,6 +129,8 @@ svg.spk{width:100%;height:18px;display:block;overflow:visible}
 .chip{transition:transform .12s,background .15s}.chip:active{transform:scale(.95)}
 @media (max-width:360px){.hero{flex-direction:column;align-items:flex-start}.hk .k.big b{font-size:24px}.tile>b{font-size:15px}}
 .pvt.cmp th,.pvt.cmp td{padding:6px 5px}
+/* Schmale Schirme (375 bis 430 px): Vorschau und Verlauf passen ohne inneren Scroll; ab 431 px unverändert */
+@media (max-width:430px){.pvt:not(.cmp){font-size:10px}.pvt:not(.cmp) th,.pvt:not(.cmp) td{padding:6px 4px}.pvt:not(.cmp) th{letter-spacing:.04em}}
 /* Touch: anklickbare Abschnittsköpfe und Eingabefelder mindestens 44 px hoch */
 .panel h2>span[onclick]{position:relative}.panel h2>span[onclick]::after{content:"";position:absolute;inset:-22px -6px}
 /* Kopfzeile: ◉ reicht nach links, ☀ nach rechts; so werden beide Trefferflächen mindestens 44 px breit, ohne sich zu überlappen */
