@@ -1,4 +1,6 @@
-/* Finanz-Radar Erweiterungen: Sparplan-Check, Vorschau, Monatsabschluss, Schnellerfassung, CSV-Import, Sicherheit */
+/* Finanz-Radar Erweiterungen: Sparplan-Check, Vorschau, Monatsabschluss, Schnellerfassung, CSV-Import, Sicherheit.
+   Geladen nach features.js, vor boost.js. Abhängig von app.js (S, render, save) und features.js (W.lockNow).
+   Ersetzt V.csv. Tagessicherungen in fr_bk, Datenschutz in fr_sec. Hängt sich über W.render an render(). Rendert am Ende einmal. */
 (function () {
   'use strict';
   const W = window;

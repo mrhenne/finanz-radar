@@ -1,3 +1,8 @@
+/* app.js: Kern der App. Zustand S, Speichern (fr_s), Synchronisierung mit Supabase (Upload, Abruf, Sicherungen),
+   Anmeldung, Ansichten V.* (Home, Cashflow, Vermögen, FIRE, Mehr …), Diagramme (SVG), Kurse (CoinGecko).
+   Abhängigkeiten: config.js (window.FR_CONFIG), window.supabase (Skript mit defer, vor dieser Datei).
+   Ladereihenfolge: config.js, app.js (rendert am Ende einmal), features.js, extras.js, boost.js.
+   Spätere Dateien ersetzen Funktionen über window (W.render, W.theme, W.bars, W.cu). */
 /* Fachliche Konstanten. Werte unverändert; Änderung nur zusammen mit den Tests. */
 const SYNC_DELAY_MS = 1500, TAX_KAP_PCT = 26.375, FREIBETRAG_KAP = 1000, FREIGRENZE_SPEKU = 1000, ETF_STEUERANTEIL = 0.7, DEFAULT_WR_PCT = 4;
 const ANIM=matchMedia('(prefers-reduced-motion: reduce)').matches?'':'<animate attributeName="r" values="3;6;3" dur="1.8s" repeatCount="indefinite"/>';

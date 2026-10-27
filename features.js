@@ -1,4 +1,6 @@
-/* Finanz-Radar Erweiterungen. Geladen nach app.js. */
+/* Finanz-Radar Erweiterungen: Runway-Stufen, Prognose, Fuck-Off-Rechner, PIN-Sperre, Sicherheits-Ansicht, Monatsautomatik.
+   Geladen nach app.js, vor extras.js und boost.js. Abhängig von app.js (S, $, N, avg, nn, render, save).
+   Ersetzt V.plan durch prHTML und hängt sich über W.render an render(). Rendert am Ende einmal. */
 (function () {
   'use strict';
   const W = window, $ = id => document.getElementById(id);

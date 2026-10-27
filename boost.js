@@ -1,5 +1,6 @@
 /* Finanz-Radar Boost: Fokus-Home, Job-Szenarien, Passives Einkommen, Dark Mode, Mikro-Feedback, PWA.
-   Geladen nach extras.js. Ändert keine bestehenden Daten, legt nur neue Felder an (S.job, S.pi, S.thv, S.msSeen, S.ui.hf). */
+   Letzte App-Datei, geladen nach extras.js. Ändert keine bestehenden Daten, legt nur neue Felder an (S.job, S.pi, S.thv, S.msSeen, S.ui.hf).
+   Abhängig von app.js, features.js, extras.js. Ersetzt W.applyTh (Wrapper), W.theme, W.bars, W.cu. Registriert sw.js und rendert am Ende einmal. */
 (function () {
   'use strict';
   const W = window, $ = id => document.getElementById(id);
