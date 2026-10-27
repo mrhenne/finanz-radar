@@ -47,7 +47,7 @@ Die App unterstützt Registrierung, Anmeldung per E-Mail und Passwort, Login-Lin
 
 Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Hochgeladen wird erst, nachdem der Cloud-Stand gelesen wurde. Beim Anmelden vergleicht die App lokale und Cloud-Zeitstempel; der neuere Stand wird verwendet (der letzte Upload gewinnt). Vor jedem Überschreiben einer Fassung legt die App eine Sicherung unter **Mehr → Datenschutz → Sicherungen** ab: „vor Cloud-Abgleich“ für ungesicherte lokale Änderungen, „Cloud-Stand vor Überschreiben“ für die überschriebene Cloud-Fassung. Scheitert ein Upload, wird er bei der nächsten Änderung, nach Rückkehr der Verbindung oder manuell erneut versucht; es gibt keinen automatischen Wiederholungs-Timer.
 
-Beim Wechsel zu einem anderen Konto werden lokale App-Daten des vorherigen Kontos vor dem Cloud-Abgleich verworfen. Das ist bewusst so entschieden und im Bericht als Entscheidung für Henne offen geführt.
+Beim Wechsel zu einem anderen Konto prüft die App, ob auf dem Gerät ungesicherte Änderungen des vorherigen Kontos liegen. Wenn ja, fragt sie: **als Datei sichern und wechseln**, **verwerfen und wechseln** oder **abbrechen** (dann wird das neue Konto abgemeldet und der bisherige Stand bleibt unverändert). Ohne ungesicherte Änderungen wechselt die App direkt. Daten des vorherigen Kontos erscheinen nie im neuen Konto und werden nie in dessen Cloud hochgeladen.
 
 ### Vorhandene ältere Cloud-Daten
 
@@ -126,7 +126,7 @@ Weitere Werkzeuge:
 
 ## Bekannte Grenzen
 
-Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Last-Write-Wins bei zwei Geräten, Kontowechsel verwirft ungesyncte Daten des alten Kontos, Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung und Kirchensteuer.
+Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Last-Write-Wins bei zwei Geräten, Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung und Kirchensteuer.
 
 ## Fachliche Regeln (bitte bei Änderungen beibehalten)
 

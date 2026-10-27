@@ -80,6 +80,7 @@ class StubEl {
   querySelectorAll() { return []; }
   closest() { return null; }
   focus() { this._doc.activeElement = this; }
+  click() {}
   blur() {}
   select() {}
   getBoundingClientRect() { return { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 }; }
