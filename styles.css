@@ -5,8 +5,8 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;padding-bottom:90px;-webkit-text-size-adjust:100%}
 .wrap{max-width:520px;margin:0 auto;padding:10px}
 .top{display:flex;align-items:center;gap:8px;background:var(--p);border:1px solid var(--ln);padding:8px 10px;font-size:11px;color:var(--mut)}
-.dot{width:9px;height:9px;border-radius:50%}.top b{color:var(--ink)}.sp{flex:1}
-.badge{background:var(--orb);color:#fff;padding:5px 9px;font-size:11px;letter-spacing:.06em}
+.dot{width:9px;height:9px;border-radius:50%}.top b{color:var(--ink)}.top>span:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.sp{flex:1}
+.badge{background:var(--orb);color:#fff;padding:5px 9px;font-size:11px;letter-spacing:.06em;white-space:nowrap}
 .panel{background:var(--p);border:1px solid var(--ln);margin-top:10px;padding:14px;position:relative}
 .panel h2{margin:0 0 12px;font-size:11px;font-weight:500;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
 .hatch{height:9px;margin:12px -14px;background:repeating-linear-gradient(135deg,var(--ln) 0 1px,transparent 1px 5px)}
@@ -129,3 +129,6 @@ svg.spk{width:100%;height:18px;display:block;overflow:visible}
 .chip{transition:transform .12s,background .15s}.chip:active{transform:scale(.95)}
 @media (max-width:360px){.hero{flex-direction:column;align-items:flex-start}.hk .k.big b{font-size:24px}.tile>b{font-size:15px}}
 .pvt.cmp th,.pvt.cmp td{padding:6px 5px}
+/* Touch: anklickbare Abschnittsköpfe und Eingabefelder mindestens 44 px hoch */
+.panel h2>span[onclick]{position:relative}.panel h2>span[onclick]::after{content:"";position:absolute;inset:-15px -6px}
+input:not([type=checkbox]):not([type=range]),select{min-height:44px}
