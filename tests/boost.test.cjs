@@ -7,9 +7,11 @@ const sw = fs.readFileSync('sw.js', 'utf8');
 const boost = fs.readFileSync('boost.js', 'utf8');
 
 test('boost.js is loaded last, after extras.js', () => {
-  const order = ['config.js', 'app.js', 'features.js', 'extras.js', 'boost.js'].map(f => html.indexOf('<script src="' + f + '"></script>'));
+  const order = ['config.js', 'app.js', 'features.js', 'extras.js', 'boost.js'].map(f => html.indexOf('<script src="' + f + '"'));
   order.forEach(i => assert.ok(i > 0));
   assert.deepEqual(order, [...order].sort((a, b) => a - b));
+  // 6.2: defer erhält die Reihenfolge; jedes App-Skript muss defer haben
+  ['config.js', 'app.js', 'features.js', 'extras.js', 'boost.js'].forEach(f => assert.match(html, new RegExp('<script src="' + f + '" defer></script>')));
 });
 
 test('service worker never caches API traffic or writes', () => {
