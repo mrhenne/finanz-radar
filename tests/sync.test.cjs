@@ -108,11 +108,13 @@ test('Gerät B mit ungesicherten Offline-Änderungen: pull von A darf sie nicht 
   A.h.setS({ ...A.h.S(), tx: [...A.h.S().tx, tx('neu-a', 5)] });
   A.setNow(T.t3);
   await A.ctx.push();
-  // B lädt beim nächsten Start: Cloud ist neuer als B's Stand
+  // B lädt danach: Cloud ist neuer, B hat ungesicherte Änderungen mit anderem Inhalt -> Konflikt, nichts wird überschrieben (B-03)
   B.setNow(T.t4);
   await B.ctx.pull(true);
-  assert.ok(!B.h.S().tx.some(x => x.id === 'offline-b'), 'Auszug: ungesicherte Buchung ist aus dem Stand verschwunden');
-  assert.ok(readBk(B).includes('offline-b'), 'Vor dem Überschreiben liegt eine lokale Sicherung mit der Buchung vor');
+  assert.ok(B.h.S().tx.some(x => x.id === 'offline-b'), 'ungesicherte Buchung bleibt lokal');
+  assert.ok(!B.h.S().tx.some(x => x.id === 'neu-a'), 'Cloud-Stand wird nicht still übernommen');
+  assert.match(B.render(), /Cloud-Stand ist neuer|Synchronisierung pausiert/, 'Konflikt wird angezeigt');
+  assert.ok(cloudTxIds(server).includes('neu-a') && !cloudTxIds(server).includes('offline-b'), 'Cloud unverändert');
 });
 
 test('Erster Abruf schlägt fehl (Netz aus), dann Änderung: der Upload darf die Cloud nicht mit einem leeren Stand überschreiben', async () => {
@@ -129,7 +131,8 @@ test('Erster Abruf schlägt fehl (Netz aus), dann Änderung: der Upload darf die
   server.offline = false;                       // Netz wieder da, bevor der Upload-Timer läuft
   await B.settle();
   assert.deepEqual(cloudTxIds(server), ['cloud-1'], 'Cloud-Stand unverändert');
-  assert.ok(readBk(B).includes('b-neu'), 'die lokale Änderung ist gesichert');
+  assert.ok(B.h.S().tx.some(x => x.id === 'b-neu'), 'die lokale Änderung bleibt erhalten');
+  assert.match(B.render(), /Cloud-Stand ist neuer|Synchronisierung pausiert/, 'Konflikt statt Überschreiben');
 });
 
 test('kaputtes fr_s (kein gültiges JSON): App startet mit leerem Stand, Rohdaten werden vorher gesichert', () => {
@@ -167,7 +170,7 @@ test('Altdaten in user_state: erst nach bewusster Entscheidung wird finance_stat
   assert.deepEqual(server.user_state[uid].app_state, { tx: [] }, 'user_state unverändert');
 });
 
-test('Zwei Geräte laden gleichzeitig hoch: Last-Write-Wins bleibt, die überschriebene Cloud-Fassung liegt vorher in den Sicherungen', async () => {
+test('Zwei Geräte laden gleichzeitig hoch: kein Last-Write-Wins mehr, B bekommt den Konflikt statt zu überschreiben (B-03)', async () => {
   const server = makeServer();
   server.addUser('a@example.test', 'geheim123');
   const A = device(server, T.t0);
@@ -178,8 +181,9 @@ test('Zwei Geräte laden gleichzeitig hoch: Last-Write-Wins bleibt, die übersch
   A.setNow(T.t2); await A.settle();
   addTx(B, tx('von-b', 2));
   B.setNow(T.t3); await B.settle(); // B hat den Stand von A noch nicht gesehen
-  assert.deepEqual(cloudTxIds(server), ['von-b'], 'letzter Upload gewinnt (Verhalten unverändert)');
-  assert.ok(readBk(B).includes('von-a'), 'die überschriebene Fassung von A ist in den Sicherungen von B');
+  assert.deepEqual(cloudTxIds(server), ['von-a'], 'Cloud-Stand von A bleibt: B überschreibt nicht');
+  assert.ok(B.h.S().tx.some(x => x.id === 'von-b'), 'B behält seine Änderung lokal');
+  assert.match(B.render(), /Cloud-Stand ist neuer|Synchronisierung pausiert/, 'Konflikt wird angezeigt');
 });
 
 test('Abgelaufene Sitzung: Änderungen bleiben lokal, es wird nichts hochgeladen', async () => {

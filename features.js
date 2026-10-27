@@ -60,7 +60,8 @@
 
   /* Wiederkehrende Buchungen: idempotent pro Monat */
   function autoRecurring() {
-    if (typeof sb !== 'undefined' && sb && (!authReady || !user || recMode)) return;
+    /* vor dem Laden des Cloud-Stands nichts schreiben: sonst gilt ein frisches Gerät als ungesichert (Konflikt, B-03) */
+    if (typeof sb !== 'undefined' && sb && (!authReady || !user || recMode || cloudReady !== user.id)) return;
     const m = monthNow();
     if (S.recDone === m) return;
     (S.rec || []).forEach(r => {
