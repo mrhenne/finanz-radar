@@ -41,6 +41,10 @@ const result = {};
 // Start: Laden der fünf Skripte, inkl. erstem Render (render() am Ende von app.js)
 result.startMs = medianMs(() => loadApp({ now: NOW, tz: TZ, fixture: makeExtreme() }));
 const app = loadApp({ now: NOW, tz: TZ, fixture });
+// Zähler auch für das Dokument (document.addEventListener, document.querySelectorAll)
+const docAdd = app.doc.addEventListener, docQsa = app.doc.querySelectorAll;
+app.doc.addEventListener = function (...a) { counts.doc++; return docAdd.apply(this, a); };
+app.doc.querySelectorAll = function (...a) { counts.qsa++; return docQsa.apply(this, a); };
 result.frsBytes = Buffer.byteLength(app.storage.getItem('fr_s'), 'utf8');
 result.fixtureBytes = fixtureBytes;
 
