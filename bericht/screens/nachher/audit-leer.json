@@ -1,0 +1,77 @@
+[
+ {
+  "shot": "home__light__375__leer.png",
+  "overflow": 0,
+  "small": 4,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Fokus]\" 286x15",
+   "SPAN \"▾\" 7x14"
+  ]
+ },
+ {
+  "shot": "cash__light__375__leer.png",
+  "overflow": 0,
+  "small": 23,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Zeitraum]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 286x15",
+   "SPAN \"[Neu] Buchung\" 286x15"
+  ]
+ },
+ {
+  "shot": "vermoegen__light__375__leer.png",
+  "overflow": 0,
+  "small": 13,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Notgroschen]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 286x15",
+   "SPAN \"[Neu] Bestand\" 286x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__light__375__leer.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 286x15",
+   "SPAN \"[Meilensteine]\" 286x15"
+  ]
+ },
+ {
+  "shot": "prognose__light__375__leer.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "INPUT#pr_y \"20\" 325x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__light__375__leer.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Module]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 286x15"
+  ]
+ }
+]

@@ -1,0 +1,458 @@
+[
+ {
+  "shot": "home__light__375__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Fokus]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__light__375__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Zeitraum]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 286x15",
+   "BUTTON \"+ Ø variable Ausga\" 169x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__light__375__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Notgroschen]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 286x15",
+   "SPAN \"[Neu] Bestand\" 286x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__light__375__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 286x15",
+   "SPAN \"[Meilensteine]\" 286x15"
+  ]
+ },
+ {
+  "shot": "prognose__light__375__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "INPUT#pr_y \"20\" 325x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__light__375__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Module]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 286x15"
+  ]
+ },
+ {
+  "shot": "home__light__430__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Fokus]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__light__430__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Zeitraum]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 341x15",
+   "BUTTON \"+ Ø variable Ausga\" 196x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__light__430__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Notgroschen]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 341x15",
+   "SPAN \"[Neu] Bestand\" 341x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__light__430__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 341x15",
+   "SPAN \"[Meilensteine]\" 341x15"
+  ]
+ },
+ {
+  "shot": "prognose__light__430__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "INPUT#pr_y \"20\" 380x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__light__430__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Module]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 341x15"
+  ]
+ },
+ {
+  "shot": "home__light__1280__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Fokus]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__light__1280__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Zeitraum]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 431x15",
+   "BUTTON \"+ Ø variable Ausga\" 241x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__light__1280__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Notgroschen]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 431x15",
+   "SPAN \"[Neu] Bestand\" 431x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__light__1280__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 431x15",
+   "SPAN \"[Meilensteine]\" 431x15"
+  ]
+ },
+ {
+  "shot": "prognose__light__1280__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "INPUT#pr_y \"20\" 470x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__light__1280__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☀\" 28x25",
+   "SPAN \"[Module]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 431x15"
+  ]
+ },
+ {
+  "shot": "home__dark__375__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Fokus]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__dark__375__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Zeitraum]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 286x15",
+   "BUTTON \"+ Ø variable Ausga\" 169x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__dark__375__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Notgroschen]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 286x15",
+   "SPAN \"[Neu] Bestand\" 286x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__dark__375__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 286x15",
+   "SPAN \"[Meilensteine]\" 286x15"
+  ]
+ },
+ {
+  "shot": "prognose__dark__375__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "INPUT#pr_y \"20\" 325x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__dark__375__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Module]\" 286x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 286x15"
+  ]
+ },
+ {
+  "shot": "home__dark__430__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Fokus]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__dark__430__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Zeitraum]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 341x15",
+   "BUTTON \"+ Ø variable Ausga\" 196x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__dark__430__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Notgroschen]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 341x15",
+   "SPAN \"[Neu] Bestand\" 341x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__dark__430__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 341x15",
+   "SPAN \"[Meilensteine]\" 341x15"
+  ]
+ },
+ {
+  "shot": "prognose__dark__430__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "INPUT#pr_y \"20\" 380x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__dark__430__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Module]\" 341x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 341x15"
+  ]
+ },
+ {
+  "shot": "home__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 5,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Fokus]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "BUTTON \"Sichern\" 66x31"
+  ]
+ },
+ {
+  "shot": "cash__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 28,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Zeitraum]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Vorschau]\" 431x15",
+   "BUTTON \"+ Ø variable Ausga\" 241x31"
+  ]
+ },
+ {
+  "shot": "vermoegen__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 21,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Notgroschen]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[Verteilung]\" 431x15",
+   "SPAN \"[Neu] Bestand\" 431x15"
+  ]
+ },
+ {
+  "shot": "fuckoff__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 18,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Runway · Fuck-Off\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[FIRE] Fuck-Off-Za\" 431x15",
+   "SPAN \"[Meilensteine]\" 431x15"
+  ]
+ },
+ {
+  "shot": "prognose__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 17,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "INPUT#pr_y \"20\" 470x16",
+   "BUTTON#pr_lb \"+\" 27x31",
+   "BUTTON \"MSCI World\" 86x31",
+   "BUTTON \"S&P 500\" 66x31"
+  ]
+ },
+ {
+  "shot": "mehr__dark__1280__klein.png",
+  "overflow": 0,
+  "small": 6,
+  "examples": [
+   "BUTTON \"◉\" 28x25",
+   "BUTTON#th \"☾\" 28x25",
+   "SPAN \"[Module]\" 431x15",
+   "SPAN \"▾\" 7x14",
+   "SPAN \"[App installieren]\" 431x15"
+  ]
+ }
+]
