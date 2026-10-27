@@ -40,7 +40,7 @@ test('Eingabefelder haben einen Namen (aria-label, aria-labelledby oder label fo
     if (/aria-label=|aria-labelledby=/.test(attrs)) continue;
     const id = (attrs.match(/\bid=["']?([\w-]+)/) || [])[1];
     if (id && !/\$\{/.test(id) && all.includes('for="' + id + '"')) continue;
-    if (/\$\{/.test(attrs)) continue; // dynamische IDs: im Browser-Audit geprüft
+    // Auch Eingaben mit ${…} in den Attributen zählen: sie wurden früher übersprungen (Befund U-20, Nachabnahme)
     bad.push(m[0].slice(0, 90));
   }
   assert.deepEqual(bad, [], 'Eingabefeld ohne Namen');
@@ -94,4 +94,49 @@ test('PWA: Manifest mit maskable-Icon und Namen', () => {
   const man = JSON.parse(read('manifest.webmanifest'));
   assert.ok(man.name && man.short_name);
   assert.ok(man.icons.some(i => /maskable/.test(i.purpose || '')), 'kein maskable-Icon');
+});
+
+test('Eingabefelder: Schrift mindestens 16 px (kein Zoom in iOS), auch inline', () => {
+  assert.match(css, /input,select,textarea\{[^}]*font-size:16px/);
+  const small = [];
+  for (const m of all.matchAll(/<(input|select|textarea)\b[^>]*>/g)) {
+    const f = m[0].match(/font-size:\s*(\d+)px/);
+    if (f && Number(f[1]) < 16) small.push(m[0].slice(0, 90));
+  }
+  assert.deepEqual(small, [], 'Eingabefeld unter 16 px');
+});
+
+// Trefferflächen: Box-Maße aus der Probe bei 375 px (Kopfzeilen-Icon 28 × 25 px,
+// Abschnittskopf-Span 15 px hoch, Chip 31 px hoch). Geprüft werden die Erweiterungen (::after) in CSS.
+test('Kopfzeilen-Icons: Trefferfläche mindestens 44 px breit und hoch', () => {
+  // ◉ reicht nach links, ☀ nach rechts; die Lücke dazwischen gehört keinem doppelt
+  const four = '(-?\\d+)(?:px)? (-?\\d+)(?:px)? (-?\\d+)(?:px)? (-?\\d+)(?:px)?';
+  const auge = css.match(new RegExp('\\.top \\.x:not\\(#th\\)::after\\{inset:' + four + '\\}'));
+  const sonne = css.match(new RegExp('#th::after\\{inset:' + four + '\\}'));
+  assert.ok(auge && sonne, 'Erweiterungen der Kopfzeilen-Icons fehlen');
+  assert.ok(28 + Math.abs(Number(auge[4])) >= 44, '◉ zu schmal');
+  assert.ok(28 + Math.abs(Number(sonne[2])) >= 44, '☀ zu schmal');
+  assert.ok(25 + 2 * Math.abs(Number(auge[1])) >= 44, '◉ zu niedrig');
+  assert.ok(25 + 2 * Math.abs(Number(sonne[1])) >= 44, '☀ zu niedrig');
+});
+
+// Die Rechnung aus dem CSS allein überschätzt die Fläche: Probe bei −15 px ergab 41 px (Ziel 44).
+// Deshalb die gemessenen Werte als Grenze: Abschnittskopf −22 px (47 px), Chip −8 px (46 px).
+test('Trefferflächen: Abschnittskopf und Chip mindestens 44 px hoch (Erweiterung je Seite)', () => {
+  const h2 = css.match(/\.panel h2>span\[onclick\]::after\{content:"";position:absolute;inset:(-?\d+)px/);
+  const chip = css.match(/\.chip::after\{content:"";position:absolute;inset:(-?\d+)px/);
+  assert.ok(h2 && chip, 'Erweiterungen fehlen');
+  assert.ok(Math.abs(Number(h2[1])) >= 22, 'Abschnittskopf: Erweiterung unter 22 px');
+  assert.ok(Math.abs(Number(chip[1])) >= 8, 'Chip: Erweiterung unter 8 px');
+});
+
+test('Vorschau-Tabelle: bei 375 bis 430 px kleinere Schrift und Innenabstand, ab 431 px unverändert', () => {
+  assert.match(js, /<table class="pvt">/);
+  assert.match(css, /@media \(max-width:430px\)\{\.pvt:not\(\.cmp\)\{font-size:10px\}\.pvt:not\(\.cmp\) th,\.pvt:not\(\.cmp\) td\{padding:6px 4px\}/);
+});
+
+test('Kategorie-Farben: nur der ■-Marker ist farbig und aria-hidden, der Name steht in Textfarbe', () => {
+  assert.doesNotMatch(js, /style="color:[^"]*">■[^<]/, 'Farbe und Text im selben Element');
+  assert.doesNotMatch(js, /<i style="color:/, 'Marker als <i> ohne aria-hidden');
+  assert.ok((js.match(/<span aria-hidden="true" style="color:/g) || []).length >= 3, 'Marker-Muster fehlt');
 });
