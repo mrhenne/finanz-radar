@@ -50,8 +50,8 @@
     S.th = { auto: 'light', light: 'dark', dark: 'auto' }[S.th || 'auto'] || 'auto'; S.thv = 2; save(); W.applyTh();
     toast({ light: 'Design: Hell', dark: 'Design: Dunkel', auto: 'Design: Automatisch, folgt dem iPhone' }[S.th]);
   };
-  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => W.applyTh()); } catch (e) { }
-  try { PAL[1] = 'var(--ink)'; } catch (e) { }
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => W.applyTh()); } catch(e){/* Browser ohne Änderungs-Ereignis für das Systemdesign: das Design bleibt beim Laden. */}
+  try { PAL[1] = 'var(--ink)'; } catch(e){/* Schutz nur für ein eingefrorenes Array; sonst ohne Wirkung. */}
 
   /* =====================================================================
      5. Passives Einkommen
@@ -218,7 +218,7 @@
   W.homeFull = () => { S.ui.hf = !S.ui.hf; save(); render(); };
   function alerts() {
     const a = [], al = (t, s, b, js) => '<div class="al w"><span><b>' + t + '</b><small>' + s + '</small></span><button class="chip" onclick="' + js + '">' + b + '</button></div>';
-    let ex = 0; try { ex = Number(localStorage.getItem('fr_exp')) || 0; } catch (e) { }
+    let ex = 0; try { ex = Number(localStorage.getItem('fr_exp')) || 0; } catch(e){/* Ohne lesbaren Zeitstempel gilt die Datei-Sicherung als nie erstellt. */}
     const age = ex ? Math.floor((Date.now() - ex) / 864e5) : null;
     if (S.tx.length >= 5 && (age === null || age >= 30)) a.push(al('Backup fällig', age === null ? 'Noch kein Datei-Backup gespeichert' : 'Letztes Datei-Backup vor ' + nS(age) + ' Tagen', 'Sichern', W.dlBackup ? 'dlBackup()' : go('data')));
     const eg = S.as.filter(x => x.eg);
@@ -311,7 +311,7 @@
     const off = navigator.onLine === false; b.classList.toggle('on', off); document.body.classList.toggle('offl', off);
   }
   W.addEventListener('offline', offBar);
-  W.addEventListener('online', () => { offBar(); toast('Wieder online'); try { if (typeof sb !== 'undefined' && sb && user) push(); } catch (e) { } });
+  W.addEventListener('online', () => { offBar(); toast('Wieder online'); try { if (typeof sb !== 'undefined' && sb && user) push(); } catch(e){/* push() meldet Fehler selbst im Sync-Status; hier nur Schutz vor Ausnahmen beim Aufruf. */} });
   function sab() { if ($('sab')) return; const s = document.createElement('div'); s.id = 'sab'; s.className = 'sab'; document.body.appendChild(s); }
 
   const _more = V.more;

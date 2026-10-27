@@ -2,12 +2,12 @@
    Strategie: eigene Dateien zuerst aus dem Netz (immer aktuell), bei fehlender Verbindung aus dem Cache.
    Supabase-Bibliothek vom CDN: Cache mit Aktualisierung im Hintergrund.
    API-Aufrufe (Supabase-Daten, CoinGecko) werden NIE gecacht. */
-const VERSION = 'fr-2026-10-27t';
+const VERSION = 'fr-2026-10-27u';
 const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'app.js', 'features.js', 'extras.js', 'boost.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 const CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@';
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => Promise.all(SHELL.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => null)))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => Promise.all(SHELL.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => /* eine fehlende Datei bricht die Installation nicht ab (S-27) */ null)))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -41,7 +41,7 @@ self.addEventListener('fetch', e => {
   if (req.url.startsWith(CDN)) {
     e.respondWith((async () => {
       const cache = await caches.open(VERSION), hit = await cache.match(req);
-      const net = fetch(req).then(res => { if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone()); return res; }).catch(() => null);
+      const net = fetch(req).then(res => { if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone()); return res; }).catch(() => /* Netzfehler: der Aufrufer nutzt den Cache-Eintrag oder Response.error() */ null);
       return hit || (await net) || Response.error();
     })());
   }

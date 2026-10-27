@@ -79,7 +79,7 @@
     const b = new Blob([JSON.stringify(S)], { type: 'application/json' }), a = document.createElement('a');
     a.href = URL.createObjectURL(b); a.download = 'finanz-radar-backup-' + today() + '.json'; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
-    try { localStorage.setItem('fr_exp', String(Date.now())); } catch (e) { }
+    try { localStorage.setItem('fr_exp', String(Date.now())); } catch(e){/* Zeitstempel nicht speicherbar: der Hinweis zur Datei-Sicherung kommt früher wieder. */}
     toast('Backup gespeichert'); render();
   };
   function backupBanner() {
@@ -311,7 +311,7 @@ const CSV_MAX_ROWS = 1500;
   /* ---------- 8. Sicherheit & Datenschutz ---------- */
   const SEC_K = 'fr_sec', BK_K = 'fr_bk';
   const secGet = () => { try { return Object.assign({ cover: true, idle: 0 }, JSON.parse(localStorage.getItem(SEC_K) || '{}')); } catch (e) { return { cover: true, idle: 0 }; } };
-  W.secSet = (k, v) => { const s = secGet(); s[k] = k === 'cover' ? !!v : Math.max(0, Number(v) || 0); try { localStorage.setItem(SEC_K, JSON.stringify(s)); } catch (e) { } render(); };
+  W.secSet = (k, v) => { const s = secGet(); s[k] = k === 'cover' ? !!v : Math.max(0, Number(v) || 0); try { localStorage.setItem(SEC_K, JSON.stringify(s)); } catch(e){/* Einstellung nicht speicherbar: sie gilt bis zum Neuladen. */} render(); };
   const bkGet = () => { try { const a = JSON.parse(localStorage.getItem(BK_K) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   let lastSnap = 0;
   function autoSnap() {
@@ -323,7 +323,7 @@ const CSV_MAX_ROWS = 1500;
       if (last && !last.k && ymdOf(new Date(last.t)) === day) a[a.length - 1] = rec; else a.push(rec); // Sicherungen mit k (Cloud-Abgleich) werden nie ersetzt
       while (a.length > 5) a.shift();
       localStorage.setItem(BK_K, JSON.stringify(a));
-    } catch (e) { }
+    } catch(e){/* Tagessicherung nicht speicherbar: sie entfällt, die App läuft weiter. */}
   }
   W.snapRestore = i => {
     const a = bkGet(), r = a[i]; if (!r) return;
@@ -353,7 +353,7 @@ const CSV_MAX_ROWS = 1500;
   ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(e => document.addEventListener(e, () => { lastAct = Date.now(); }, { passive: true, capture: true }));
   setInterval(() => {
     const s = secGet(); if (!(s.idle > 0) || document.hidden) return;
-    let pin = null; try { pin = localStorage.getItem('fr_pin'); } catch (e) { }
+    let pin = null; try { pin = localStorage.getItem('fr_pin'); } catch(e){/* Kein Zugriff auf den Speicher: die Auto-Sperre wird in diesem Lauf nicht ausgelöst. */}
     if (pin && !document.querySelector('.lk') && Date.now() - lastAct >= s.idle * 60000 && W.lockNow) { W.lockNow(); lastAct = Date.now(); }
   }, AUTOLOCK_CHECK_MS);
 

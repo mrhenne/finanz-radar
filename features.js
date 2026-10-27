@@ -121,7 +121,7 @@
   const PIN_ITER=310000;
   const PIN_BASE_WAIT_MS=30000, PIN_MAX_WAIT_MS=900000;
   const hexOf=buf=>Array.from(new Uint8Array(buf)).map(v=>v.toString(16).padStart(2,'0')).join('');
-  const pinStore=c=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(c))}catch(e){}};
+  const pinStore=c=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(c))}catch(e){/* PIN-Speicher nicht verfügbar: Fehlversuche gelten nur für diese Sitzung. */}};
   const pinBackoffMs=blocks=>Math.min(PIN_BASE_WAIT_MS*Math.pow(2,Math.max(0,blocks-1)),PIN_MAX_WAIT_MS);
   async function pinKdf(pin,saltHex,iter){
     const key=await W.crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
@@ -151,7 +151,7 @@
     if(buffer.length===config.n) {
       const typed=buffer; buffer='';
       let ok=false; try { ok=await pinCheck(typed,config); } catch(e) { ok=false; }
-      if(ok){ locked=false; try { pinStore(config.v===2?{...config,f:0,b:0,u:0}:await pinRecord(typed,config.m)); } catch(e) {} }
+      if(ok){ locked=false; try { pinStore(config.v===2?{...config,f:0,b:0,u:0}:await pinRecord(typed,config.m)); } catch(e){/* Neuer PIN-Eintrag nicht speicherbar: der bisherige Eintrag bleibt gültig. */} }
       else { let f=(config.f||0)+1, b=config.b||0, u=0; if(f>=3){ b+=1; f=0; u=Date.now()+pinBackoffMs(b); } pinStore({...config,f,b,u}); }
     }
     lockUI();
@@ -163,7 +163,7 @@
     catch(e) { pinMessage='PIN konnte auf diesem Gerät nicht gespeichert werden.'; }
     render();
   };
-  W.rmPin = () => { try{localStorage.removeItem(PIN_KEY);}catch(e){} locked=false;pinMessage='PIN entfernt.';lockUI();render(); };
+  W.rmPin = () => { try{localStorage.removeItem(PIN_KEY);}catch(e){/* Löschen fehlgeschlagen: PIN bleibt gesetzt, die Sperre bleibt aktiv. */} locked=false;pinMessage='PIN entfernt.';lockUI();render(); };
   W.lockNow = () => { if(pinConfig()){locked=true;buffer='';lockUI();} };
   document.addEventListener('visibilitychange',() => {
     if(document.hidden){hiddenAt=Date.now();return;}
