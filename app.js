@@ -150,6 +150,22 @@ window.addEventListener('online',syncNun);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNun()});
 /* Tastatur im Dialog: Esc = Später entscheiden, Tab bleibt innerhalb der drei Schaltflächen. */
 document.addEventListener('keydown',e=>{const ids=['kf_b1','kf_b2','kf_b3'].filter(i=>$(i));if(!ids.length)return;if(e.key==='Escape'){e.preventDefault();return kontoOffen()?kontoWahl('abbrechen'):konfliktWahl('spaeter')}if(e.key!=='Tab')return;const i=ids.findIndex(x=>$(x)===document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();$(ids[ids.length-1]).focus()}else if(!e.shiftKey&&(i<0||i===ids.length-1)){e.preventDefault();$(ids[0]).focus()}});
+/* Aktionen ohne Inline-Handler (CSP script-src-attr 'none'). act(fn, args, ev) erzeugt data-click (bzw. data-change, data-input)
+   und data-args als JSON-Array. Aufgerufen wird nur, was in ACTS steht. "$value", "$checked" und "$el" stehen für Wert, Haken und Element.
+   Nutzerdaten in den Argumenten gehen über esc() in das Attribut. */
+const ACTS=new Set([]);
+const act=(fn,args=[],ev='click')=>{if(!ACTS.has(fn))throw new Error('Aktion nicht registriert: '+fn);return `data-${ev}="${fn}"`+(args.length?` data-args="${esc(JSON.stringify(args))}"`:'')};
+/* Ein Ereignis, ein Dispatcher (einmal beim Laden). Alle Vorfahren mit Attribut laufen von innen nach außen, wie bei Inline-Handlern. */
+function actRun(attr,e){
+const hits=[];
+for(let el=e.target&&e.target.closest?e.target.closest('['+attr+']'):null;el;el=el.parentElement&&el.parentElement.closest?el.parentElement.closest('['+attr+']'):null)hits.push(el);
+hits.forEach(el=>{const fn=el.getAttribute(attr);if(!ACTS.has(fn))throw new Error('Aktion nicht registriert: '+fn);
+const args=JSON.parse(el.getAttribute('data-args')||'[]').map(a=>a==='$value'?el.value:a==='$checked'?el.checked:a==='$el'?el:a);
+try{window[fn](...args)}catch(err){setTimeout(()=>{throw err})}});
+}
+document.addEventListener('click',e=>actRun('data-click',e));
+document.addEventListener('change',e=>actRun('data-change',e));
+document.addEventListener('input',e=>actRun('data-input',e));
 const em=m=>({'Invalid login credentials':'E-Mail oder Passwort falsch.','Email not confirmed':'Bitte zuerst den Link in der Bestätigungs-Mail öffnen.','User already registered':'Diese E-Mail ist schon registriert: bitte anmelden.'}[m]||String(m||'Unbekannter Fehler'));
 function localSave(){try{localStorage.setItem('fr_s',JSON.stringify(S))}catch(e){/* Speicher voll oder gesperrt: Stand bleibt im Arbeitsspeicher, der Upload läuft weiter. */}}
 function save(){localSave();saveSeq++;try{localStorage.setItem('fr_dirty','1')}catch(e){/* Markierung „ungesichert“ nicht setzbar: die Synchronisierung läuft trotzdem. */}if(sb&&user&&!legacyPending&&!legacyCheckError&&!konfl&&!kontoOffen()){syncOk=null;clearTimeout(tmr);tmr=setTimeout(push,SYNC_DELAY_MS)}}
