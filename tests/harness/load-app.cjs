@@ -132,6 +132,7 @@ function registerStaticDom(doc) {
  *  opts.supabase   Fake-Client für window.supabase.createClient (nur mit Konfiguration aktiv)
  *  opts.fetch      async (url, init, n) => Response-ähnliches Objekt; ohne Angabe: Netz aus
  *  opts.confirm    Rückgabe für confirm() (Standard true)
+ *  opts.seed       feste Zufallsfolge für Math.random (z. B. für IDs aus uid() beim Laden)
  */
 function loadApp(opts = {}) {
   if (opts.tz) process.env.TZ = opts.tz;
@@ -175,6 +176,8 @@ function loadApp(opts = {}) {
   sandbox.self = sandbox;
   if (opts.supabase) sandbox.supabase = { createClient: () => opts.supabase };
   const ctx = vm.createContext(sandbox);
+  // opts.seed: feste Zufallsfolge für Math.random (uid() beim Laden). Ohne Angabe bleibt Math.random unverändert.
+  if (opts.seed !== undefined) vm.runInContext(`(function(a){Math.random=function(){a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})(${Number(opts.seed)>>>0})`, ctx);
   SCRIPTS.forEach(f => vm.runInContext(readRoot(f), ctx, { filename: f }));
 
   // Zugriff auf lokale Zustände (let/const der App) nur für Tests. Keine Änderung am Produktivcode.
