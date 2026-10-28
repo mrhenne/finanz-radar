@@ -71,8 +71,10 @@ let konfl=false,kfOpen=false;
 const dirty=()=>{try{return localStorage.getItem('fr_dirty')==='1'}catch(e){return false}};
 const clearDirty=()=>{try{localStorage.removeItem('fr_dirty')}catch(e){/* Markierung nicht löschbar: der nächste Upload löscht sie. */}};
 const kanon=v=>Array.isArray(v)?v.map(kanon):v&&typeof v==='object'?Object.keys(v).sort().reduce((o,k)=>(o[k]=kanon(v[k]),o),{}):v;
-/* Gleicher Inhalt, unabhängig von Schlüsselreihenfolge, Zeitstempel und Konto-Kennung. */
-function sameData(a,b){const f=x=>{const c=JSON.parse(JSON.stringify(x||{}));delete c.ts;delete c.uid;return JSON.stringify(kanon(c))};return f(a)===f(b)}
+/* Nur Fachdaten zählen für den Konflikt. Darstellung (ui, th, hide) und Kennungen (ts, uid) lösen keinen Dialog aus. */
+const SYNC_FACHDATEN=['tx','as','goals','rec','debts','hist','sales','f','spl','mnotes','msn','prPlans','lastImp','pi'];
+/* Gleicher Inhalt der Fachdaten, unabhängig von Schlüsselreihenfolge. */
+function sameData(a,b){const f=x=>{const c={};SYNC_FACHDATEN.forEach(k=>{if(x&&x[k]!==undefined)c[k]=x[k]});return JSON.stringify(kanon(c))};return f(a)===f(b)}
 const leerStand=th=>({tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:th||'light',f:{wr:4,exp:'',r:6}});
 function konfliktMelden(){retryStop();if(!konfl)kfOpen=true;konfl=true;syncOk=false;syncMsg='Synchronisierung pausiert: Die Cloud hat einen neueren Stand, und hier liegen ungesicherte Änderungen.';return render()}
 async function konfliktWahl(w){
