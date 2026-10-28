@@ -319,7 +319,7 @@
   V.more = () => {
     let h = _more();
     const btn = (k, l) => '<button class="btn o" style="text-align:left" onclick="' + go(k) + '">' + l + '</button>', add = btn('passive', 'Passives Einkommen') + btn('job', 'Job-Szenarien · Teilzeit');
-    const i = h.indexOf("onclick=\"tab='goals'"), j = i > 0 ? h.lastIndexOf('<button', i) : -1;
+    const i = h.indexOf(act('goTab',['goals'])), j = i > 0 ? h.lastIndexOf('<button', i) : -1;
     h = j > 0 ? h.slice(0, j) + add + h.slice(j) : h + card('Neu', add);
     if (!standalone()) h += card('App installieren', '<div class="li"><span>1. Seite in <b>Safari</b> öffnen</span></div><div class="li"><span>2. <b>Teilen</b> antippen, dann „Zum Home-Bildschirm“</span></div><div class="li"><span>3. „Als Web-App öffnen“ aktiv lassen, <b>Hinzufügen</b></span></div><div class="note">Danach startet Finanz-Radar wie eine App: Vollbild, eigenes Icon, Startbildschirm und offline nutzbar. Die Home-Bildschirm-App hat einen eigenen Speicher: mit Cloud-Login sind deine Daten sofort da, ohne Login vorher unter Daten &amp; Backup exportieren.</div>');
     return h;
