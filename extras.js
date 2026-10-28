@@ -78,7 +78,7 @@
   /* ---------- Backup-Hinweis ---------- */
   const expAt = () => { try { return Number(localStorage.getItem('fr_exp')) || 0; } catch (e) { return 0; } };
   W.dlBackup = () => {
-    const b = new Blob([JSON.stringify(S)], { type: 'application/json' }), a = document.createElement('a');
+    const b = new Blob([exportJson()], { type: 'application/json' }), a = document.createElement('a');
     a.href = URL.createObjectURL(b); a.download = 'finanz-radar-backup-' + today() + '.json'; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
     try { localStorage.setItem('fr_exp', String(Date.now())); } catch(e){/* Zeitstempel nicht speicherbar: der Hinweis zur Datei-Sicherung kommt früher wieder. */}
