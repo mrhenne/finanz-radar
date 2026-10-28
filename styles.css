@@ -33,14 +33,12 @@ svg{width:100%;height:auto;display:block}
 .note{font-size:10px;color:var(--mut);margin:12px 2px}
 @keyframes pu{0%{box-shadow:0 0 0 0 rgba(255,90,31,.55)}100%{box-shadow:0 0 0 12px rgba(255,90,31,0)}}
 @keyframes pg{0%{box-shadow:0 0 0 0 rgba(40,200,100,.65)}100%{box-shadow:0 0 0 9px rgba(40,200,100,0)}}
-@keyframes sh{to{transform:translateX(100%)}}
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes bl{50%{opacity:.3}}
 .badge{animation:pu 2.2s infinite}
 .live{width:8px;height:8px;border-radius:50%;background:#28c840}.live.pulse{animation:pg 1.6s infinite}
 .in .panel{animation:up .4s both}.in .panel:nth-child(2){animation-delay:.06s}.in .panel:nth-child(3){animation-delay:.12s}.in .panel:nth-child(4){animation-delay:.18s}
 .bar{overflow:hidden}.bar i{position:relative;transition:width .9s cubic-bezier(.2,.8,.2,1)}
-.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:sh 2.4s infinite}
 .stk i{transition:width .9s}.s-crypto{animation:bl 2.4s infinite}
 .btn{transition:transform .12s}.btn:active{transform:scale(.96)}
 .k.big b{text-shadow:0 0 18px rgba(255,90,31,.25)}
