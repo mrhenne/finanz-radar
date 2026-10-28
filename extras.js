@@ -54,12 +54,12 @@
   /* ---------- 1. Sparplan-Check ---------- */
   const spT = () => Math.max(0, Number(S.spl && S.spl.t) || 0);
   W.setSpl = () => { S.spl = { t: Math.max(0, Math.round(num($('sp_t').value))) }; save(); render(); };
-  W.useSpl = v => { S.spl = { t: Math.max(0, Math.round(v)) }; save(); render(); };
+  W.useSpl = (v, ev) => { if (ev) ev.preventDefault(); S.spl = { t: Math.max(0, Math.round(v)) }; save(); render(); };
   function spPanel() {
     const t = spT(), a = avg(), ist = invSum(txOf(mo)), sug = Math.round(a.s / 10) * 10;
     const cur = ymOf(), day = new Date().getDate();
-    let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input aria-label="Sparziel pro Monat in Euro" id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn o" style="margin:0;align-self:end" onclick="setSpl()">Speichern</button></div>';
-    if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" onclick="useSpl(' + sug + ');return false" style="color:var(--ort)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
+    let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input aria-label="Sparziel pro Monat in Euro" id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn o" style="margin:0;align-self:end" ' + act('setSpl') + '>Speichern</button></div>';
+    if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" ' + act('useSpl',[sug,'$event']) + ' style="color:var(--ort)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
     const pc = Math.min(100, ist / t * 100), diff = ist - t;
     let status;
     if (diff >= 0) status = '<b class="pos">✓ Plan erfüllt</b> · ' + eur(ist) + ' von ' + eur(t) + (diff > 0 ? ' (+' + eur(diff) + ')' : '');
@@ -88,7 +88,7 @@
     if (S.tx.length < 5) return '';
     const age = expAt() ? Math.floor((Date.now() - expAt()) / 86400000) : null;
     if (age !== null && age < 30) return '';
-    return card('Hinweis', '<b class="neg">Backup fällig</b><div class="mut" style="margin-top:4px">' + (age === null ? 'Noch kein Datei-Backup gespeichert.' : 'Letztes Datei-Backup vor ' + age + ' Tagen.') + '</div><button class="btn o" onclick="dlBackup()">Jetzt als Datei sichern</button>');
+    return card('Hinweis', '<b class="neg">Backup fällig</b><div class="mut" style="margin-top:4px">' + (age === null ? 'Noch kein Datei-Backup gespeichert.' : 'Letztes Datei-Backup vor ' + age + ' Tagen.') + '</div><button class="btn o" ' + act('dlBackup') + '>Jetzt als Datei sichern</button>');
   }
   wrap('home', h => insAfterFirst(h, backupBanner() + spPanel()));
 
@@ -106,7 +106,7 @@
       cash += inc - out - inv; if (cash < 0 && !neg) neg = monLabel(m);
       rows += '<tr><td>' + monLabel(m) + '</td><td>' + eur(inc) + '</td><td>' + eur(out) + '</td><td>' + eur(inv) + '</td><td>' + colored(cash, eur(cash)) + '</td></tr>';
     }
-    return card('Vorschau', '<div class="row" style="align-items:center"><span class="mut" style="flex:1">Cash-Bestand heute: ' + eur(byK('cash')) + '</span><button class="chip' + (PV.v ? ' on' : '') + '" onclick="pvToggle()">+ Ø variable Ausgaben</button></div><div class="tw"><table class="pvt"><tr><th>Monat</th><th>Einnahmen</th><th>Ausgaben</th><th>Investiert</th><th>Cash</th></tr>' + rows + '</table></div>'
+    return card('Vorschau', '<div class="row" style="align-items:center"><span class="mut" style="flex:1">Cash-Bestand heute: ' + eur(byK('cash')) + '</span><button class="chip' + (PV.v ? ' on' : '') + '" ' + act('pvToggle') + '>+ Ø variable Ausgaben</button></div><div class="tw"><table class="pvt"><tr><th>Monat</th><th>Einnahmen</th><th>Ausgaben</th><th>Investiert</th><th>Cash</th></tr>' + rows + '</table></div>'
       + (neg ? '<div class="neg" style="margin-top:8px">Achtung: Der Cash-Bestand wird voraussichtlich im ' + neg + ' negativ.</div>' : '')
       + '<div class="note">Basis: deine wiederkehrenden Vorlagen und der Cash-Bestand aus Vermögen. Ø variable Ausgaben = Ø Ausgaben minus Vorlagen.</div>');
   }
@@ -134,7 +134,7 @@
         .filter(x => Math.abs(x.d) >= 30 && (x.a === 0 || Math.abs(x.d) >= x.a * .15)).sort((p, q) => Math.abs(q.d) - Math.abs(p.d)).slice(0, 3);
       h += tips.length ? tips.map(x => '<div class="li"><span>' + esc(x.c) + '<small>Ø ' + eur(x.a) + ' (letzte ' + n + (n === 1 ? ' Monat' : ' Monate') + ')</small></span><span>' + eur(x.v) + ' ' + colored(-x.d, (x.d > 0 ? '+' : '') + eur(x.d)) + '</span></div>').join('') : '<span class="mut">Keine auffälligen Abweichungen zum Durchschnitt.</span>';
     } else h = '<span class="mut">Für Tipps brauche ich mindestens einen Vormonat mit Buchungen.</span>';
-    return card('Abschluss', h + '<label>Notiz zum Monat</label><textarea aria-label="Notiz zum Monat" rows="3" maxlength="500" onchange="setMNote(this.value)" placeholder="Was war los? Was nimmst du mit?">' + esc((S.mnotes && S.mnotes[mo]) || '') + '</textarea>');
+    return card('Abschluss', h + '<label>Notiz zum Monat</label><textarea aria-label="Notiz zum Monat" rows="3" maxlength="500" ' + act('setMNote',['$value'],'change') + ' placeholder="Was war los? Was nimmst du mit?">' + esc((S.mnotes && S.mnotes[mo]) || '') + '</textarea>');
   }
   wrap('review', h => h + tipsPanel() + histPanel());
 
@@ -149,9 +149,9 @@
     if (document.getElementById('qsh')) return;
     const tpl = document.createElement('template');
     tpl.innerHTML = '<div class="qsh" id="qsh" role="dialog" aria-modal="true" aria-labelledby="q_t"><div><h2 id="q_t" style="margin:0 0 10px;font-size:11px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase">[Schnell] Buchung</h2>'
-      + '<input aria-label="Betrag in Euro" id="q_a" type="number" inputmode="decimal" placeholder="Betrag €" style="font-size:22px"><input aria-label="Notiz" id="q_n" placeholder="Notiz, z. B. Rewe" style="margin-top:8px" autocomplete="off" oninput="qSug()">'
-      + '<div class="chips" id="q_ch" style="margin-top:8px"></div><div class="row" style="margin-top:8px"><select aria-label="Kategorie" id="q_c" onchange="Q_manual()"></select><input aria-label="Datum" id="q_d" type="date"></div>'
-      + '<div class="mut" id="q_h" style="margin-top:6px;min-height:14px"></div><div class="row"><button class="btn o" onclick="qClose()">Abbrechen</button><button class="btn" onclick="qSave()">Buchen</button></div></div></div>';
+      + '<input aria-label="Betrag in Euro" id="q_a" type="number" inputmode="decimal" placeholder="Betrag €" style="font-size:22px"><input aria-label="Notiz" id="q_n" placeholder="Notiz, z. B. Rewe" style="margin-top:8px" autocomplete="off" ' + act('qSug',[],'input') + '>'
+      + '<div class="chips" id="q_ch" style="margin-top:8px"></div><div class="row" style="margin-top:8px"><select aria-label="Kategorie" id="q_c" ' + act('Q_manual',[],'change') + '></select><input aria-label="Datum" id="q_d" type="date"></div>'
+      + '<div class="mut" id="q_h" style="margin-top:6px;min-height:14px"></div><div class="row"><button class="btn o" ' + act('qClose') + '>Abbrechen</button><button class="btn" ' + act('qSave') + '>Buchen</button></div></div></div>';
     const el = tpl.content.firstElementChild;
     el.addEventListener('click', e => { if (e.target === el) qClose(); });
     document.body.appendChild(el);
@@ -298,16 +298,16 @@ const CSV_MAX_ROWS = 1500;
     if (!IMP.rows.length) return IMP.info ? '<div class="mut" style="margin-top:8px">' + esc(IMP.info) + '</div>' : '';
     const sel = IMP.rows.filter(r => r.inc), dups = IMP.rows.filter(r => r.dup).length, shown = IMP.rows.slice(0, 300);
     return '<div class="mut" style="margin-top:8px">' + esc(IMP.info) + ' ' + dups + ' mögliche Duplikate (abgewählt). Ausgewählt: ' + sel.length + '.</div>'
-      + '<div class="row" style="margin-top:6px"><button class="btn o" style="margin:0" onclick="impAll(true)">Alle wählen</button><button class="btn o" style="margin:0" onclick="impAll(false)">Keine</button></div>'
-      + '<div style="margin-top:8px">' + shown.map((r, i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><label style="margin:0;display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input aria-label="Zeile importieren" type="checkbox" style="width:auto" ' + (r.inc ? 'checked ' : '') + 'onchange="impSet(' + i + ',\'inc\',this.checked)"><span class="mut">' + r.d.slice(8) + '.' + r.d.slice(5, 7) + '.' + r.d.slice(2, 4) + '</span>' + (r.dup ? '<span class="neg">Duplikat?</span>' : '') + '</label><b class="' + (r.sign > 0 ? 'pos' : '') + '">' + (r.sign > 0 ? '+' : '−') + eur(r.a) + '</b></div><div class="mut" style="margin:4px 0">' + (esc(r.n) || '–') + '</div><select aria-label="Kategorie der Buchung" onchange="impSet(' + i + ',\'c\',this.value)">' + ALLC().map(c => '<option' + (c === r.c ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>').join('') + '</div>'
+      + '<div class="row" style="margin-top:6px"><button class="btn o" style="margin:0" ' + act('impAll',[true]) + '>Alle wählen</button><button class="btn o" style="margin:0" ' + act('impAll',[false]) + '>Keine</button></div>'
+      + '<div style="margin-top:8px">' + shown.map((r, i) => '<div class="li" style="display:block"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><label style="margin:0;display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0"><input aria-label="Zeile importieren" type="checkbox" style="width:auto" ' + (r.inc ? 'checked ' : '') + '' + act('impSet',[i,'inc','$checked'],'change') + '><span class="mut">' + r.d.slice(8) + '.' + r.d.slice(5, 7) + '.' + r.d.slice(2, 4) + '</span>' + (r.dup ? '<span class="neg">Duplikat?</span>' : '') + '</label><b class="' + (r.sign > 0 ? 'pos' : '') + '">' + (r.sign > 0 ? '+' : '−') + eur(r.a) + '</b></div><div class="mut" style="margin:4px 0">' + (esc(r.n) || '–') + '</div><select aria-label="Kategorie der Buchung" ' + act('impSet',[i,'c','$value'],'change') + '>' + ALLC().map(c => '<option' + (c === r.c ? ' selected' : '') + '>' + c + '</option>').join('') + '</select></div>').join('') + '</div>'
       + (IMP.rows.length > 300 ? '<div class="note">Es werden die ersten 300 Zeilen angezeigt; alle ausgewählten Zeilen werden importiert (Auswahl der restlichen Zeilen ist per „Alle/Keine“ steuerbar).</div>' : '')
-      + '<button class="btn" onclick="impGo()">' + sel.length + ' Buchungen importieren</button><button class="btn o" onclick="impClear()">Verwerfen</button>';
+      + '<button class="btn" ' + act('impGo') + '>' + sel.length + ' Buchungen importieren</button><button class="btn o" ' + act('impClear') + '>Verwerfen</button>';
   }
   function impDraw() { const el = document.getElementById('imp_out'); if (el) { el.innerHTML = impPreview(); if (typeof blurNums === 'function') blurNums(); } }
   function impPanel() {
-    return card('Import', '<label>CSV-Kontoauszug (Bank, Trade Republic u. ä.)</label><input aria-label="CSV-Kontoauszug auswählen" id="imp_f" type="file" accept=".csv,.txt,text/csv,text/plain" onchange="impFile(this)"><div class="note">Erkannt werden Kopfzeile, Trennzeichen und Zahlenformat automatisch. Kategorien werden aus deinen früheren Buchungen und Stichworten vorgeschlagen; vor dem Import kannst du alles anpassen. Bereits vorhandene Buchungen mit gleichem Datum und Betrag werden als Duplikat abgewählt.</div><div id="imp_out">' + impPreview() + '</div>' + (S.lastImp && S.lastImp.ids && S.lastImp.ids.length ? '<button class="btn o" onclick="impUndo()">Letzten Import rückgängig (' + S.lastImp.ids.length + ')</button>' : ''));
+    return card('Import', '<label>CSV-Kontoauszug (Bank, Trade Republic u. ä.)</label><input aria-label="CSV-Kontoauszug auswählen" id="imp_f" type="file" accept=".csv,.txt,text/csv,text/plain" ' + act('impFile',['$el'],'change') + '><div class="note">Erkannt werden Kopfzeile, Trennzeichen und Zahlenformat automatisch. Kategorien werden aus deinen früheren Buchungen und Stichworten vorgeschlagen; vor dem Import kannst du alles anpassen. Bereits vorhandene Buchungen mit gleichem Datum und Betrag werden als Duplikat abgewählt.</div><div id="imp_out">' + impPreview() + '</div>' + (S.lastImp && S.lastImp.ids && S.lastImp.ids.length ? '<button class="btn o" ' + act('impUndo') + '>Letzten Import rückgängig (' + S.lastImp.ids.length + ')</button>' : ''));
   }
-  wrap('data', h => h + card('Sicherung', '<div class="mut">Letztes Datei-Backup: ' + (expAt() ? new Date(expAt()).toLocaleDateString('de-DE') : 'noch nie') + '</div><button class="btn o" onclick="dlBackup()">Backup als Datei speichern</button>'));
+  wrap('data', h => h + card('Sicherung', '<div class="mut">Letztes Datei-Backup: ' + (expAt() ? new Date(expAt()).toLocaleDateString('de-DE') : 'noch nie') + '</div><button class="btn o" ' + act('dlBackup') + '>Backup als Datei speichern</button>'));
   V.csv = () => bk() + impPanel();
 
   /* ---------- 8. Sicherheit & Datenschutz ---------- */
@@ -335,9 +335,9 @@ const CSV_MAX_ROWS = 1500;
   wrap('sec', h => {
     const s = secGet(), hasPin = !!(function () { try { return localStorage.getItem('fr_pin'); } catch (e) { return null; } })();
     const snaps = bkGet().map((r, i) => ({ r, i })).filter(x => !x.r.u || !S.uid || x.r.u === S.uid).reverse();
-    return h + card('Datenschutz', '<label class="chk"><input aria-label="App-Inhalt beim Wechsel verdecken" type="checkbox" ' + (s.cover ? 'checked ' : '') + 'onchange="secSet(\'cover\',this.checked)">App-Inhalt beim Wechsel verdecken</label><div class="note">Zeigt beim App-Wechsel und im Task-Switcher nur das Logo statt deiner Zahlen.</div>'
-      + '<label>Automatisch sperren nach Inaktivität' + (hasPin ? '' : ' (benötigt eine PIN)') + '</label><select aria-label="Automatisch sperren nach Inaktivität" onchange="secSet(\'idle\',this.value)">' + [[0, 'aus'], [1, '1 Minute'], [2, '2 Minuten'], [5, '5 Minuten'], [10, '10 Minuten']].map(o => '<option value="' + o[0] + '"' + (s.idle === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>')
-      + card('Sicherungen', '<div class="mut">Täglich wird automatisch ein Stand auf diesem Gerät gesichert (die letzten 5).</div>' + (snaps.length ? snaps.map(x => '<div class="li"><span>' + new Date(x.r.t).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) + '<small>' + x.r.n + ' Buchungen</small></span><span><button class="btn x" onclick="snapRestore(' + x.i + ')">Wiederherstellen</button></span></div>').join('') : '<div class="mut" style="margin-top:6px">Noch keine Sicherung vorhanden.</div>') + '<div class="note">Diese Sicherungen ersetzen kein Datei-Backup (Mehr → Daten → „Backup als Datei speichern“).</div>');
+    return h + card('Datenschutz', '<label class="chk"><input aria-label="App-Inhalt beim Wechsel verdecken" type="checkbox" ' + (s.cover ? 'checked ' : '') + '' + act('secSet',['cover','$checked'],'change') + '>App-Inhalt beim Wechsel verdecken</label><div class="note">Zeigt beim App-Wechsel und im Task-Switcher nur das Logo statt deiner Zahlen.</div>'
+      + '<label>Automatisch sperren nach Inaktivität' + (hasPin ? '' : ' (benötigt eine PIN)') + '</label><select aria-label="Automatisch sperren nach Inaktivität" ' + act('secSet',['idle','$value'],'change') + '>' + [[0, 'aus'], [1, '1 Minute'], [2, '2 Minuten'], [5, '5 Minuten'], [10, '10 Minuten']].map(o => '<option value="' + o[0] + '"' + (s.idle === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>')
+      + card('Sicherungen', '<div class="mut">Täglich wird automatisch ein Stand auf diesem Gerät gesichert (die letzten 5).</div>' + (snaps.length ? snaps.map(x => '<div class="li"><span>' + new Date(x.r.t).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) + '<small>' + x.r.n + ' Buchungen</small></span><span><button class="btn x" ' + act('snapRestore',[x.i]) + '>Wiederherstellen</button></span></div>').join('') : '<div class="mut" style="margin-top:6px">Noch keine Sicherung vorhanden.</div>') + '<div class="note">Diese Sicherungen ersetzen kein Datei-Backup (Mehr → Daten → „Backup als Datei speichern“).</div>');
   });
 
   /* Verdecken beim App-Wechsel + Inaktivitäts-Sperre */

@@ -151,16 +151,16 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNun()}
 /* Tastatur im Dialog: Esc = Später entscheiden, Tab bleibt innerhalb der drei Schaltflächen. */
 document.addEventListener('keydown',e=>{const ids=['kf_b1','kf_b2','kf_b3'].filter(i=>$(i));if(!ids.length)return;if(e.key==='Escape'){e.preventDefault();return kontoOffen()?kontoWahl('abbrechen'):konfliktWahl('spaeter')}if(e.key!=='Tab')return;const i=ids.findIndex(x=>$(x)===document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();$(ids[ids.length-1]).focus()}else if(!e.shiftKey&&(i<0||i===ids.length-1)){e.preventDefault();$(ids[0]).focus()}});
 /* Aktionen ohne Inline-Handler (CSP script-src-attr 'none'). act(fn, args, ev) erzeugt data-click (bzw. data-change, data-input)
-   und data-args als JSON-Array. Aufgerufen wird nur, was in ACTS steht. "$value", "$checked" und "$el" stehen für Wert, Haken und Element.
+   und data-args als JSON-Array. Aufgerufen wird nur, was in ACTS steht. "$value", "$checked", "$el" und "$event" stehen für Wert, Haken, Element und Ereignis.
    Nutzerdaten in den Argumenten gehen über esc() in das Attribut. */
-const ACTS=new Set(['kfZeigen','konfliktWahl','kontoWahl','goTab','continueWithCurrentData','pull','tg','sh','edStart','del','addDebt','addHist','edSave','edClose','cgRetry','setLrg','setLtop','liveNeu','setLsel','setEgm','setEgt','togEg','trdStart','doTr','trdClose','pick','feedUpd','applyRec','copyMo','addTx','sugg','addAs','setF','msNote','exportBackup','importBackup','addGoal','setFNum','setTxy','setYr','login','magic','forgot','setPw','pushNun','logout','logoutLokal','setP','saveRunway5','cancelRunway5','editRunway5','setBud','setAl','pinKey','setPin','lockNow','rmPin','setTf','setKist','setFx','fxToggle','piImport','piAdd','piDel','piSetF','setJob','dlBackup','qInvest','homeFull']);
+const ACTS=new Set(['kfZeigen','konfliktWahl','kontoWahl','goTab','continueWithCurrentData','pull','tg','sh','edStart','del','addDebt','addHist','edSave','edClose','cgRetry','setLrg','setLtop','liveNeu','setLsel','setEgm','setEgt','togEg','trdStart','doTr','trdClose','pick','feedUpd','applyRec','copyMo','addTx','sugg','addAs','setF','msNote','exportBackup','importBackup','addGoal','setFNum','setTxy','setYr','login','magic','forgot','setPw','pushNun','logout','logoutLokal','setP','saveRunway5','cancelRunway5','editRunway5','setBud','setAl','pinKey','setPin','lockNow','rmPin','setTf','setKist','setFx','fxToggle','setSpl','useSpl','dlBackup','pvToggle','setMNote','qSug','Q_manual','qClose','qSave','impAll','impSet','impGo','impClear','impFile','impUndo','secSet','snapRestore','piImport','piAdd','piDel','piSetF','setJob','qInvest','homeFull']);
 const act=(fn,args=[],ev='click')=>{if(!ACTS.has(fn))throw new Error('Aktion nicht registriert: '+fn);return `data-${ev}="${fn}"`+(args.length?` data-args="${esc(JSON.stringify(args))}"`:'')};
 /* Ein Ereignis, ein Dispatcher (einmal beim Laden). Alle Vorfahren mit Attribut laufen von innen nach außen, wie bei Inline-Handlern. */
 function actRun(attr,e){
 const hits=[];
 for(let el=e.target&&e.target.closest?e.target.closest('['+attr+']'):null;el;el=el.parentElement&&el.parentElement.closest?el.parentElement.closest('['+attr+']'):null)hits.push(el);
 hits.forEach(el=>{const fn=el.getAttribute(attr);if(!ACTS.has(fn))throw new Error('Aktion nicht registriert: '+fn);
-const args=JSON.parse(el.getAttribute('data-args')||'[]').map(a=>a==='$value'?el.value:a==='$checked'?el.checked:a==='$el'?el:a);
+const args=JSON.parse(el.getAttribute('data-args')||'[]').map(a=>a==='$value'?el.value:a==='$checked'?el.checked:a==='$el'?el:a==='$event'?e:a);
 try{window[fn](...args)}catch(err){setTimeout(()=>{throw err})}});
 }
 document.addEventListener('click',e=>actRun('data-click',e));

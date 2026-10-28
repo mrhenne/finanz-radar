@@ -122,3 +122,11 @@ test('keine Aktion ist überflüssig: jeder Name in ACTS wird im Quelltext genut
   // Nur Namen zählen, die im Quelltext als act('name' vorkommen; der Aufruf in den Tests zählt nicht
   assert.deepEqual(registriert.filter(n => !genutzt.has(n)), []);
 });
+
+test('Dispatcher: $event übergibt das Ereignis (für Links: preventDefault statt return false)', () => {
+  const app = setup();
+  app.evalApp("ACTS.add('aktEreignis'); function aktEreignis(x){ __log.push(['ev', x && x.typ]); }");
+  const link = el({ 'data-click': 'aktEreignis', 'data-args': '["$event"]' });
+  app.doc.listeners.click[0]({ target: link, typ: 'click' });
+  assert.deepEqual(log(app), [['ev', 'click']]);
+});
