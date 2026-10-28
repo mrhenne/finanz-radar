@@ -366,12 +366,12 @@ Jede Teilziffer hat einen Status: **behoben**, **gemeldet** oder **unkritisch**.
 - **Herkunft der Daten:** Nutzereingabe (Formulare), Backup-Import (JSON), CSV-Import (Text), Cloud-Stand (`finance_state`, nicht geprüft beim Laden), CoinGecko (Namen, IDs, Symbole), lokale Einstellungen (`fr_pin`, `fr_sec`, `fr_cg`).
 - **Behoben:** S-01 (kritische Attributhülle in `histHTML`), S-02 (Passiv-Löschen mit ID aus dem Backup), S-03 (`esc()` neu, Speichern über `clean()` mit altem Textformat), S-04 (CoinGecko-Namen), S-05 (Verteidigungstiefe an allen Textsenken mit Nutzerdaten). Beleg: `tests/security.test.cjs` (6 Tests), Chrome-Probe, Grep-Prüfung der Restsenken (verbleibend nur feste Texte, Zahlen, Farben).
 - **Gemeldet:** S-06 (toter CSV-Pfad in features.js ohne Escaping).
-- **Restrisiko:** `'unsafe-inline'` (S. 3.2). Inline-Handler bleiben.
+- **Restrisiko:** Inline-Handler sind seit Teil B entfernt (14.4). `'unsafe-inline'` bleibt nur für `style-src` (3.2).
 
 ### 3.2 Header und Auslieferung: behoben (Cache-Prüfung offen)
 
 - **behoben (S-07):** CSP, HSTS, COOP, CORP in `vercel.json`. Beleg: Header über lokalen Server geprüft, Chrome lädt die Login-Ansicht ohne CSP-Meldung. Abgleich mit den Netzwerkaufrufen: `fetch(` nur in app.js (CoinGecko-Aufrufe in `cgPump`, `liveFetch`, `cgPrice`, `sugg`, `pick`) und sw.js; `createClient` für Supabase; `connect-src` deckt `*.supabase.co` (https und wss) und `api.coingecko.com` ab. Keine Fonts, keine externen Bilder, keine Inline-`<script>`-Blöcke in `index.html`.
-- **Restrisiko:** `'unsafe-inline'` in `script-src` (Inline-`onclick` in ca. 100 Stellen (Quelle und erzeugtes HTML)) und in `style-src` (154 `style=`-Attribute). Ausbau-Vorschlag: Handler auf `addEventListener` umstellen, dann `'unsafe-inline'` streichen (Phase 4/5).
+- **Restrisiko (Stand Teil B, 14.4.6):** `'unsafe-inline'` nur noch in `style-src` (147 `style=`-Attribute in den Quelldateien). Skripte: `script-src 'self' https://cdn.jsdelivr.net` und `script-src-attr 'none'`, keine Inline-Handler mehr. Ausbau für `style-src`: Styles in Klassen oder per CSSOM setzen, dann `'unsafe-inline'` streichen (eigener Auftrag).
 - **Nicht geprüft:** Cache-Header für statische Dateien (S-34). Lokal getestet, Vercel-Antwort nicht.
 
 ### 3.3 Supply Chain: behoben (SRI), Advisory: unkritisch
@@ -573,7 +573,7 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | S-04 | Sicherheit | mittel | app.js:199, 202 (`liveHTML`) | CoinGecko-Namen, Symbole, IDs ungeprüft in innerHTML/onclick | behoben | Grep, `esc()` und Zeichenfilter (`[^\w-]`) | 1454d01 |
 | S-05 | Sicherheit | niedrig | 25 Zeilen mit innerHTML (siehe 3.1) | Textsenken mit Nutzerdaten ohne Escaping (Verteidigungstiefe) | behoben | Grep-Prüfung, Liste in 3.1 | 1454d01 |
 | S-06 | Sicherheit | mittel | features.js:131–168 (`csvLoad`, `csvFile`, `csvGo`) | Toter CSV-Pfad: `csvGo` schreibt Notiz ohne Escaping in `S.tx`. Nicht erreichbar, weil `V.csv` von extras.js überschrieben wird. Code bleibt liegen. | gemeldet | Grep: nur features.js referenziert | – |
-| S-07 | Header | mittel | vercel.json | keine CSP, HSTS, COOP, CORP | behoben | Lokaler Header-Test, Chrome-Login ohne CSP-Meldung | 19ecab5 |
+| S-07 | Header | mittel | vercel.json | keine CSP, HSTS, COOP, CORP | behoben (Teil B: Skripte ohne `'unsafe-inline'`, `script-src-attr 'none'`; `style-src` Restrisiko, 14.4.6) | Lokaler Header-Test, Chrome-Login ohne CSP-Meldung; Browser-Smoketest 18/18 unter der neuen CSP | 19ecab5, 2397c49 |
 | S-08 | Supply Chain | mittel | index.html:5 | Supabase-Skript ohne SRI | behoben | sha384 live geprüft, CI-Schritt | 19ecab5 |
 | S-09 | PIN | mittel | features.js:219–226 | PIN als ungesalzenes SHA-256 (4–6 Ziffern sofort knackbar) | behoben | `pin.test.cjs` | 8bbab07 |
 | S-10 | PIN | mittel | features.js:227, 235–244 | Fehlversuchszähler nur im Speicher, Neuladen setzt zurück | behoben | `pin.test.cjs` (Staffelung), Code | 8bbab07 |
@@ -635,7 +635,7 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 
 Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 
-1. **Inline-Handler auf `addEventListener` umstellen** (Nutzen hoch, Aufwand groß). Danach `'unsafe-inline'` aus `script-src` streichen. Betrifft ca. 100 `onclick` und 154 `style=`-Attribute (für `style-src` gleicher Schritt).
+1. **Umgesetzt (Teil B, 14.4): Inline-Handler abgebaut, `script-src` ohne `'unsafe-inline'`.** Nutzen hoch, Aufwand war groß. Offen bleiben die 147 `style=`-Attribute; danach `'unsafe-inline'` aus `style-src` streichen (eigener Auftrag, je Ansicht).
 2. **Sperr-Overlay vor dem ersten Render setzen** (S-11, Nutzen mittel, Aufwand klein). Platzhalter oder CSS-Klasse im `<body>`.
 3. **Backup-Import validieren** (S-17, S-15-Muster): Datumsformat, Zahlentyp, Textbeträge ablehnen statt auf 0 setzen. Verhalten ändert sich sichtbar, daher Entscheidung Henne.
 4. **Toten Code entfernen** (S-06, S-29, S-30): `csvLoad`-Pfad, `plan()`/`pcalc()`, `cu`/`bars`/`applyTh`/`theme` in app.js. Nutzen: weniger Risiko. Aufwand: klein, aber Diff prüfbar machen (Phase 5).
@@ -655,7 +655,7 @@ Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 
 ## 6. Restrisiken
 
-- **`'unsafe-inline'`** in `script-src` und `style-src` (CSP). Inline-Handler und `style=`-Attribute bleiben. XSS-Schutz hängt damit weiter an `esc()`.
+- **`'unsafe-inline'`** nur noch in `style-src` (CSP, seit Teil B). Inline-Handler sind entfernt; `style=`-Attribute (147) bleiben. XSS-Schutz hängt an `esc()` und `act()`.
 - **PIN nur Sichtschutz:** Die Daten liegen unverschlüsselt in `localStorage`. Wer das Gerät mit Entwicklerwerkzeugen öffnet, kommt an die Daten.
 - **Last-Write-Wins bei zwei Geräten:** Zeitstempel kommen vom Client. Uhrzeitabweichungen können den falschen Stand gewinnen lassen (B-03). Im Test mit Fake-Supabase bestätigt, nicht behoben.
 - **Backup-Import:** Fremde oder manipulierte Dateien werden bereinigt, aber Datumsfelder und Textbeträge nicht geprüft (S-17).
@@ -1104,7 +1104,7 @@ Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. 
 | S-04 | Sicherheit | mittel | behoben | 1454d01 |
 | S-05 | Sicherheit | niedrig | behoben | 1454d01 |
 | S-06 | Sicherheit | mittel | behoben: toter Code entfernt (Phase 5) | b4d35f3 |
-| S-07 | Header | mittel | behoben | 19ecab5 |
+| S-07 | Header | mittel | behoben; Teil B: Skripte ohne `'unsafe-inline'` | 19ecab5, 2397c49 |
 | S-08 | Supply Chain | mittel | behoben | 19ecab5 |
 | S-09 | PIN | mittel | behoben | 8bbab07 |
 | S-10 | PIN | mittel | behoben | 8bbab07 |
@@ -1241,7 +1241,7 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 | # | Punkt | Quelle | Nutzen | Aufwand | Empfehlung |
 |---|---|---|---|---|---|
 | 1 | Supabase live: `user_state`-RLS prüfen (Advisors und `finance_state`-Policies am 27.10.2026 erledigt, 3.8) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
-| 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | eigener Auftrag, je Ansicht |
+| 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | umgesetzt (Teil B, 14.4): 131 Handler-Attribute durch `act()`, `script-src` ohne `'unsafe-inline'`; `style=` (147) offen |
 | 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | umgesetzt (Teil A1) |
 | 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | umgesetzt (Teil A2) |
 | 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | umgesetzt (Teil A1) |
@@ -1278,7 +1278,7 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 
 ### 13.2 Restrisiken (Stand Ende Phase 5)
 
-- **`'unsafe-inline'`** in `script-src` und `style-src`. Der XSS-Schutz hängt an `esc()`. Phase 5 hat keine ungeschützte Senke hinzugefügt (Diff geprüft, 12.6).
+- **`'unsafe-inline'`** nur noch in `style-src` (seit Teil B, 14.4). Der XSS-Schutz hängt an `esc()` und `act()`. Phase 5 hat keine ungeschützte Senke hinzugefügt (Diff geprüft, 12.6).
 - **PIN nur Sichtschutz.** Die Daten liegen unverschlüsselt in `localStorage`.
 - **Zeitstempel vom Gerät.** Der Konflikt-Dialog (B-03, Teil A1) greift nur, wenn der Cloud-Stand neuer ist. Uhrabweichungen können einen Konflikt übersehen lassen.
 - **Backup-Import** prüft Strukturen und Limits, aber nicht Datumsfelder und Textbeträge (S-17).
@@ -1666,3 +1666,274 @@ Umfang: Aufgaben 1 bis 3 aus dem Auftrag. B-19 umgesetzt: optionale Felder Zins 
 - **Datei-Export und -Import:** nur über den Test-Harness, keine echte Datei im Browser.
 - **Fachliche Richtigkeit gegen Bankrechner:** nicht abgeglichen. Die Formel ist gegen eine monatliche Schleife nachgerechnet (`tests/reference/schulden.cjs`).
 - **Trailer:** Die Commits tragen `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`, nicht `Sonnet 5.5` wie im Auftrag. Das Modell dieses Laufs ist Haiku 5.5; gleiche Abweichung wie in 14.1.
+
+### 14.4 Teil B: Inline-Handler abgebaut, CSP ohne `unsafe-inline` bei Skripten (S-07)
+
+Umfang: Aufgaben 1 bis 6 aus dem Auftrag für Teil B (Inventur, Mechanismus, Migration, Browser-Smoketest, CSP, Dokumentation). Kein Push, kein Deploy, kein Zugriff auf Live-Supabase, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt. `.github/workflows/` und `schema.sql` unverändert. Eine Änderung je Commit, `VERSION` in `sw.js` bei jeder Änderung an einer ausgelieferten Datei (`fr-2026-10-28aq` bis `fr-2026-10-28ax`). Der Branch bleibt lokal.
+
+**Ergebnis in Kürze**
+
+- Im Quelltext gibt es keine Handler-Attribute mehr (`on…=` in `index.html`, `app.js`, `features.js`, `extras.js`, `boost.js`, `styles.css`, `sw.js`). Geprüft durch `tests/handler-statisch.test.cjs`.
+- `script-src` lautet `'self' https://cdn.jsdelivr.net` ohne `'unsafe-inline'`. Neu: `script-src-attr 'none'`. `style-src` behält `'unsafe-inline'` (Restrisiko, 14.4.6).
+- Browser-Smoketest 18 von 18 Schritten unter der neuen CSP, ohne Konsolen-, Ausnahme- oder CSP-Meldung.
+- Keine sichtbare Änderung: gleiches HTML ohne Handler-Attribute in allen 76 Fällen, 44 Screenshots bytegleich mit dem Stand 909542e.
+
+#### 14.4.1 Inventur (Stand 909542e)
+
+Gezählt wurden 131 Handler-Attribute: `index.html` 2, `app.js` 76, `features.js` 15, `extras.js` 21, `boost.js` 17. Davon 104 `click`, 24 `change`, 3 `input`. Drei Attribute in `boost.js` entstehen erst über die Parameter `chip`, `al` und `tile`; sie stehen in der Tabelle als „JS-Text“.
+
+Außerdem gibt es zwei Sonderfälle im Text: ein Regex in `features.js` (V.fire), der den alten Formularblock des FIRE-Tabs ausschneidet, und ein Suchtext in `boost.js`, der die Einfügung im Tab Mehr bestimmt. Beide sind umgestellt. Zehn JavaScript-Eigenschaften (`el.onclick = …`, `el.onload = …`, siehe 14.4.8) sind keine Attribute, die CSP wirkt auf sie nicht; sie bleiben unverändert.
+
+Spalten: **this / Ereignis** zeigt, ob der Handler `this` (`this.value`, `this.checked`) liest. **Nutzerdaten im Argument** zeigt, woher ein Argument kommt. „ID aus den Daten“ wird über JSON und `esc()` übergeben, „Index“ ist eine Zahl aus einer Schleife. **Neue Form** ist der Aufruf nach der Umstellung.
+
+Tabelle (139 Zeilen; die Zeile `app.js:416` ist einmal aufgeführt):
+
+| Nr | Datei:Zeile (909542e) | Art | Ereignis | Handler-Code (alt, wie im Quelltext) | this / Ereignis | Nutzerdaten im Argument | Neue Form |
+|---:|---|---|---|---|---|---|---|
+| 1 | app.js:123 | Attribut | click | `kfOpen=true;render()` | nein | nein (feste Werte) | `'+act('kfZeigen')+'` |
+| 2 | app.js:124 | Attribut | click | `konfliktWahl('uebernehmen')` | nein | nein (feste Werte) | `'+act('konfliktWahl',['uebernehmen'])+'` |
+| 3 | app.js:124 | Attribut | click | `konfliktWahl('behalten')` | nein | nein (feste Werte) | `'+act('konfliktWahl',['behalten'])+'` |
+| 4 | app.js:124 | Attribut | click | `konfliktWahl('spaeter')` | nein | nein (feste Werte) | `'+act('konfliktWahl',['spaeter'])+'` |
+| 5 | app.js:128 | Attribut | click | `kontoWahl('sichern')` | nein | nein (feste Werte) | `'+act('kontoWahl',['sichern'])+'` |
+| 6 | app.js:128 | Attribut | click | `kontoWahl('verwerfen')` | nein | nein (feste Werte) | `'+act('kontoWahl',['verwerfen'])+'` |
+| 7 | app.js:128 | Attribut | click | `kontoWahl('abbrechen')` | nein | nein (feste Werte) | `'+act('kontoWahl',['abbrechen'])+'` |
+| 8 | app.js:185 | Attribut | click | `tab='data';render();scrollTo(0,0)` | nein | nein (feste Werte) | `act('goTab',['data'])` |
+| 9 | app.js:185 | Attribut | click | `continueWithCurrentData()` | nein | nein (feste Werte) | `act('continueWithCurrentData')` |
+| 10 | app.js:186 | Attribut | click | `continueWithCurrentData()` | nein | nein (feste Werte) | `act('continueWithCurrentData')` |
+| 11 | app.js:186 | Attribut | click | `pull(true)` | nein | nein (feste Werte) | `act('pull',[true])` |
+| 12 | app.js:214 | Attribut | click | `tg('${id}')` | nein | nein (feste Werte) | `act('tg',[key])` |
+| 13 | app.js:214 | Attribut | click | `tg('${id}')` | nein | nein (feste Werte) | `act('tg',[key])` |
+| 14 | app.js:217 | Attribut | click | `tab='more';render();scrollTo(0,0)` | nein | nein (feste Werte) | `act('goTab',['more'])` |
+| 15 | app.js:230 | Attribut | click | `sh(-1)` | nein | nein (Monat +1 / −1) | `act('sh',[-1])` |
+| 16 | app.js:230 | Attribut | click | `sh(1)` | nein | nein (Monat +1 / −1) | `act('sh',[1])` |
+| 17 | app.js:264 | Attribut | click | `ed={k:'debts',id:'${d.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['debts',d.id])` |
+| 18 | app.js:264 | Attribut | click | `del('debts','${d.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['debts',d.id])` |
+| 19 | app.js:264 | Attribut | click | `addDebt()` | nein | nein (feste Werte) | `act('addDebt')` |
+| 20 | app.js:289 | Attribut | click | `addHist()` | nein | nein (feste Werte) | `act('addHist')` |
+| 21 | app.js:289 | Attribut | click | `ed={k:'hist',id:'${x.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['hist',x.id])` |
+| 22 | app.js:289 | Attribut | click | `del('hist','${x.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['hist',x.id])` |
+| 23 | app.js:299 | Attribut | click | `edSave()` | nein | nein (feste Werte) | `act('edSave')` |
+| 24 | app.js:299 | Attribut | click | `ed=null;render()` | nein | nein (feste Werte) | `act('edClose')` |
+| 25 | app.js:335 | Attribut | click | `cgRetry()` | nein | nein (feste Werte) | `act('cgRetry')` |
+| 26 | app.js:337 | Attribut | click | `lrg='${r[0]}';render()` | nein | nein (feste Liste: Zeitraum) | `act('setLrg',[r[0]])` |
+| 27 | app.js:345 | Attribut | click | `ltop=${n};render()` | nein | nein (feste Werte 5 und 10) | `act('setLtop',[n])` |
+| 28 | app.js:345 | Attribut | click | `liveFetch().then(render)` | nein | nein (feste Werte) | `act('liveNeu')` |
+| 29 | app.js:351 | Attribut | click | `lsel='${c.id.replace(/[^\w-]/g,'')}';render()` | nein | ja: Fremdwert (CoinGecko-ID, nur \w und -) | `act('setLsel',[c.id.replace(/[^\w-]/g,'')])` |
+| 30 | app.js:354 | Attribut | change | `S.f.egm=+this.value\|\|3;save();render()` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `act('setEgm',['$value'],'change')` |
+| 31 | app.js:354 | Attribut | change | `S.f.egt=+this.value\|\|0;save();render()` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `act('setEgt',['$value'],'change')` |
+| 32 | app.js:370 | Attribut | click | `togEg('${a.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('togEg',[a.id])` |
+| 33 | app.js:370 | Attribut | click | `trd={id:'${a.id}',m:'b'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('trdStart',[a.id,'b'])` |
+| 34 | app.js:370 | Attribut | click | `trd={id:'${a.id}',m:'s'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('trdStart',[a.id,'s'])` |
+| 35 | app.js:370 | Attribut | click | `ed={k:'as',id:'${a.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['as',a.id])` |
+| 36 | app.js:370 | Attribut | click | `del('as','${a.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['as',a.id])` |
+| 37 | app.js:371 | Attribut | click | `doTr()` | nein | nein (feste Werte) | `act('doTr')` |
+| 38 | app.js:371 | Attribut | click | `trd=null;render()` | nein | nein (feste Werte) | `act('trdClose')` |
+| 39 | app.js:377 | Attribut | click | `pick(${i})` | nein | ja: Index (Zahl) | `act('pick',[i])` |
+| 40 | app.js:394 | Attribut | input | `feedUpd()` | nein | nein (feste Werte) | `act('feedUpd',[],'input')` |
+| 41 | app.js:394 | Attribut | change | `feedUpd()` | nein | nein (feste Werte) | `act('feedUpd',[],'change')` |
+| 42 | app.js:400 | Attribut | click | `ed={k:'tx',id:'${x.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['tx',x.id])` |
+| 43 | app.js:400 | Attribut | click | `del('tx','${x.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['tx',x.id])` |
+| 44 | app.js:408 | Attribut | click | `applyRec()` | nein | nein (feste Werte) | `act('applyRec')` |
+| 45 | app.js:408 | Attribut | click | `copyMo()` | nein | nein (feste Werte) | `act('copyMo')` |
+| 46 | app.js:408 | Attribut | click | `addTx()` | nein | nein (feste Werte) | `act('addTx')` |
+| 47 | app.js:410 | Attribut | click | `ed={k:'rec',id:'${r.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['rec',r.id])` |
+| 48 | app.js:410 | Attribut | click | `del('rec','${r.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['rec',r.id])` |
+| 49 | app.js:411 | Attribut | change | `sugg()` | nein | nein (feste Werte) | `act('sugg',[],'change')` |
+| 50 | app.js:411 | Attribut | input | `sugg()` | nein | nein (feste Werte) | `act('sugg',[],'input')` |
+| 51 | app.js:411 | Attribut | click | `addAs()` | nein | nein (feste Werte) | `act('addAs')` |
+| 52 | app.js:416 | Attribut | click | `setF()` | nein | nein (feste Werte) | `act('setF')` |
+| 53 | app.js:417 | Attribut | click | `msNote(${m})` | nein | ja: Monat aus den Daten | `act('msNote',[m])` |
+| 54 | app.js:419 | Attribut | click | `exportBackup()` | nein | nein (feste Werte) | `act('exportBackup')` |
+| 55 | app.js:419 | Attribut | click | `importBackup()` | nein | nein (feste Werte) | `act('importBackup')` |
+| 56 | app.js:420 | Attribut | click | `ed={k:'goals',id:'${g.id}'};render();scrollTo(0,0)` | nein | ja: ID aus den Daten (JSON, esc) | `act('edStart',['goals',g.id])` |
+| 57 | app.js:420 | Attribut | click | `del('goals','${g.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['goals',g.id])` |
+| 58 | app.js:420 | Attribut | click | `addGoal()` | nein | nein (feste Werte) | `act('addGoal')` |
+| 59 | app.js:424 | Attribut | change | `S.f.${k}=+this.value;save();render()` | ja: `this.value`/`this.checked` | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `act('setFNum',[k,'$value'],'change')` |
+| 60 | app.js:425 | Attribut | change | `txy=this.value;render()` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `act('setTxy',['$value'],'change')` |
+| 61 | app.js:428 | Attribut | click | `del('sales','${x.id}')` | nein | ja: ID aus den Daten (JSON, esc) | `act('del',['sales',x.id])` |
+| 62 | app.js:429 | Attribut | click | `tab='${k}';render();scrollTo(0,0)` | nein | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `act('goTab',[k])` |
+| 63 | app.js:432 | Attribut | change | `yr=this.value;render()` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `act('setYr',['$value'],'change')` |
+| 64 | app.js:435 | Attribut | change | `S.f.cz=+this.value;save();render()` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `act('setFNum',['cz','$value'],'change')` |
+| 65 | app.js:436 | Attribut | click | `login(false)` | nein | nein (feste Werte) | `act('login',[false])` |
+| 66 | app.js:436 | Attribut | click | `login(true)` | nein | nein (feste Werte) | `act('login',[true])` |
+| 67 | app.js:436 | Attribut | click | `magic()` | nein | nein (feste Werte) | `act('magic')` |
+| 68 | app.js:436 | Attribut | click | `forgot()` | nein | nein (feste Werte) | `act('forgot')` |
+| 69 | app.js:437 | Attribut | click | `setPw()` | nein | nein (feste Werte) | `act('setPw')` |
+| 70 | app.js:439 | Attribut | click | `setPw()` | nein | nein (feste Werte) | `act('setPw')` |
+| 71 | app.js:439 | Attribut | click | `push().then(render)` | nein | nein (feste Werte) | `act('pushNun')` |
+| 72 | app.js:439 | Attribut | click | `pull(false)` | nein | nein (feste Werte) | `act('pull',[false])` |
+| 73 | app.js:439 | Attribut | click | `logout(false)` | nein | nein (feste Texte) | `act('logout',[false])` |
+| 74 | app.js:439 | Attribut | click | `if(confirm('Lokale Daten auf diesem Gerät löschen? Cloud-Daten bleiben erhalten.'))logout(true)` | nein | nein (feste Texte) | `act('logoutLokal')` |
+| 75 | app.js:441 | Attribut | change | `setP('${a.id}',this.value)` | ja: `this.value`/`this.checked` | ja: ID aus den Daten (JSON, esc) | `act('setP',[a.id,'$value'],'change')` |
+| 76 | app.js:445 | Attribut | click | `tab='${k}';render();scrollTo(0,0)` | nein | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `act('goTab',[k])` |
+| 77 | boost.js:18 | JS-Text | (JS-Text) | `const go = k => "tab='" + k + "';render();scrollTo(0,0)";` | nein | nein (feste Werte) | `const go = k => act('goTab', [k]);` |
+| 78 | boost.js:108 | Attribut | click | `piImport()` | nein | nein (feste Werte) | `' + act('piImport') + '` |
+| 79 | boost.js:122 | Attribut | click | `piAdd()` | nein | nein (feste Werte) | `' + act('piAdd') + '` |
+| 80 | boost.js:126 | Attribut | click | `piDel(' + esc(JSON.stringify(x.id)) + ')` | nein | ja: ID aus den Daten (JSON, esc) | `' + act('piDel',[x.id]) + '` |
+| 81 | boost.js:128 | Attribut | change | `piSetF('yd',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('piSetF',['yd','$value'],'change') + '` |
+| 82 | boost.js:128 | Attribut | change | `piSetF('yz',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('piSetF',['yz','$value'],'change') + '` |
+| 83 | boost.js:128 | Attribut | change | `piSetF('rent',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('piSetF',['rent','$value'],'change') + '` |
+| 84 | boost.js:168 | Attribut | change | `setJob('inc',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('setJob',['inc','$value'],'change') + '` |
+| 85 | boost.js:173 | JS-Text | (JS-Text) | `const chip = (on, lbl, js) => '<button class="chip' + (on ? ' on' : '') + '" onclick="' + js + '">' + lbl + '</button>';` | nein | nein (feste Werte) | `const chip = (on, lbl, at) => '<button class="chip' + (on ? ' on' : '') + '" ' + at + '>' + lbl + '</button>';` |
+| 86 | boost.js:175 | JS-Text | (JS-Text) | `'setJob('sh',' + p + ')'` | nein | nein (feste Liste: Prozentwerte) | `act('setJob',['sh',p])` |
+| 87 | boost.js:176 | Attribut | change | `setJob('sh',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('setJob',['sh','$value'],'change') + '` |
+| 88 | boost.js:176 | Attribut | change | `setJob('ov',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('setJob',['ov','$value'],'change') + '` |
+| 89 | boost.js:177 | JS-Text | (JS-Text) | `'setJob('sab',' + p + ')'` | nein | nein (feste Liste: Prozentwerte) | `act('setJob',['sab',p])` |
+| 90 | boost.js:178 | JS-Text | (JS-Text) | `'setJob('at',' + p + ')'` | nein | nein (feste Liste: Prozentwerte) | `act('setJob',['at',p])` |
+| 91 | boost.js:193 | Attribut | click | `setJob('sh',' + p + ')` | nein | nein (feste Liste: Prozentwerte) | `' + act('setJob',['sh',p]) + '` |
+| 92 | boost.js:202 | Attribut | click | `' + go('job') + '` | nein | nein (feste Werte) | `' + go('job') + '` |
+| 93 | boost.js:204 | Attribut | click | `' + go('job') + '` | nein | nein (feste Werte) | `' + go('job') + '` |
+| 94 | boost.js:221 | JS-Text | (JS-Text) | `al = (t, s, b, js) => '<div class="al w"><span><b>' + t + '</b><small>' + s + '</small></span><button class="chip" onclick="' + js + '">' + b + '</button></div>';` | nein | nein (feste Werte) | `al = (t, s, b, at) => '<div class="al w"><span><b>' + t + '</b><small>' + s + '</small></span><button class="chip" ' + at + '>' + b + '</button></div>';` |
+| 95 | boost.js:224 | JS-Text | (JS-Text) | `'dlBackup()' : go('data')` | nein | nein (feste Werte) | `act('dlBackup') : go('data')` |
+| 96 | boost.js:228 | JS-Text | (JS-Text) | `'qInvest()'` | nein | nein (feste Werte) | `act('qInvest')` |
+| 97 | boost.js:241 | JS-Text | (JS-Text) | `const tile = (lbl, v, sub, extra, js) => '<button class="tile" onclick="' + js + '"><span>'` | nein | nein (feste Werte) | `const tile = (lbl, v, sub, extra, at) => '<button class="tile" ' + at + '><span>'` |
+| 98 | boost.js:250 | Attribut | click | `homeFull()` | nein | nein (feste Werte) | `' + act('homeFull') + '` |
+| 99 | boost.js:321 | Attribut | click | `' + go(k) + '` | nein | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `' + go(k) + '` |
+| 100 | extras.js:57 | JS-Text | (JS-Text) | `W.useSpl = v => { S.spl = { t: Math.max(0, Math.round(v)) }; save(); render(); };` | nein | nein (feste Werte) | `W.useSpl = (v, ev) => { if (ev) ev.preventDefault(); S.spl = { t: Math.max(0, Math.round(v)) }; save(); render(); };` |
+| 101 | extras.js:61 | Attribut | click | `setSpl()` | nein | nein (feste Werte) | `' + act('setSpl') + '` |
+| 102 | extras.js:62 | Attribut | click | `useSpl(' + sug + ');return false` | nein | ja: Zahl aus den Daten (Vorschlag) | `' + act('useSpl',[sug,'$event']) + '` |
+| 103 | extras.js:91 | Attribut | click | `dlBackup()` | nein | nein (feste Werte) | `' + act('dlBackup') + '` |
+| 104 | extras.js:109 | Attribut | click | `pvToggle()` | nein | nein (feste Werte) | `' + act('pvToggle') + '` |
+| 105 | extras.js:137 | Attribut | change | `setMNote(this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('setMNote',['$value'],'change') + '` |
+| 106 | extras.js:152 | Attribut | input | `qSug()` | nein | nein (feste Werte) | `' + act('qSug',[],'input') + '` |
+| 107 | extras.js:153 | Attribut | change | `Q_manual()` | nein | nein (feste Werte) | `' + act('Q_manual',[],'change') + '` |
+| 108 | extras.js:154 | Attribut | click | `qClose()` | nein | nein (feste Werte) | `' + act('qClose') + '` |
+| 109 | extras.js:154 | Attribut | click | `qSave()` | nein | nein (feste Werte) | `' + act('qSave') + '` |
+| 110 | extras.js:301 | Attribut | click | `impAll(true)` | nein | nein (feste Werte) | `' + act('impAll',[true]) + '` |
+| 111 | extras.js:301 | Attribut | click | `impAll(false)` | nein | nein (feste Werte) | `' + act('impAll',[false]) + '` |
+| 112 | extras.js:302 | Attribut | change | `impSet(' + i + ','inc',this.checked)` | ja: `this.value`/`this.checked` | ja: Index (Zahl) | `' + act('impSet',[i,'inc','$checked'],'change') + '` |
+| 113 | extras.js:302 | Attribut | change | `impSet(' + i + ','c',this.value)` | ja: `this.value`/`this.checked` | ja: Index (Zahl) | `' + act('impSet',[i,'c','$value'],'change') + '` |
+| 114 | extras.js:304 | Attribut | click | `impGo()` | nein | nein (feste Werte) | `' + act('impGo') + '` |
+| 115 | extras.js:304 | Attribut | click | `impClear()` | nein | nein (feste Werte) | `' + act('impClear') + '` |
+| 116 | extras.js:308 | Attribut | change | `impFile(this)` | nein | nein (Element zur Laufzeit) | `' + act('impFile',['$el'],'change') + '` |
+| 117 | extras.js:308 | Attribut | click | `impUndo()` | nein | nein (feste Werte) | `' + act('impUndo') + '` |
+| 118 | extras.js:310 | Attribut | click | `dlBackup()` | nein | nein (feste Werte) | `' + act('dlBackup') + '` |
+| 119 | extras.js:338 | Attribut | change | `secSet('cover',this.checked)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('secSet',['cover','$checked'],'change') + '` |
+| 120 | extras.js:339 | Attribut | change | `secSet('idle',this.value)` | ja: `this.value`/`this.checked` | nein (Wert aus dem Element zur Laufzeit) | `' + act('secSet',['idle','$value'],'change') + '` |
+| 121 | extras.js:340 | Attribut | click | `snapRestore(' + x.i + ')` | nein | ja: Index (Zahl) | `' + act('snapRestore',[x.i]) + '` |
+| 122 | features.js:12 | Attribut | click | `tab='' + k + '';render();scrollTo(0,0)` | nein | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `' + act('goTab',[k]) + '` |
+| 123 | features.js:43 | Attribut | click | `saveRunway5()` | nein | nein (feste Werte) | `' + act('saveRunway5') + '` |
+| 124 | features.js:43 | Attribut | click | `cancelRunway5()` | nein | nein (feste Werte) | `' + act('cancelRunway5') + '` |
+| 125 | features.js:44 | Attribut | click | `editRunway5()` | nein | nein (feste Werte) | `' + act('editRunway5') + '` |
+| 126 | features.js:107 | Attribut | change | `setBud('' + c + '',this.value)` | ja: `this.value`/`this.checked` | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `' + act('setBud',[c,'$value'],'change') + '` |
+| 127 | features.js:114 | Attribut | change | `setAl('' + k + '',this.value)` | ja: `this.value`/`this.checked` | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `' + act('setAl',[k,'$value'],'change') + '` |
+| 128 | features.js:148 | Attribut | click | `pinKey(''+k+'')` | nein | nein (feste Liste: Schlüssel, Kategorie, Stufe) | `' + act('pinKey',[String(k)]) + '` |
+| 129 | features.js:178 | Attribut | click | `setPin()` | nein | nein (feste Werte) | `' + act('setPin') + '` |
+| 130 | features.js:178 | Attribut | click | `lockNow()` | nein | nein (feste Werte) | `' + act('lockNow') + '` |
+| 131 | features.js:178 | Attribut | click | `rmPin()` | nein | nein (feste Werte) | `' + act('rmPin') + '` |
+| 132 | features.js:196 | Attribut | click | `setTf(${v})` | nein | nein (feste Stufen 30, 15, 0 bzw. 0, 8, 9) | `act('setTf',[v])` |
+| 133 | features.js:196 | Attribut | click | `setKist(${v})` | nein | nein (feste Stufen 30, 15, 0 bzw. 0, 8, 9) | `act('setKist',[v])` |
+| 134 | features.js:196 | Attribut | click | `setFx()` | nein | nein (feste Werte) | `act('setFx')` |
+| 135 | features.js:196 | Attribut | click | `fxToggle(false)` | nein | nein (feste Werte) | `act('fxToggle',[false])` |
+| 136 | features.js:196 | Attribut | click | `fxToggle(true)` | nein | nein (feste Werte) | `act('fxToggle',[true])` |
+| 137 | features.js:203 | Attribut | click | `setF\(\)">Übernehmen<\/button>` | nein | nein (feste Werte) | `data-click="setF">Übernehmen<\/button>` |
+| 138 | index.html:31 | Attribut | click | `hideN()` | nein | nein (feste Werte) | `data-click="hideN"` |
+| 139 | index.html:31 | Attribut | click | `theme()` | nein | nein (feste Werte) | `data-click="theme"` |
+
+#### 14.4.2 Mechanismus
+
+- `act(fn, args, ev)` in `app.js` erzeugt `data-click="fn"` (bzw. `data-change`, `data-input`) und `data-args="…"`. `data-args` ist ein JSON-Array, über `esc()` in das Attribut gesetzt. Nutzerdaten gelangen nie als Rohtext in den Code.
+- `ACTS` ist die Allowlist (Set, 87 Namen). `act()` wirft bei einem Namen, der nicht dort steht. Der Dispatcher ruft nur Namen aus `ACTS` auf und löst sie über `window[name]` auf. Daten können also keine beliebigen Funktionen aufrufen.
+- Ein Listener je Ereignisart am Dokument (`click`, `change`, `input`), einmal beim Laden. Das Neuzeichnen legt keine Listener an; der Lecktest in `tests/aktionen.test.cjs` prüft das.
+- Verschachtelte Ziele: Alle Vorfahren mit Attribut laufen von innen nach außen, wie bei Inline-Handlern. Die Kette wird vor dem ersten Aufruf gesammelt, damit ein Neuzeichnen während des Klicks sie nicht abschneidet.
+- Ein Fehler in einer Aktion wird wie ein ungefangener Fehler gemeldet (asynchron). Die übrigen Ziele laufen weiter.
+- Platzhalter: `$value` (Wert), `$checked` (Haken), `$el` (Element), `$event` (Ereignis). `$event` kommt nur beim Link „übernehmen“ im Sparplan vor (siehe 14.4.8).
+- Kein `eval`, kein `new Function`, keine Zeichenketten als Code, keine `javascript:`-URL im Quelltext.
+
+#### 14.4.3 Umsetzung (Commits, älteste zuerst)
+
+| Commit | Schritt | Inhalt |
+|---|---|---|
+| `8cd0e1e` | 1 | Dispatcher, `act()`, `ACTS`; `tests/aktionen.test.cjs` (7) |
+| `faec892` | 2 | `app.js`: 75 Attribute umgestellt; Konto, Sync, Ansichten. FIRE-Button bewusst noch inline, wegen Regex in `features.js`. Snapshot `schulden-alt.json`: nur die Handler-Attribute der Ansicht Vermögen neu geschrieben |
+| `9f8a2c6` | 3 | `features.js`: 15 Attribute; FIRE-Button und Regex zusammen; Suchtext in `boost.js` (Mehr) |
+| `f0465c5` | 4 | `boost.js`: 17 Attribute, 3 über die Parameter von `chip`, `al`, `tile`; `cgRetry` als Funktionsdeklaration; `tests/security.test.cjs` (Prüfung der Passiv-ID auf `act()`) |
+| `fd65e84` | 5 | `styles.css` `[onclick]` → `[data-click]`; `tests/ui-static.test.cjs`; `tests/ui/shoot.cjs` |
+| `44d5d13` | 6 | `extras.js`: 21 Attribute; `$event` und `preventDefault()` für den Link mit `return false` |
+| `2814524` | 7 | `index.html`: `hideN`, `theme` (2) |
+| `969c91e` | 8 | Test: Äquivalenz der Ansichten gegen 909542e (`tests/handler-aequivalenz.test.cjs`, Snapshot `tests/fixtures/snapshots/handler-alt.json`), statische Prüfung (`tests/handler-statisch.test.cjs`), Option `seed` im Harness |
+| `b87da41` | 9 | Test: Browser-Smoketest `tests/ui/smoke.cjs` |
+| `2397c49` | 10 | `vercel.json`: CSP ohne `'unsafe-inline'` bei Skripten, `script-src-attr 'none'`; `tests/csp.test.cjs` |
+| Dieser Commit | 11 | README, CHATGPT-ANLEITUNG, CHANGELOG, Bericht (14.4, Befundtabellen) |
+
+#### 14.4.4 Prüfprotokoll
+
+| Prüfung | vorher (`909542e`) | nachher (`2397c49`) |
+|---|---|---|
+| Syntax (`sh tests/check-syntax.sh`) | OK | OK (55 Dateien) |
+| Gesamtcheck `bash tests/run-all.sh` | 269 grün | 364 grün; die Zahl stieg bei jedem Commit |
+| Neue Testdateien | – | `aktionen` (11), `handler-aequivalenz` (77), `handler-statisch` (2), `csp` (5) = 95 neue Tests |
+| Geänderte Prüfungen | – | `security`: Prüfung der Passiv-ID sucht jetzt `act('piDel',[x.id])`, die Aussage bleibt. `ui-static`: Selektor `[data-click]`. `schulden-regression`: Snapshot-Ansicht nur bei den Handler-Attributen neu geschrieben (vorher geprüft: ohne Handler gleich). Keine Prüfung abgeschwächt |
+| Render-Vergleich, 19 Ansichten × 4 Fixtures | – | HTML ohne Handler-Attribute: 76 von 76 gleich (SHA-256). Handler: 1.124 vorher, 1.124 nachher, gleiche Reihenfolge, gleiche Zuordnung (47 normalisierte Muster) |
+| Screenshots (`tests/ui/shoot.cjs`, Kopie mit festen Kursantworten) | – | 44 Bilder bytegleich mit 909542e: 6 Ansichten × 2 Breiten × 2 Designs (Fixture klein), Schnellerfassung, CSV-Import, PIN-Sperre, Login (je 2 Breiten × 2 Designs) |
+| Browser-Smoketest, 18 Schritte | – | Mit `unsafe-inline`: 18/18. Mit der neuen CSP: 18/18 (14.4.5) |
+| Lecktest Phase 5 (`node tests/perf/measure.cjs`, 50 Renders Prognose) | Dokument-Listener +0, Timer +0 | Dokument-Listener +0, Timer +0 |
+| Secret-Scan | keine Treffer | keine Treffer (`run-all`) |
+| VERSION-Prüfung (`sh tests/check-sw-version.sh 909542e`) | – | erhöht: `fr-2026-10-28aq` → `fr-2026-10-28ax` |
+
+Zur Äquivalenzprüfung: Die Zuordnung (47 Muster) ist aus der Paarung der alten und neuen Handler je Ansicht entstanden. Sie ist also kein unabhängiger Beleg. Unabhängig geprüft sind die Gleichheit des HTML ohne Handler, die Anzahl und Reihenfolge der Handler, die Argumente (Texte, Zahlen, Wahrheitswerte) und die Registrierung der Funktionen. Eine absichtlich falsche Zahl (`sh(1)` statt `sh(-1)`) lässt 8 Fälle rot werden; die Probe ist zurückgenommen.
+
+#### 14.4.5 Browser-Smoketest (`tests/ui/smoke.cjs`)
+
+Chrome headless über CDP, Repo über einen lokalen Server mit den Headern aus `vercel.json`. `config.js` im Speicher mit leerem `FR_CONFIG`. Fixture „klein“. Die 18 Schritte:
+
+1. Start mit Fixture „klein“ (Titel „Home“)
+2. Tabs Home, Cashflow, Vermögen, Fuck Off, Prognose, Mehr (je Titel geprüft)
+3. Panel-Kopf zuklappen und wieder öffnen (Zustand `S.ui.c`)
+4. Design: hell → dunkel → automatisch → hell
+5. Zahlen ausblenden und einblenden
+6. Monatsnavigation zurück und vor
+7. Buchung über die Schnellerfassung anlegen
+8. Buchung über das Löschen-Symbol entfernen
+9. Backup: Export füllt das Feld; Import öffnet die Bestätigung, die abgelehnt wird (Buchungen unverändert)
+10. PIN-Sperre öffnen (Schaltfläche „Jetzt sperren“) und mit der PIN entsperren
+11. Prognose-Chips Teilfreistellung 15 % und 30 % (Zustand und Klasse „on“)
+12. Schuld anlegen und wieder löschen
+13. Schnellerfassung mit Esc schließen
+
+Ergebnisse:
+
+- **Lauf 1** (CSP mit `'unsafe-inline'`, Stand vor der Umstellung der CSP): 18 von 18 ok; 0 Konsole, 0 CSP, 0 Netz.
+- **Lauf 2** (neue CSP): 18 von 18 ok; 0 Konsole, 0 CSP, 0 Netz. Die CSP wird aus der Antwort gelesen und im Bericht ausgegeben.
+- **Negativprobe**: Ein `onclick` am Umschalter Design (temporär in `index.html`) ergibt `CSP script-src-attr | inline` und lässt den Schritt rot werden; der Lauf endet mit Exit 1. Die Datei ist danach wieder auf dem Stand des Commits.
+
+Während des Aufbaus gab es zwei Korrekturen am Test selbst, keine an der App: Der Favicon-Abruf (404) wird mit 204 beantwortet. CoinGecko blockte aus diesem Netz mit 429 ohne CORS-Kopf; die Kursantworten kommen deshalb über CDP als leere, gültige Antworten mit CORS-Kopf. Die CSP wird vor dieser Antwort geprüft (connect-src bleibt wirksam).
+
+#### 14.4.6 CSP und Restrisiko (S-07 neu bewertet)
+
+| | vorher (`909542e`) | nachher (`2397c49`) |
+|---|---|---|
+| `script-src` | `'self' https://cdn.jsdelivr.net 'unsafe-inline'` | `'self' https://cdn.jsdelivr.net` |
+| `script-src-attr` | nicht gesetzt (Fallback: `script-src`) | `'none'` |
+| `style-src` | `'self' 'unsafe-inline'` | unverändert |
+
+- **Skripte:** Inline-Skripte und Inline-Ereignisattribute sind technisch gesperrt. Im Quelltext gibt es kein `eval`, kein `new Function`, keine Zeichenketten als Timer-Code, kein `document.write`, keine `javascript:`-URL. Ein Restrisiko bleibt dort, wo Daten in ein Skript oder in eine URL gelangen würden; das schützen `esc()` und `act()`.
+- **Styles:** `style-src` erlaubt weiterhin `'unsafe-inline'`. Im Quelltext stehen 147 `style=`-Attribute (909542e; der Phase-2-Bericht nennt 154, die Zählung ist älter). Über Styles lässt sich nichts ausführen, aber die Darstellung beeinflussen. Der Ausbau: Styles in Klassen oder per `element.style.setProperty` setzen, danach `style-src 'self'`. Das ist ein eigener Auftrag, am besten je Ansicht.
+- **Bewertung:** S-07 bleibt „behoben“. Das Restrisiko für Skripte ist von mittel auf niedrig gesenkt. Das verbleibende `style-src`-Restrisiko ist niedrig. Der Cache-Header live (S-34) ist nicht geprüft.
+- `vercel.json` gehört nicht zur Liste der CI-Prüfung für `VERSION`. Die CSP-Änderung erhöht `VERSION` deshalb nicht; am Cache-Inhalt hat sich nichts geändert.
+
+#### 14.4.7 Sichtbare Änderungen
+
+Keine. Begründung: Gleiches HTML ohne Handler-Attribute (76 von 76 Fällen), 44 Screenshots bytegleich, die CSS-Selektoren `[onclick]` wurden auf `[data-click]` umgestellt und treffen dieselben Elemente. Verhalten: Alle Vorfahren mit Aktion laufen wie vorher. Der Link „übernehmen“ im Sparplan verhindert wie vorher das Springen zu `#` (jetzt über `preventDefault()`).
+
+#### 14.4.8 Umsetzungsentscheidungen (aus dem Code, nicht von Henne bestätigt)
+
+- **Dispatcher statt Listener je Element.** Der Vorschlag nannte `addEventListener`. Die Ansichten werden bei jedem Render neu geschrieben; ein Listener je Element hätte neu gebunden werden müssen. Ein Dispatcher am Dokument braucht keine Bindung und kein Aufräumen.
+- **`$event`** ist ein zusätzlicher Platzhalter. Der Link im Sparplan hatte `return false`, das bei Inline-Handlern das Standardverhalten verhindert. Die Aktion `useSpl` ruft dafür `preventDefault()` auf.
+- **`cgRetry`** war eine `const`-Funktion. Der Dispatcher findet sie über das Fenster nicht; der Test hat es gefunden. Die Umstellung auf eine Funktionsdeklaration ändert nichts am Ablauf.
+- **Schlüssel des Panels.** `P()` bildet den Schlüssel einmal. Anzeige und Nachschlagen in `S.ui.c` bleiben escaped wie vorher. `act('tg', [key])` übergibt den Rohtext. Der alte Attributwert war nach der HTML-Dekodierung ebenfalls der Rohtext (vorher geprüft).
+- **Bestätigungstext „Abmelden und lokale Daten löschen“** steht jetzt in `logoutLokal()`, mit demselben Wortlaut.
+- **Property-Handler** (`el.onclick = …` in `features.js` (7) und `extras.js` (3)) bleiben. Sie sind keine Attribute; die CSP wirkt nicht auf sie.
+- **Smoketest:** Kursabrufe von CoinGecko werden über CDP beantwortet (siehe 14.4.5). Gleiches gilt für den Screenshot-Vergleich, damit die Kurswerte gleich sind.
+- **Testhilfe `seed`:** Die Fixtures ohne IDs bekommen beim Laden zufällige IDs (`uid()`). Der Snapshot und der Test laufen mit derselben Zufallsfolge. Ohne `seed` bleibt das Verhalten gleich.
+- **Trailer:** Die Commits tragen `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`, wie der Auftrag es vorgibt. Das Modell dieses Laufs ist Haiku 5.5. Der Trailer weicht also vom tatsächlichen Modell ab; das ist beim Lesen der Historie zu berücksichtigen.
+- **Zwei Commit-Texte zählen ungenau:** `f0465c5` nennt für `boost.js` 21 Handler, `44d5d13` für `extras.js` 22. Gezählt sind 17 Attribute plus 3 über Parameter (`boost.js`) bzw. 21 Attribute plus eine Funktionsdefinition (`extras.js`). Der Inhalt der Commits ist davon nicht berührt; gelten die Zahlen dieses Abschnitts.
+
+#### 14.4.9 Was nicht geprüft wurde
+
+- **Browser:** nur Chrome headless auf dem Mac. Safari, iOS, Android nicht.
+- **Supabase:** keine echte Verbindung (Smoketest ohne Konfiguration). Login, RLS und Sync wurden nicht im Browser geprüft.
+- **Auslieferung:** Die Header wurden lokal nach `vercel.json` ausgeliefert, nicht von Vercel. Die Cache-Regeln (S-34) sind unverändert und nicht live geprüft.
+- **Nicht im Browser bedient:** Dateiauswahl für den CSV-Import, Datei-Export und -Import, Konflikt- und Kontowechsel-Dialog (nur über den Harness, wie zuvor). Die übrigen Aktionen sind über Name und Argumente abgedeckt, nicht über einen Klick.
+- **Screenshots:** mit Fixture „klein“ und festen Kursantworten. Die Matrix mit „extrem“ wurde nicht erneut gefahren.
+- **`style-src`:** Das Restrisiko bleibt (14.4.6).
