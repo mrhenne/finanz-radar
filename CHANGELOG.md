@@ -74,6 +74,28 @@ Neue Datenfelder (optional, je Schuld unter `S.debts`): `r` (Zins in % p. a., 0 
 
 Nicht geprüft: echter Browser (Layout der neuen Zeilen bei 375 px, Dunkelmodus, Trefferflächen der neuen Felder, Bild der Animationen), Supabase-Synchronisierung mit den neuen Feldern, Datei-Import im Browser. Der SVG-Pulse an den Diagrammen (`ANIM` in `app.js`) ist unverändert und unbegrenzt (Details in Bericht 14.3).
 
+### Teil B: Aktionen ohne Inline-Handler, CSP ohne unsafe-inline bei Skripten (S-07)
+
+- `8cd0e1e` Dispatcher und `act()`: eine Auflösung am Dokument für click, change und input, Allowlist `ACTS`, Platzhalter `$value`, `$checked`, `$el`, `$event` (`app.js`, `tests/aktionen.test.cjs`)
+- `faec892` `app.js` umgestellt (76 Attribute); mehrteilige Handler als benannte Funktionen
+- `9f8a2c6` `features.js` umgestellt (15); Ausschnitt FIRE und Suche im Mehr-Tab an `act()` angepasst
+- `f0465c5` `boost.js` umgestellt (17 Attribute, dazu 3 über die Parameter von `chip`, `al`, `tile`); `go()` liefert das Attribut
+- `fd65e84` CSS-Auswahl `[data-click]` (`styles.css`, `ui-static`, `shoot.cjs`)
+- `44d5d13` `extras.js` umgestellt (21); Link im Sparplan mit `$event` und `preventDefault()` statt `return false`
+- `2814524` `index.html` umgestellt (2)
+- `969c91e` Test: Äquivalenz der 76 Ansichten gegen 909542e (Hash ohne Handler-Attribute, Anzahl und Reihenfolge, Funktion und Argumente je Handler), statische Prüfung auf `on*`-Attribute
+- `b87da41` Test: Browser-Smoketest `tests/ui/smoke.cjs` (18 Schritte, Chrome über CDP, CSP aus `vercel.json`)
+- `2397c49` `vercel.json`: `script-src 'self' https://cdn.jsdelivr.net` ohne `'unsafe-inline'`, neu `script-src-attr 'none'`; `tests/csp.test.cjs`
+- Dieser Commit: README, CHATGPT-ANLEITUNG, CHANGELOG und Bericht (Abschnitt 14.4)
+
+Tests: 269 grün vorher, 364 grün nachher (`bash tests/run-all.sh`). Neue Testdateien: `aktionen` (11), `handler-aequivalenz` (77), `handler-statisch` (2), `csp` (5). Geändert: `security` (Prüfung der Passiv-ID auf `act()` umgestellt), `schulden-regression` (Snapshot nur bei den Handler-Attributen), `ui-static` (Selektor `[data-click]`). Die Testhilfe `tests/harness/load-app.cjs` hat die Option `seed` für `Math.random`.
+
+Sichtbare Änderungen: keine. Der Render-Vergleich zeigt für alle 76 Fälle (19 Ansichten, 4 Fixtures) dasselbe HTML ohne Handler-Attribute. Die Screenshots von 6 Ansichten, Schnellerfassung, CSV-Import, PIN und Login sind je Breite und Design bytegleich mit 909542e (44 Bilder).
+
+Sicherheit: Inline-Skripte und Inline-Ereignisattribute sind gesperrt. `style-src` behält `'unsafe-inline'` (Restrisiko, Bericht 14.4).
+
+Nicht geprüft: Safari und iOS, echte Supabase-Verbindung (Smoketest ohne Konfiguration), Live-Header auf Vercel (lokaler Server), Cache-Regeln. Die Eigenschaften `el.onclick = …` in `features.js` und `extras.js` (10 Stellen) sind keine Attribute und bleiben unverändert.
+
 ## Endkontrolle (Phase 1 bis 5)
 
 ### Phase 1: Baseline und Inventur
