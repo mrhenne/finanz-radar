@@ -582,8 +582,8 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | S-14 | Login | niedrig | app.js:84, 87 | Mindestlänge 6 (client), kein Bestätigungsfeld | gemeldet | Code | – |
 | S-15 | Import | mittel | extras.js:208–214 (`parseDate`) | `31.02.` wird als `2026-02-31` übernommen | behoben | `csv-import.test.cjs` | 3af32d3 |
 | S-16 | Import | niedrig | extras.js:235 | Stilles Abschneiden nach 1.500 Zeilen | behoben | `csv-import.test.cjs` | 3af32d3 |
-| S-17 | Import | niedrig | app.js:15–42 (`normalizeImportedState`) | Backup-Datumsfelder ungeprüft; Textbeträge werden 0 (Datenverlust bei fremden Backups) | gemeldet | Code | – |
-| S-18 | Export | niedrig | app.js:243 (`exportBackup`), extras.js (`dlBackup`) | Backup enthält `S.uid` (Supabase-Nutzer-ID) und `ts` | gemeldet | Code | – |
+| S-17 | Import | niedrig | app.js:15–42 (`normalizeImportedState`) | Backup-Datumsfelder ungeprüft; Textbeträge werden 0 (Datenverlust bei fremden Backups) | umgesetzt (Teil A2) | Code | `a61c956` |
+| S-18 | Export | niedrig | app.js:243 (`exportBackup`), extras.js (`dlBackup`) | Backup enthält `S.uid` (Supabase-Nutzer-ID) und `ts` | umgesetzt (Teil A2, `uid` entfernt; `ts` bleibt) | Code | `bcc98cb` |
 | S-19 | CSV-Export | – | – | kein CSV-Export vorhanden (JSON only) | unkritisch | Grep | – |
 | S-20 | Secrets | – | Repo und Historie | keine Dienstschlüssel. `sb_publishable_` ist öffentlich. | unkritisch | `git log --all -p`, Grep | – |
 | S-21 | Öffentliches Repo | niedrig | Commit-Metadaten | private E-Mail in 43 Commits | gemeldet | `git log --all` | – |
@@ -615,9 +615,9 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | B-13 | Anzeige | niedrig | features.js (`levelsHTML`) | Runway-Stufe mit Ziel 0 zeigt „ca. 0,0 Jahre“. | behoben (SÄ-7) | `fuckoff.test.cjs`, vorher rot | 4d976ce |
 | B-14 | Datenintegrität | mittel | app.js (`histPick`, `histHTML`, `snap`); features.js, boost.js (Verlauf, Rückblick) | Zwei Historie-Einträge für einen Monat: doppelt angezeigt; Verlauf und Rückblick lasen verschiedene Einträge. | behoben (SÄ-8) | `vermoegen.test.cjs`, vorher rot | 5473286 |
 | B-15 | Datenintegrität | mittel | app.js (`edSave`) | Bearbeiten: Ein leeres Datum machte die Buchung datumslos (verschwindet aus dem Monat); ein ungültiger Monat in der Historie wurde übernommen. | behoben (SÄ-14) | `vermoegen.test.cjs`, vorher rot | 5473286 |
-| B-16 | Kennzahl | mittel | app.js (`fireF`); features.js (`fxP`, Ausgaben-Feld) | Ausgaben-Basis: Die Fuck-Off-Zahl rechnet mit Ø Ausgaben, der Fuck-Off-Rechner mit den Fixkosten, wenn das Ausgaben-Feld leer ist (Fixture: 282.788 € gegen 900 € je Monat Entnahme). | gemeldet, Entscheidung Henne | Nachmessung in 3a.8 | – |
-| B-17 | Annahme | mittel | features.js (`fxSim`, `prFin`); app.js (`tax`) | Steuer-Annahmen: keine Verlustverrechnung, keine Vorabpauschale, keine Kirchensteuer; Teilfreistellung im Fuck-Off-Rechner fest 30 %. | gemeldet, teilweise offengelegt | `krypto.test.cjs`, `prognose.test.cjs` | – |
-| B-18 | Modell | niedrig | features.js (`prSim`, `prFin`) | Zinsmodell: effektiver Jahreszins, monatlich verzinst; Steuer nur am Ende; Einmalzahlungen am Jahresende. | gemeldet, teilweise offengelegt | `prognose.test.cjs` | – |
+| B-16 | Kennzahl | mittel | app.js (`fireF`); features.js (`fxP`, Ausgaben-Feld) | Ausgaben-Basis: Die Fuck-Off-Zahl rechnet mit Ø Ausgaben, der Fuck-Off-Rechner mit den Fixkosten, wenn das Ausgaben-Feld leer ist (Fixture: 282.788 € gegen 900 € je Monat Entnahme). | umgesetzt (Teil A2) | Nachmessung in 3a.8, Vorher/Nachher in 14.2 | `b9d5f23` |
+| B-17 | Annahme | mittel | features.js (`fxSim`, `prFin`); app.js (`tax`) | Steuer-Annahmen: keine Verlustverrechnung, keine Vorabpauschale, keine Kirchensteuer; Teilfreistellung im Fuck-Off-Rechner fest 30 %. | umgesetzt (Teil A2): Teilfreistellung und Kirchensteuer wählbar, Rest im Tab Steuer ausgewiesen | `steuer-annahmen.test.cjs`, `prognose.test.cjs` | `4f38e51`, `955e107` |
+| B-18 | Modell | niedrig | features.js (`prSim`, `prFin`) | Zinsmodell: effektiver Jahreszins, monatlich verzinst; Steuer nur am Ende; Einmalzahlungen am Jahresende. | teilweise (Teil A2): Hinweis zur Steuer am Ende ergänzt, Zinsmodell unverändert | `prognose.test.cjs` | `4f38e51` |
 | B-19 | Fehlende Funktion | mittel | app.js (`debtsHTML`, `addDebt`) | Schulden ohne Zins, Tilgung und Restlaufzeit. Schuldenabbau (Plan 4.4) ist nicht vorhanden. | gemeldet (Vorschlag) | Code-Lesung | – |
 | B-20 | Logik | niedrig | features.js (`autoRecurring`) | Wiederkehrende Buchungen: keine Pause und kein Beenden. Automatisch gebucht wird nur der aktuelle Monat; frühere Monate per „Recurring anwenden“. | gemeldet (Verhalten) | `buchungen.test.cjs` | – |
 | B-21 | Fehlende Funktion | niedrig | app.js (`liveHTML`) | Anzeige „Kurs veraltet“ fehlt (Plan 4.5). | gemeldet | Code-Lesung | – |
@@ -1242,12 +1242,12 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 | 1 | Supabase live: `user_state`-RLS prüfen (Advisors und `finance_state`-Policies am 27.10.2026 erledigt, 3.8) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
 | 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | eigener Auftrag, je Ansicht |
 | 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | umgesetzt (Teil A1) |
-| 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | Entscheidung |
+| 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | umgesetzt (Teil A2) |
 | 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | umgesetzt (Teil A1) |
 | 6 | Neuversuch bei Upload-Fehlern (Timer mit Obergrenze) | B-24, 5.14 | mittel | klein | umgesetzt (Teil A1) |
 | 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden (REVOKE-Zeile seit 27.10.2026 im Vorschlag) | S-24, 5.7, `vorschlaege/` | mittel | klein, Testkonto nötig | nach Punkt 1 |
-| 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | Entscheidung |
-| 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | zuerst ausweisen |
+| 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | umgesetzt (Teil A2) |
+| 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | umgesetzt (Teil A2): Teilfreistellung und Kirchensteuer wählbar, Verlustverrechnung und Vorabpauschale ausgewiesen |
 | 10 | Schulden mit Zins und Restlaufzeit | B-19, 3a.8.5, 5.12 | mittel | groß, Datenmodell | nur nach Freigabe |
 | 11 | Wiederkehrende Buchungen pausieren und beenden | B-20 | mittel | mittel | Entscheidung |
 | 12 | Supabase-Client erst bei Bedarf erzeugen (Start unabhängig vom CDN) | P5-18 | mittel | mittel, app.js | nach Punkt 2 |
@@ -1526,3 +1526,72 @@ Commits auf dem Branch `endkontrolle-2026-10-26-ohne-workflow` (älteste zuerst)
 - Uhrabweichung zwischen Geräten (Restrisiko von B-03).
 - Häufigkeit von Dialogen durch reine UI-Unterschiede (Design, Panels), siehe Umsetzungsentscheidungen.
 - Die Prüfung von `user_state` (Altdaten) wird nicht automatisch wiederholt. Das ist unverändert und nicht Teil von B-24.
+
+### 14.2 Teil A2: Nachbesserung A1, Backup, Ausgaben-Basis, Steuer-Annahmen
+
+Umfang: Aufgaben 0 bis 4 aus dem Auftrag. Befunde S-17, S-18, B-16 und B-17 sind umgesetzt. B-18 ist teilweise umgesetzt (Hinweis zur Steuer am Ende; das Zinsmodell bleibt unverändert). Kein Push, kein Deploy, kein Zugriff auf Live-Supabase, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt. `.github/workflows/` unverändert. `schema.sql` unverändert. Am Datenmodell `S` nur zwei optionale Felder unter `S.f` (siehe unten).
+
+**Commits** (Branch `endkontrolle-2026-10-26-ohne-workflow`, älteste zuerst):
+
+| Commit | Befund | Inhalt |
+|---|---|---|
+| `d37fd04` | A1-Nachbesserung | Konflikt-Vergleich nur über Fachdaten; `ui`, `th`, `hide` lösen keinen Dialog aus (`app.js`, `tests/sync-vergleich.test.cjs`) |
+| `bcc98cb` | S-18 | Export ohne `uid` (`exportJson()`), Import ignoriert eine Kennung aus der Datei |
+| `a61c956` | S-17 | Import prüft jeden Datensatz und meldet übernommen, verworfen und korrigiert (`app.js`, `tests/import-pruefung.test.cjs`) |
+| `b9d5f23` | B-16 | Eine Ausgaben-Basis `ausgabenBasis()` für Fuck-Off-Zahl und -Rechner; Basis wird als Text angezeigt (`app.js`, `features.js`, `tests/ausgaben-basis.test.cjs`) |
+| `4f38e51` | B-17, B-18 | Teilfreistellung und Kirchensteuer wählbar, Annahmen-Liste im Tab Steuer, Hinweise (`app.js`, `features.js`, `tests/steuer-annahmen.test.cjs`, `tests/reference/forecast.cjs`) |
+| `955e107` | B-17 | Formelwerte der Kirchensteuer als benannte Konstanten |
+| dieser Commit | S-17, S-18, B-16, B-17, B-18 | README, CHANGELOG, Bericht (14.2, Befundtabelle, 13.1) |
+
+**Prüfprotokoll**
+
+| Prüfung | vorher (`e0fe898`, Ende A1) | nachher (`955e107`) |
+|---|---|---|
+| Syntax (`sh tests/check-syntax.sh`, alle JS-Dateien und Tests) | OK | OK |
+| Gesamtcheck `bash tests/run-all.sh` | 185 grün | 230 grün |
+| Neue Testdateien | – | `sync-vergleich` (4), `export-uid` (2), `import-pruefung` (23), `ausgaben-basis` (5), `steuer-annahmen` (11) = 45 neue Tests |
+| Bestehende Assertions | – | keine geändert. Die Referenz `refFx` in `tests/reference/forecast.cjs` hat jetzt den Parameter `tf` (Standard 30, Ergebnis unverändert) |
+| Secret-Scan | keine Treffer | keine Treffer (134 Dateien) |
+| Standardwerte (Regressionsvergleich) | – | Ansichten Fire, Steuer, Plan, Home, Jahr und die Prognose-Ergebnisse für die Fixtures klein, grenzfälle und extrem: identisch zu `b9d5f23` (Stand vor den Steuer-Änderungen). Im Tab Steuer kommt nur der neue Abschnitt hinzu. |
+
+**Umsetzungsentscheidungen (aus dem Code, nicht von Henne bestätigt)**
+
+- *Konflikt-Vergleich (A1-Nachbesserung):* verglichen werden `tx, as, goals, rec, debts, hist, sales, f, spl, mnotes, msn, prPlans, lastImp, pi`. `S.real` ist nicht in der Liste; der Wert folgt aus `sales`.
+- *Import streng nur beim Dateiimport.* Der Start aus `fr_s` und die Wiederherstellung aus den Sicherungen prüfen nicht streng. Sonst könnte ein Eintrag, den die Prüfung ablehnt, beim Start still verloren gehen. Eine Datei mit `uid` verliert die Kennung beim Import.
+- *Datumsfelder:* `tx.d`, `sales.d` und `pi.items[].d` müssen echte Kalendertage sein. `as.l[].d` darf leer sein (Kauf ohne Datum), sonst ebenso Kalendertag. `hist.m` ist YYYY-MM mit Monat 01 bis 12. `goals.y` wird nicht geprüft.
+- *Beträge:* endlich, |Betrag| höchstens 1 Mrd. €, auch bei Menge und Preis. Negative Werte bleiben erlaubt (eine Erstattung in einer Ausgabenkategorie ist negativ gespeichert). Textbeträge nur bei eindeutigem Format: `12,50`, `1.234,50`, `12.50`. `1.234` oder `12,500` werden verworfen.
+- *Pflichtbetrag fehlt* (z. B. `tx.a`, `hist.nw`, Menge und Preis eines Bestands): Datensatz verworfen. Optionale Beträge (`as.c`, `sales.gc`, `sales.gp`, Kaufgebühr, `goals.c`) fehlen: Wert 0 wie bisher.
+- *Korrigiert statt verworfen:* unbekannte Kategorie → Sonstiges, unbekannte Vermögensart → sonst, unbekannte Stand-Berechnung eines Ziels → manuell (Anzeige unverändert, weil `gv()` auf den Stand zurückfällt).
+- *Ausgaben-Basis:* `ausgabenBasis()` nimmt das Ausgaben-Feld, wenn es einen Wert ungleich 0 hat, sonst Ø Ausgaben (`avg().o`). Die Fixkosten bleiben für Notgroschen und Runway. Auch „Plan aus meinen Zahlen“ in der Prognose nutzt die Basis. Bei Zahleneingaben mit Punkt (so schreibt das Zahlenfeld) ergibt das dasselbe wie vorher.
+- *Teilfreistellung:* `S.f.tf` (Standard 30). Prognose und Rechner lesen dasselbe Feld; die Chips in beiden schreiben es. Gespeicherte Pläne merken `tf` und `ks`. Beim Laden eines Plans werden beide Einstellungen zurückgesetzt. Alte Pläne ohne `ks` setzen die Kirchensteuer auf keine.
+- *Kirchensteuer:* `S.f.kist` (Standard 0). Mit 8 oder 9 % ersetzt der Gesamtsatz aus der Formel das Feld Steuersatz in der Prognose und den Satz der Abgeltung im Rechner (das Feld `S.f.kt` aus dem Tab Steuer wird dann nicht verwendet). Die Prognose zeigt einen Hinweis mit dem Satz.
+- *Steuer-Übersicht* (Tab Steuer): ohne Kirchensteuer und mit fester Teilfreistellung von 30 % für Aktien-ETF; Aktien ohne Teilfreistellung (so wie vorher). Die Liste „[Annahmen] Steuer“ zeigt das an einer Stelle.
+- *Hinweistexte* (c): Verlustverrechnung nur im selben Jahr, Vorabpauschale nicht modelliert und mit Wirkung auf den Endwert netto der Prognose, Steuer der Prognose einmalig am Ende der Ansparphase (je Jahr in der Entnahmephase), keine Steuerberatung.
+
+**Sichtbare Änderungen (vorher / nachher)**
+
+- **SÄ-A2-1 Konflikt:** Vorher Dialog bei reiner Änderung von Design, Panel-Zustand oder ausgeblendeten Werten. Nachher kein Dialog; Fachdaten-Unterschiede lösen weiter den Dialog aus (Tests).
+- **SÄ-A2-2 Import:** Vorher „Import erfolgreich.“, ungültige Datensätze still übernommen, Textbetrag „12,50“ als 0. Nachher „Import erfolgreich. N übernommen, Y verworfen (Gründe). Korrigiert: …“. Die Bestätigung vor dem Ersetzen bleibt.
+- **SÄ-A2-3 Export:** Die Datei enthält keine `uid` mehr. Im Stand bleibt sie erhalten; der Konto-Schutz (B-25) arbeitet wie vorher.
+- **SÄ-A2-4 Ausgaben-Basis (B-16), Fixture klein mit leerem Ausgaben-Feld:** Fuck-Off-Zahl unverändert 282.788 € (Basis Ø Ausgaben 943 €/Monat). Rechner vorher mit Fixkosten 900 €/Monat, nachher mit Ø Ausgaben 943 €/Monat: Ø Entnahme netto 1.806 € → 1.845 €/Monat; Steuer in der Entnahme 70.463 € → 67.818 €; Kapital leer in Jahr 53,4 → 52,4; Entnahmerate zu Beginn 3,8 % → 4 %. Neue Zeile „Basis: Ø Ausgaben 943 €/Monat“ bzw. „Basis: eigene Eingabe“.
+- **SÄ-A2-5 Teilfreistellung (B-17), Fixture klein, Prognose Standardwerte:** Steuer 12.621 € bei 30 % (Standard, unverändert). Bei 15 % steigt sie auf 15.382 €; Endwert netto 104.669 € → 101.908 €. Im Rechner steht die Teilfreistellung in der Steuer-Zeile.
+- **SÄ-A2-6 Kirchensteuer (B-17), Fixture klein:** Standard „keine“ (26,375 %, unverändert). Mit 8 %: Gesamtsatz 27,819 %, Steuer der Prognose 13.312 €, Endwert netto 103.979 €. Mit 9 %: 27,995 %, Steuer 13.397 €, Endwert netto 103.894 €. Im Rechner: „Steuer 27,819 % (Teilfreistellung 30 %, Kirchensteuer 8 %)“.
+- **SÄ-A2-7 Hinweise (B-17, B-18):** neuer Abschnitt „[Annahmen] Steuer“ im Tab Steuer; Hinweise in Prognose und Rechner ergänzt (Verlustverrechnung, Vorabpauschale).
+
+**Neue Datenfelder** (alle unter `S`, werden mit synchronisiert; alle optional)
+
+- `S.f.tf`: Teilfreistellung in Prozent. Standard 30 (fehlt das Feld). Auswahl 30, 15, 0.
+- `S.f.kist`: Kirchensteuer in Prozent. Standard 0 (keine). Auswahl 0, 8, 9.
+- `prPlans[].tf` (bestand schon) und `prPlans[].ks` (neu, optional): Einstellung des gespeicherten Plans.
+- Keine neuen lokalen Schlüssel. Der Import-Bericht wird nur während des Imports gebildet und nicht gespeichert.
+- `S.uid` entfällt aus der Export-Datei (kein neues Feld).
+
+**Was nicht geprüft wurde**
+
+- Echter Browser: Import-Dialog, Chips in Prognose und Rechner, Touch-Ziele (neue Chips mit `min-height: 44px`, nicht gemessen), Kontrast der neuen Zeilen (verwendet bestehende Textfarben; nicht gemessen). `tests/ui-static.test.cjs` und `tests/ui-render.test.cjs` laufen im Gesamtcheck grün.
+- Steuerrecht: Die Kirchensteuer-Formel ist vorgegeben und nachgerechnet, nicht gegen aktuelle Gesetzestexte oder Beispiele der Finanzverwaltung geprüft.
+- Gespeicherte Pläne mit `tf` und `ks`: Laden und Speichern im Browser nicht geprüft (der DOM-Stub führt keine Handler aus).
+- Regressionsvergleich: drei Fixtures mit Standardwerten, Prognose ohne Entnahmephase. Die Entnahmephase ist über die Referenz (`refSim`, `refFx`) getestet, nicht im Vergleich der Oberfläche.
+- `ts` aus einem Backup bleibt übernommen (Restrisiko Sync, B-03: Zeitstempel vom Gerät).
+- Sicherungen-Wiederherstellung (Mehr → Datenschutz) läuft ohne Import-Prüfung; im Browser nicht geprüft.
+- Trailer: Die Commits tragen `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` wie im Auftrag. Das Modell dieses Laufs ist Haiku 5.5; gleiche Abweichung wie in 14.1.

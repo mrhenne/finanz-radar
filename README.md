@@ -45,7 +45,7 @@ Im Projekt existiert bereits die ältere Tabelle `public.user_state` mit eigenen
 
 Die App unterstützt Registrierung, Anmeldung per E-Mail und Passwort, Login-Link, Passwort-Reset und Passwortänderung sowie Abmeldung.
 
-Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Hochgeladen wird erst, nachdem der Cloud-Stand gelesen wurde. Ist der Cloud-Stand neuer als der bekannte Stand, liegen auf dem Gerät ungesicherte Änderungen (`fr_dirty`) und unterscheidet sich der Inhalt, überschreibt die App nichts. Die Synchronisierung pausiert, ein Banner erklärt das, und ein Dialog bietet drei Wege: **Cloud-Stand übernehmen** (lokale Fassung vorher in die Sicherungen), **Diesen Stand behalten** (Cloud-Fassung vorher in die Sicherungen, danach hochladen) oder **Später entscheiden** (nichts ändern, die Synchronisierung bleibt pausiert). Zusammengeführt wird nicht. Ohne ungesicherte Änderungen oder bei gleichem Inhalt gibt es keinen Dialog; die Cloud-Fassung wird dann geladen. Sicherungen liegen unter **Mehr → Datenschutz → Sicherungen**: „vor Cloud-Abgleich“ für lokale Fassungen, „Cloud-Stand vor Überschreiben“ für verdrängte Cloud-Fassungen.
+Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Hochgeladen wird erst, nachdem der Cloud-Stand gelesen wurde. Ist der Cloud-Stand neuer als der bekannte Stand, liegen auf dem Gerät ungesicherte Änderungen (`fr_dirty`) und unterscheidet sich der Inhalt, überschreibt die App nichts. Verglichen werden nur Fachdaten (`tx`, `as`, `goals`, `rec`, `debts`, `hist`, `sales`, `f`, `spl`, `mnotes`, `msn`, `prPlans`, `lastImp`, `pi`). Darstellung (`ui`, `th`, `hide`) löst keinen Dialog aus. Die Synchronisierung pausiert, ein Banner erklärt das, und ein Dialog bietet drei Wege: **Cloud-Stand übernehmen** (lokale Fassung vorher in die Sicherungen), **Diesen Stand behalten** (Cloud-Fassung vorher in die Sicherungen, danach hochladen) oder **Später entscheiden** (nichts ändern, die Synchronisierung bleibt pausiert). Zusammengeführt wird nicht. Ohne ungesicherte Änderungen oder bei gleichem Inhalt gibt es keinen Dialog; die Cloud-Fassung wird dann geladen. Sicherungen liegen unter **Mehr → Datenschutz → Sicherungen**: „vor Cloud-Abgleich“ für lokale Fassungen, „Cloud-Stand vor Überschreiben“ für verdrängte Cloud-Fassungen.
 
 Scheitert ein Upload wegen Netz, Zeitüberschreitung oder Serverfehler (5xx), wird er nach 5 s, 15 s, 45 s und 2 min erneut versucht, insgesamt fünf Versuche. Bei den Ereignissen „wieder online“ und Rückkehr in den Vordergrund wird sofort erneut versucht, wenn etwas aussteht. Der Sync-Status im Konto zeigt die Restzeit. Bei 401, 403 und 413 wird nicht erneut versucht; die Meldung nennt die Ursache. Nach fünf erfolglosen Versuchen wartet die App auf eine Änderung, auf Netzrückkehr oder auf „Jetzt hochladen“.
 
@@ -55,7 +55,7 @@ Beim Wechsel zu einem anderen Konto prüft die App, ob auf dem Gerät ungesicher
 
 In diesem Supabase-Projekt existiert bereits ein älterer Datensatz in `public.user_state`. Er bleibt unverändert erhalten. Das ältere Datenformat ist nicht identisch mit dem aktuellen Finanz-Radar-Datenmodell. Wenn für einen Nutzer noch kein Datensatz in `finance_state` existiert, prüft die App zuerst `user_state` und pausiert eine erstmalige Cloud-Synchronisierung, wenn dort ältere Daten gefunden werden. Erst nach deiner bewussten Auswahl in der App wird der aktuelle lokale Finanz-Radar-Datenstand in `finance_state` angelegt. Der ältere Datensatz wird dabei **nicht** automatisch konvertiert, gelöscht oder überschrieben.
 
-**Wichtig:** Vor der ersten Anmeldung mit wichtigen Daten bitte über **Mehr → Daten & Backup → Export** ein Backup erstellen. Der Import wird vor dem Ersetzen der aktuellen Daten bestätigt und prüft die Struktur der JSON-Datei. Gefährliche HTML-Zeichen und ungültige Datensatz-IDs werden beim Laden/Import bereinigt. Der Import ist auf 2 MB begrenzt.
+**Wichtig:** Vor der ersten Anmeldung mit wichtigen Daten bitte über **Mehr → Daten & Backup → Export** ein Backup erstellen. Der Import wird vor dem Ersetzen der aktuellen Daten bestätigt und prüft die Struktur der JSON-Datei sowie jeden Datensatz: Datumsfelder sind echte Kalendertage (YYYY-MM-DD, Monate YYYY-MM), Beträge endliche Zahlen bis 1 Mrd. € (Textbeträge wie „12,50“ nur bei eindeutigem Format), unbekannte Kategorien werden „Sonstiges“. Ungültige Datensätze werden verworfen; die Meldung nennt Anzahl und Gründe. Die Nutzerkennung (`uid`) wird weder exportiert noch übernommen. Gefährliche HTML-Zeichen und ungültige Datensatz-IDs werden beim Laden/Import bereinigt. Der Import ist auf 2 MB begrenzt.
 
 ## Datensicherheit
 
@@ -128,10 +128,15 @@ Weitere Werkzeuge:
 - **Farben:** Textfarben nach WCAG AA. Kategorie-Farben stehen nur im Marker.
 - **Texte:** „Vorlagen anwenden“, „Konto & Synchronisierung“.
 - **App-Icon:** maskierbar (`any maskable`).
+- **Konflikt-Vergleich (A1-Nachbesserung):** Vorher löste eine reine Änderung von Design oder Panel-Zuständen den Konfliktdialog aus. Nachher zählen nur Fachdaten.
+- **Backup-Import (S-17):** Vorher wurden ungültige Daten still übernommen, Textbeträge wie „12,50“ wurden zu 0. Nachher verwirft der Import ungültige Datensätze und meldet Anzahl und Gründe („X übernommen, Y verworfen“). Textbeträge werden bei eindeutigem Format übernommen, unbekannte Kategorien werden „Sonstiges“.
+- **Backup-Export (S-18):** Vorher enthielt die Datei die Nutzerkennung. Nachher nicht mehr; ein Import ignoriert eine Kennung aus der Datei.
+- **Ausgaben-Basis (B-16):** Vorher rechnete der Fuck-Off-Rechner ohne Ausgaben-Eingabe mit den Fixkosten (900 € im Beispiel), die Fuck-Off-Zahl mit Ø Ausgaben. Nachher nutzen beide das Ausgaben-Feld, sonst Ø Ausgaben; die Ansicht nennt die Basis („Basis: Ø Ausgaben 943 €/Monat“ bzw. „Basis: eigene Eingabe“). Notgroschen und Runway nutzen weiter die Fixkosten.
+- **Steuer-Annahmen (B-17):** Teilfreistellung (30, 15 oder 0 %) und Kirchensteuer (keine, 8 oder 9 %) sind in Prognose und Fuck-Off-Rechner wählbar. Standard bleibt 30 % und keine Kirchensteuer. Der Tab Steuer listet alle Annahmen an einer Stelle.
 
 ## Bekannte Grenzen
 
-Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Zeitstempel kommen vom Gerät (eine falsche Uhr kann einen Konflikt übersehen lassen), Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung und Kirchensteuer.
+Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Zeitstempel kommen vom Gerät (eine falsche Uhr kann einen Konflikt übersehen lassen), Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung über Jahre und ohne Vorabpauschale (Kirchensteuer nur als Auswahl).
 
 ## Fachliche Regeln (bitte bei Änderungen beibehalten)
 
@@ -140,8 +145,10 @@ Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die w
 - **Prognose-Reiter**: Block „Prognose-Reiter nach Vorbild Prognose Radar“ in `features.js`. Alle Element-IDs beginnen mit `pr_`, Zustand liegt in `PR`, gespeicherte Pläne in `S.prPlans` (werden mit dem Datenstand synchronisiert).
 - Der frühere Bereich „Fuck You“ heißt überall **„Fuck Off“**.
 - **Blur** („◉“-Schalter): `blurHtml()` in `app.js` umhüllt automatisch jede Zahl mit €, %, Jahre/Monate in der Ansicht mit `<span class="n">`; SVG-Texte übernimmt `blurNums()`. Neue Ansichten brauchen dafür keine Sonderregeln.
-- **Neue Datenfelder** (alle unter `S`, werden mit synchronisiert): `S.spl` (Sparziel), `S.mnotes` (Monatsnotizen), `S.msn` (Meilenstein-Notizen), `S.prPlans` (Prognose-Pläne), `S.lastImp` (letzter CSV-Import für „Rückgängig“).
+- **Neue Datenfelder** (alle unter `S`, werden mit synchronisiert): `S.spl` (Sparziel), `S.mnotes` (Monatsnotizen), `S.msn` (Meilenstein-Notizen), `S.prPlans` (Prognose-Pläne), `S.lastImp` (letzter CSV-Import für „Rückgängig“). Optionale Felder unter `S.f` (fehlen sie, gilt der Standard): `S.f.tf` (Teilfreistellung in %, Standard 30; erlaubt 30, 15, 0) und `S.f.kist` (Kirchensteuer in %, Standard 0 für keine; erlaubt 0, 8, 9).
 - **Nur auf dem Gerät gespeichert** (nicht in der Cloud): `fr_pin`, `fr_sec` (Datenschutz-Einstellungen), `fr_bk` (die letzten 5 automatischen Tagessicherungen), `fr_exp` (Zeitpunkt des letzten Datei-Backups).
+- **Ausgaben-Basis** für Fuck-Off-Zahl und Fuck-Off-Rechner: `ausgabenBasis()` in `app.js` (Ausgaben-Feld, sonst Ø Ausgaben). Die Fixkosten (`fixk()`) bleiben für Notgroschen und Runway.
+- **Steuer-Annahmen**: `kirchSatz()`, `tfWert()` und `kistWert()` in `app.js`. Mit Kirchensteuer k: Steuersatz = 25 % / (1 + 0,25 × k), plus Soli 5,5 % auf die Steuer, plus k × Steuer (8 %: 27,819 %, 9 %: 27,995 %). Nachrechnung in `tests/reference/forecast.cjs`.
 - **Schnellerfassung**: Der „+“-Button unten rechts öffnet ein Sheet; Kategorie-Vorschlag aus früheren Buchungen und Stichworten (`suggestCat()` in `extras.js`).
 
 ## Veröffentlichen und testen

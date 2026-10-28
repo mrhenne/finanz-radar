@@ -23,6 +23,32 @@ Sichtbare Änderungen (vorher / nachher):
 
 Nicht geprüft: echte Supabase-Latenz und RLS, Safari/iOS, Browser-Lauf des Dialogs, Wirkung des Dateiexports im Browser (Details in Bericht 14.1).
 
+### Teil A2: Nachbesserung, Backup, Ausgaben-Basis, Steuer-Annahmen (S-17, S-18, B-16, B-17, B-18)
+
+- `d37fd04` Konflikt-Vergleich nur über Fachdaten: Darstellung (`ui`, `th`, `hide`) löst keinen Dialog aus (A1-Nachbesserung)
+- `bcc98cb` Export ohne Nutzerkennung, Import ignoriert eine Kennung aus der Datei (S-18)
+- `a61c956` Import prüft jeden Datensatz (Datum, Betrag, Kategorie, Bereich), verwirft ungültige und meldet übernommen, verworfen und korrigiert; Textbeträge bei eindeutigem Format (S-17)
+- `b9d5f23` Fuck-Off-Zahl und Fuck-Off-Rechner nutzen dieselbe Ausgaben-Basis, die Ansicht nennt sie (B-16)
+- `4f38e51` Teilfreistellung (30, 15, 0 %) und Kirchensteuer (keine, 8, 9 %) wählbar in Prognose und Rechner; Annahmen-Liste und Hinweise im Tab Steuer (B-17, B-18 teilweise)
+- `955e107` Formelwerte der Kirchensteuer als benannte Konstanten
+- Dieser Commit: README, CHANGELOG und Bericht (Abschnitt 14.2)
+
+Tests: 185 grün vorher, 230 grün nachher (`sh tests/run-all.sh`). Neue Testdateien: `sync-vergleich`, `export-uid`, `import-pruefung`, `ausgaben-basis`, `steuer-annahmen`.
+
+Sichtbare Änderungen (vorher / nachher):
+
+- Konflikt: Eine reine Änderung von Design oder Panel-Zuständen löst keinen Dialog mehr aus. Fachdaten-Unterschiede bleiben beim Dialog.
+- Backup-Import: Vorher „Import erfolgreich.“ bei stiller Übernahme ungültiger Daten; Textbetrag „12,50“ wurde 0. Nachher „N übernommen, Y verworfen (Gründe)“, Textbeträge werden bei eindeutigem Format übernommen, unbekannte Kategorien werden Sonstiges.
+- Backup-Export: Die Datei enthält keine Nutzerkennung mehr.
+- Ausgaben-Basis: Ohne Eingabe im Ausgaben-Feld rechnet der Fuck-Off-Rechner nicht mehr mit den Fixkosten (900 € im Fixture klein), sondern mit Ø Ausgaben (943 €/Monat). Fixture klein: Entnahme netto 1.806 € → 1.845 €/Monat, Steuer in der Entnahme 70.463 € → 67.818 €. Die Fuck-Off-Zahl bleibt 282.788 €. Beide zeigen „Basis: …“.
+- Teilfreistellung: Standard 30 % wie vorher; 15 % wählbar (Fixture klein, Prognose: Steuer 12.621 € → 15.382 €).
+- Kirchensteuer: Standard keine (unverändert). 8 %: Gesamtsatz 27,819 %, Prognose-Steuer 13.312 €; 9 %: 27,995 %, 13.397 €.
+- Tab Steuer: neuer Abschnitt „[Annahmen] Steuer“ mit Satz, Pauschbetrag, Teilfreistellung, Kirchensteuer und Hinweisen zu Verlustverrechnung und Vorabpauschale.
+
+Neue Datenfelder (optional, unter `S.f`): `tf` (Teilfreistellung, Standard 30), `kist` (Kirchensteuer, Standard 0). Pläne: `ks`.
+
+Nicht geprüft: echter Browser (Import-Dialog, Chips, Touch-Ziele, Kontrast), Steuerrecht gegen aktuelle Quellen, gespeicherte Pläne im Browser, Sicherungen-Wiederherstellung ohne Import-Prüfung (Details in Bericht 14.2).
+
 ## Endkontrolle (Phase 1 bis 5)
 
 ### Phase 1: Baseline und Inventur
