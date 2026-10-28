@@ -4,7 +4,7 @@
    Ladereihenfolge: config.js, app.js (rendert am Ende einmal), features.js, extras.js, boost.js.
    Spätere Dateien ersetzen Funktionen über window (W.render, W.theme, W.bars, W.cu). */
 /* Fachliche Konstanten. Werte unverändert; Änderung nur zusammen mit den Tests. */
-const SYNC_DELAY_MS = 1500, TAX_KAP_PCT = 26.375, FREIBETRAG_KAP = 1000, FREIGRENZE_SPEKU = 1000, ETF_STEUERANTEIL = 0.7, DEFAULT_WR_PCT = 4;
+const SYNC_DELAY_MS = 1500, TAX_KAP_PCT = 26.375, FREIBETRAG_KAP = 1000, FREIGRENZE_SPEKU = 1000, ETF_STEUERANTEIL = 0.7, DEFAULT_WR_PCT = 4, KAP_ESt_PCT = 25, SOLI_PCT = 5.5;
 const ANIM=matchMedia('(prefers-reduced-motion: reduce)').matches?'':'<animate attributeName="r" values="3;6;3" dur="1.8s" repeatCount="indefinite"/>';
 const $=i=>document.getElementById(i),eur=v=>{const n=Number(v);if(!isFinite(n))return '–';return (Math.sign(n)*Math.round(Math.abs(n))||0).toLocaleString('de-DE')+' €'},pct=v=>{const n=Number(v);if(!isFinite(n))return '–';return ((Math.round(n*10)/10)||0).toLocaleString('de-DE',{maximumFractionDigits:1})+' %'},uid=()=>Math.random().toString(36).slice(2,8);
 /* Kalendertage in Ortszeit. Nicht toISOString(): das liefert UTC und verschiebt Buchungen am 1. nach 00:00 Ortszeit in den Vormonat. */
@@ -224,7 +224,7 @@ function kistWert(){const k=Number(S.f.kist);return KIST_OPTIONEN.includes(k)?k:
 function tfWert(){const t=Number(S.f.tf);return S.f.tf==null||S.f.tf===''||!isFinite(t)?30:t}
 const pct3=v=>isFinite(v)?v.toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3}):'–';
 /* Gesamtsatz der Abgeltungsteuer mit Kirchensteuer k (in %). Vereinfacht: Steuersatz = 25 % / (1 + 0,25 × k), plus Soli 5,5 % auf die Steuer, plus Kirchensteuer k × Steuer. Ohne Kirchensteuer gilt TAX_KAP_PCT (26,375 %). */
-function kirchSatz(k){if(!k)return TAX_KAP_PCT;const q=k/100,st=25/(1+0.25*q);return st*(1+0.055+q)}
+function kirchSatz(k){if(!k)return TAX_KAP_PCT;const q=k/100,st=KAP_ESt_PCT/(1+(KAP_ESt_PCT/100)*q);return st*(1+SOLI_PCT/100+q)}
 function moNav(){const[y,m]=mo.split('-');return`<div class="nav"><button class="btn o" aria-label="Vormonat" onclick="sh(-1)">‹</button><div>${new Date(y,m-1).toLocaleDateString('de-DE',{month:'long',year:'numeric'}).toUpperCase()}</div><button class="btn o" aria-label="Folgemonat" onclick="sh(1)">›</button></div>`}
 function sh(d){const[y,m]=mo.split('-').map(Number),n=new Date(y,m-1+d,1);mo=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');render()}
 function del(k,id){S[k]=S[k].filter(x=>x.id!==id);save();render()}
