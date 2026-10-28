@@ -49,6 +49,31 @@ Neue Datenfelder (optional, unter `S.f`): `tf` (Teilfreistellung, Standard 30), 
 
 Nicht geprüft: echter Browser (Import-Dialog, Chips, Touch-Ziele, Kontrast), Steuerrecht gegen aktuelle Quellen, gespeicherte Pläne im Browser, Sicherungen-Wiederherstellung ohne Import-Prüfung (Details in Bericht 14.2).
 
+### Teil A3: Schulden mit Zins und Tilgung (B-19), Bewegung (U-33)
+
+- `c43f1c8` Regressionssnapshot der Schulden-Ansicht vor der Änderung (Test)
+- `13e740d` Rechenkern `schuldPlan()`: Laufzeit, Ende, Gesamtzins, Restschuld nach 12 Monaten; Nachrechnung in `tests/reference/schulden.cjs` (B-19)
+- `c8488cf` Formular und Bearbeiten mit optionalem Zins und Rate; Anzeige der Laufzeit (B-19)
+- `364c0da` Import prüft Zins und Rate; ungültige Felder werden entfernt und gemeldet (B-19)
+- `963a2eb` Schimmer auf den Fortschrittsbalken entfernt (U-33)
+- `476d58a` Badge-Puls auf drei Wiederholungen begrenzt (U-33)
+- `3354e97` Blinken roter Warnungen entfernt, ungenutzte Klasse `.s-crypto` entfernt (U-33)
+- `d216b28` Test: im Stylesheet läuft nur der Live-Punkt endlos (`ui-static`)
+- Dieser Commit: README, CHANGELOG und Bericht (Abschnitt 14.3)
+
+Tests: 230 grün vorher, 269 grün nachher (`bash tests/run-all.sh`). Neue Testdateien: `schulden-regression`, `schulden`, `schulden-ansicht`, `schulden-import`; `ui-static` um zwei Prüfungen erweitert.
+
+Sichtbare Änderungen (vorher / nachher):
+
+- Schulden: Vorher nur Name und Betrag. Nachher optional Zins (% p. a.) und monatliche Rate. Mit beiden Feldern: Laufzeit, Ende, Zinsen bis zum Ende, Restschuld in 12 Monaten. Rate unter dem Zins: Warnhinweis statt Laufzeit. Über 100 Jahre: „länger als 100 Jahre“. Ohne die Felder bleibt die Anzeige wie bisher.
+- Eingabe: zwei Felder im Formular und im Bearbeiten-Formular. Ungültige Werte werden mit deutscher Meldung abgewiesen, nichts wird gespeichert.
+- Import: Zins über 100 oder negative Rate: Feld entfernt, Datensatz bleibt, Meldung unter „korrigiert“.
+- Bewegung: Vorher liefen Schimmer, Badge-Puls und das Blinken roter Warnungen endlos. Nachher entfallen Schimmer und Blinken, der Badge pulsiert drei Mal. Der Live-Punkt bei Synchronisierung bleibt.
+
+Neue Datenfelder (optional, je Schuld unter `S.debts`): `r` (Zins in % p. a., 0 bis 100), `rate` (monatliche Rate in €, ab 0). Beide fehlen bei alten Daten. `schema.sql` ist unverändert.
+
+Nicht geprüft: echter Browser (Layout der neuen Zeilen bei 375 px, Dunkelmodus, Trefferflächen der neuen Felder, Bild der Animationen), Supabase-Synchronisierung mit den neuen Feldern, Datei-Import im Browser. Der SVG-Pulse an den Diagrammen (`ANIM` in `app.js`) ist unverändert und unbegrenzt (Details in Bericht 14.3).
+
 ## Endkontrolle (Phase 1 bis 5)
 
 ### Phase 1: Baseline und Inventur

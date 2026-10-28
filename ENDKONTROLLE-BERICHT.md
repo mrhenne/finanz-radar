@@ -9,6 +9,7 @@ Stand: 2026-10-27 (Phase 5 abgeschlossen) · Basis: Commit `e4e1ff9` (Tag `backu
 - **Performance** (Extrem-Fixture, 5.000 Buchungen). Node: Start 114,5 → 26,2 ms, Fuck-Off-Ansicht 51,8 → 6,0 ms, Home 24,5 → 1,3 ms. Chrome (Median aus 3 Läufen): Fuck Off 45,1 → 5,6 ms, Home 32,6 → 1,8 ms, Prognose 24,6 → 3,6 ms. Ursache der großen Stelle: `avg()` (quadratisch), behoben.
 - **Entfernt (toter Code, belegt):** `plan()` und `pcalc()` in app.js, `theme()` und `bars()` in app.js (von boost.js ersetzt), CSV-Pfad in features.js (Parser, Hilfsfunktionen, Ansicht). **Korrektur zu S-29:** `cu()` und `applyTh()` in app.js sind nicht tot. Beide laufen beim ersten Render, bevor boost.js geladen ist. Sie bleiben.
 - **Umsetzung der offenen Vorschläge, Teil A1 (B-03, B-24, B-25):** umgesetzt, Abschnitt 14.1. Tests 157 → 185 grün.
+- **Umsetzung, Teil A3 (B-19 Schulden mit Zins und Tilgung, U-33 Bewegung):** umgesetzt, Abschnitt 14.3. Tests 230 → 269 grün.
 - **Offen:** Entscheidungen für Henne priorisiert in Abschnitt 13.1. Kein Push, kein Deploy, keine Live-Prüfung.
 - **Nicht getan (wie vorgegeben):** kein Push, kein Deploy, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt, `schema.sql` unverändert, Datenmodell `S` unverändert, kein Zugriff auf Live-Supabase.
 - **Abweichung:** Die Commits tragen `Co-Authored-By: Claude Haiku 5.5`, nicht `Sonnet 5.5` wie im Auftrag. Begründung in Abschnitt 12.7.
@@ -618,7 +619,7 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | B-16 | Kennzahl | mittel | app.js (`fireF`); features.js (`fxP`, Ausgaben-Feld) | Ausgaben-Basis: Die Fuck-Off-Zahl rechnet mit Ø Ausgaben, der Fuck-Off-Rechner mit den Fixkosten, wenn das Ausgaben-Feld leer ist (Fixture: 282.788 € gegen 900 € je Monat Entnahme). | umgesetzt (Teil A2) | Nachmessung in 3a.8, Vorher/Nachher in 14.2 | `b9d5f23` |
 | B-17 | Annahme | mittel | features.js (`fxSim`, `prFin`); app.js (`tax`) | Steuer-Annahmen: keine Verlustverrechnung, keine Vorabpauschale, keine Kirchensteuer; Teilfreistellung im Fuck-Off-Rechner fest 30 %. | umgesetzt (Teil A2): Teilfreistellung und Kirchensteuer wählbar, Rest im Tab Steuer ausgewiesen | `steuer-annahmen.test.cjs`, `prognose.test.cjs` | `4f38e51`, `955e107` |
 | B-18 | Modell | niedrig | features.js (`prSim`, `prFin`) | Zinsmodell: effektiver Jahreszins, monatlich verzinst; Steuer nur am Ende; Einmalzahlungen am Jahresende. | teilweise (Teil A2): Hinweis zur Steuer am Ende ergänzt, Zinsmodell unverändert | `prognose.test.cjs` | `4f38e51` |
-| B-19 | Fehlende Funktion | mittel | app.js (`debtsHTML`, `addDebt`) | Schulden ohne Zins, Tilgung und Restlaufzeit. Schuldenabbau (Plan 4.4) ist nicht vorhanden. | gemeldet (Vorschlag) | Code-Lesung | – |
+| B-19 | Fehlende Funktion | mittel | app.js (`debtsHTML`, `addDebt`) | Schulden ohne Zins, Tilgung und Restlaufzeit. Schuldenabbau (Plan 4.4) ist nicht vorhanden. | umgesetzt (Teil A3): optionale Felder Zins und Rate, Laufzeit, Ende, Zinsen, Restschuld; Import prüft beide | `tests/schulden*.test.cjs` | 13e740d, c8488cf, 364c0da |
 | B-20 | Logik | niedrig | features.js (`autoRecurring`) | Wiederkehrende Buchungen: keine Pause und kein Beenden. Automatisch gebucht wird nur der aktuelle Monat; frühere Monate per „Recurring anwenden“. | gemeldet (Verhalten) | `buchungen.test.cjs` | – |
 | B-21 | Fehlende Funktion | niedrig | app.js (`liveHTML`) | Anzeige „Kurs veraltet“ fehlt (Plan 4.5). | gemeldet | Code-Lesung | – |
 | B-22 | Text | niedrig | app.js (`liveFetch`) | Fehlertext für Kurse nennt die Entwicklungsumgebung („In der Claude-Vorschau …“). Der Nutzer sieht ihn. | gemeldet (Phase 4, Texte) | Code-Lesung | – |
@@ -1149,7 +1150,7 @@ Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. 
 | B-16 | Kennzahl | mittel | gemeldet, Entscheidung Henne | – |
 | B-17 | Annahme | mittel | gemeldet, teilweise offengelegt | – |
 | B-18 | Modell | niedrig | gemeldet, teilweise offengelegt | – |
-| B-19 | Fehlende Funktion | mittel | gemeldet (Vorschlag) | – |
+| B-19 | Fehlende Funktion | mittel | umgesetzt (Teil A3) | 13e740d, c8488cf, 364c0da |
 | B-20 | Logik | niedrig | gemeldet (Verhalten) | – |
 | B-21 | Fehlende Funktion | niedrig | gemeldet | – |
 | B-22 | Text | niedrig | gemeldet (Phase 4, Texte) | – |
@@ -1192,7 +1193,7 @@ Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. 
 | U-30 | Bewegung | niedrig | behoben (pulsiert nur während Synchronisierung, mit Titel) | 98e052b |
 | U-31 | Bewegung | niedrig | nicht vorhanden (Hook-Fehlalarm?). Grep auf marquee, ticker, scroll-Animationen: keine Treffer. Vorhandene Keyframes: pu, pg, sh, up, bl, rgIn, cf | – |
 | U-32 | Bewegung | niedrig | bereits abgesichert (geprüft, unverändert) | – |
-| U-33 | Bewegung | niedrig | gemeldet (reduzierte Bewegung schaltet es ab) | – |
+| U-33 | Bewegung | niedrig | umgesetzt (Teil A3): Schimmer und Blinken entfernt, Badge drei Durchläufe | 963a2eb, 476d58a, 3354e97 |
 | U-34 | Design | niedrig | nicht geändert, Entscheidung Henne | – |
 | U-35 | Texte | niedrig | behoben: „Vorlagen anwenden“ | ff05a9d |
 | U-36 | Texte | niedrig | behoben: „Konto & Synchronisierung“ | ff05a9d |
@@ -1248,7 +1249,7 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 | 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden (REVOKE-Zeile seit 27.10.2026 im Vorschlag) | S-24, 5.7, `vorschlaege/` | mittel | klein, Testkonto nötig | nach Punkt 1 |
 | 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | umgesetzt (Teil A2) |
 | 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | umgesetzt (Teil A2): Teilfreistellung und Kirchensteuer wählbar, Verlustverrechnung und Vorabpauschale ausgewiesen |
-| 10 | Schulden mit Zins und Restlaufzeit | B-19, 3a.8.5, 5.12 | mittel | groß, Datenmodell | nur nach Freigabe |
+| 10 | Schulden mit Zins und Restlaufzeit | B-19, 3a.8.5, 5.12 | mittel | groß, Datenmodell | umgesetzt (Teil A3, nach Freigabe durch Henne) |
 | 11 | Wiederkehrende Buchungen pausieren und beenden | B-20 | mittel | mittel | Entscheidung |
 | 12 | Supabase-Client erst bei Bedarf erzeugen (Start unabhängig vom CDN) | P5-18 | mittel | mittel, app.js | nach Punkt 2 |
 | 13 | Sperr-Overlay vor dem ersten Render | S-11, 5.2 | niedrig bis mittel (Sichtschutz beim Start) | klein | empfohlen |
@@ -1271,7 +1272,7 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 | 30 | Kopftitel bei 375 px | U-45, 10.5.8 | niedrig | klein | Entscheidung |
 | 31 | CSV-Import als Tab oder Dialog | 10.5.9 | niedrig | mittel | Entscheidung |
 | 32 | Splash-Bilder gegen aktuelle iPhone-Tabelle | U-40, 10.5.10 | niedrig | klein | vor Veröffentlichung |
-| 33 | Badge `#bd` pulsiert dauerhaft | U-33, 10.5.7 | niedrig | klein | empfohlen |
+| 33 | Badge `#bd` pulsiert dauerhaft | U-33, 10.5.7 | niedrig | klein | umgesetzt (Teil A3): drei Durchläufe, Schimmer und Blinken entfernt |
 | 34 | „Leaked Password Protection“ im Supabase-Dashboard aktivieren (einzige Advisor-Warnung, 27.10.2026) | 3.8 | mittel | klein, Dashboard | Henne |
 | 35 | Kategorie-Palette im Dunkel-Modus: Marker `#222` kaum sichtbar (rund 1,1:1) | N-01, 10.9 | niedrig | klein | Entscheidung |
 
@@ -1595,3 +1596,73 @@ Umfang: Aufgaben 0 bis 4 aus dem Auftrag. Befunde S-17, S-18, B-16 und B-17 sind
 - `ts` aus einem Backup bleibt übernommen (Restrisiko Sync, B-03: Zeitstempel vom Gerät).
 - Sicherungen-Wiederherstellung (Mehr → Datenschutz) läuft ohne Import-Prüfung; im Browser nicht geprüft.
 - Trailer: Die Commits tragen `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` wie im Auftrag. Das Modell dieses Laufs ist Haiku 5.5; gleiche Abweichung wie in 14.1.
+
+### 14.3 Teil A3: Schulden mit Zins und Tilgung (B-19), Bewegung (U-33)
+
+Umfang: Aufgaben 1 bis 3 aus dem Auftrag. B-19 umgesetzt: optionale Felder Zins und Rate, Laufzeit, Ende, Zinsen bis zum Ende, Restschuld nach 12 Monaten, Eingabe, Bearbeiten, Import. U-33 umgesetzt: Schimmer und Blinken entfernt, Badge begrenzt. U-34 (`dark-glow`) unverändert. Kein Push, kein Deploy, kein Zugriff auf Live-Supabase, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt. `.github/workflows/` und `schema.sql` unverändert. Am Datenmodell `S` nur zwei optionale Felder je Schuld (siehe unten).
+
+**Commits** (Branch `endkontrolle-2026-10-26-ohne-workflow`, älteste zuerst):
+
+| Commit | Befund | Inhalt |
+|---|---|---|
+| `c43f1c8` | B-19 | Test: Regressionssnapshot der Schulden-Ansicht, auf dem Stand vor der Änderung erzeugt (`tests/schulden-regression.test.cjs`, `tests/fixtures/snapshots/schulden-alt.json`) |
+| `13e740d` | B-19 | Rechenkern `schuldPlan()` (`app.js`), Nachrechnung in `tests/reference/schulden.cjs`, `tests/schulden.test.cjs`; `sw.js` `fr-2026-10-28al` |
+| `c8488cf` | B-19 | Formular und Bearbeiten mit Zins und Rate, Anzeige der Laufzeit, Fehlermeldungen (`app.js`, `tests/schulden-ansicht.test.cjs`); `sw.js` `am` |
+| `364c0da` | B-19 | Import prüft Zins und Rate (`optZahl`), lokaler Stand entfernt ungültige Felder still (`app.js`, `tests/schulden-import.test.cjs`); `sw.js` `an` |
+| `963a2eb` | U-33 | Schimmer auf Fortschrittsbalken entfernt, samt Keyframes `sh` (`styles.css`); `sw.js` `ao` |
+| `476d58a` | U-33 | `.badge` pulsiert drei Mal statt endlos (`styles.css`); `sw.js` `ap` |
+| `3354e97` | U-33 | Blinken von `.p` (Warnungen) entfernt, ungenutzte `.s-crypto` entfernt, Keyframes `bl` entfallen (`styles.css`); `sw.js` `aq` |
+| `d216b28` | U-33 | Test: im Stylesheet läuft nur der Live-Punkt endlos; Badge höchstens 3; SVG-Pulse in `app.js` als offen festgehalten (`tests/ui-static.test.cjs`) |
+| dieser Commit | B-19, U-33 | README, CHANGELOG, Bericht (14.3, Befundtabellen 4 und 12.5, Liste 13.1) |
+
+**Prüfprotokoll**
+
+| Prüfung | vorher (`05b0561`, Ende A2) | nachher (`d216b28`) |
+|---|---|---|
+| Syntax (`sh tests/check-syntax.sh`, alle JavaScript-Dateien und Tests) | OK | OK (50 Dateien) |
+| Gesamtcheck `bash tests/run-all.sh` | 230 grün | 269 grün |
+| Neue Testdateien | – | `schulden-regression` (3), `schulden` (11), `schulden-ansicht` (11), `schulden-import` (12) = 37 Tests; `ui-static` +2 = 39 neue Tests |
+| Bestehende Assertions | – | keine geändert |
+| Snapshot alte Schulden (Fixture klein, ohne Eingabeblock) | – | unverändert: Assets 15.500 €, Schulden 4.000 €, Nettovermögen 11.500 € |
+| Secret-Scan | keine Treffer | keine Treffer (140 Dateien) |
+| VERSION-Prüfung (`sh tests/check-sw-version.sh 05b0561`) | – | erhöht: `fr-2026-10-28ak` → `fr-2026-10-28aq` |
+
+**Umsetzungsentscheidungen (aus dem Code und dem Auftrag, nicht von Henne bestätigt)**
+
+- *Erste Rate im Folgemonat.* Das Ende ist der Monat heute plus n. Im Beispiel 10.000 € bei 5 % und 300 € ab Oktober 2026 endet die Schuld im Oktober 2029 (36 Raten). Der Auftrag legt das nicht fest. Eine andere Festlegung verschiebt das Ende um einen Monat.
+- *Formel wie vorgegeben.* n = ceil(B/Rate) bei 0 %, sonst ceil(−ln(1 − i·B/Rate) / ln(1 + i)). Gesamtzins = Summe der Zinsen über alle Raten, einschließlich einer kleineren letzten Rate. Restschuld in 12 Monaten nach 12 Raten, nie negativ.
+- *Rate ≤ i·B:* Hinweis mit dem Zins je Monat, keine Laufzeit. Rate 0: Hinweis „Keine Rate eingetragen, daher keine Laufzeit“.
+- *Obergrenze:* mehr als 1.200 Monate (100 Jahre): „länger als 100 Jahre“, ohne Ende und ohne Gesamtzins. Die Restschuld in 12 Monaten bleibt.
+- *Beide Felder nötig:* Die Laufzeitzeilen erscheinen nur, wenn Zins und Rate gesetzt sind. Ein einzelnes Feld wird gespeichert, zeigt aber keine Zeile. Zins 0 ist eine gültige Eingabe.
+- *Eingabefelder* sind Textfelder mit Dezimaltastatur (`inputmode=decimal`), nicht `type=number`. So wird eine ungültige Eingabe nicht still zu leer. Zugelassen sind Ziffern mit Komma oder Punkt. Leer heißt „nicht angegeben“ und lässt das Feld weg.
+- *Import:* Zins 0 bis 100, Rate ab 0 und höchstens 1 Mrd. € (wie bei anderen Beträgen; der Auftrag nannte nur ≥ 0). Textwerte wie „5,5“ werden bei eindeutigem Format übernommen und gemeldet. Ungültige Felder entfallen, der Datensatz bleibt. Der lokale Start und die Wiederherstellung entfernen ungültige Felder ohne Meldung.
+- *Anzeige:* Laufzeit als „3 Jahre 2 Monate“ bzw. „8 Monate“, Ende als Monat und Jahr, Beträge gerundet wie überall in der App (ganze Euro).
+- *Nettovermögen* bleibt Assets minus Schulden (`dt()`), unabhängig von Zins und Rate.
+- *Modellgrenzen:* fester Zins, gleichbleibende Rate, keine Sondertilgung, keine Zinsänderung, keine Gebühr, keine Steuer. Zinsen monatlich auf die Restschuld.
+- *Schimmer:* ersatzlos entfernt statt einmal abgespielt. Die Balken ändern ihren Wert über die Breitenanimation, das reicht.
+- *Blinken:* entfernt, nicht begrenzt. Die betroffenen roten Zeilen zeigen Warnungen oder Stände (z. B. Notgroschen unter Ziel, Pauschbetrag über 90 %, Budget über Limit, Sabbatical), keinen Lade- oder Live-Zustand.
+- *Badge:* drei Durchläufe, sobald er erscheint. Der Live-Punkt bei Synchronisierung (`.live.pulse`) bleibt endlos.
+- *SVG-Pulse (`ANIM` in `app.js`, zwei Stellen: Verlauf Net Worth und Portfolio-Verlauf):* nicht geändert, weil sie außerhalb der Dateien liegen, die der Auftrag nennt. Sie laufen weiter endlos und sind mit `prefers-reduced-motion` abgeschaltet (U-29). Entscheidung für Henne.
+
+**Sichtbare Änderungen (vorher / nachher)**
+
+- **SÄ-A3-1 Schulden:** Vorher Name und Betrag. Nachher optional Zins und Rate. Beispiel 10.000 € bei 5 % und 300 €: „Laufzeit 3 Jahre, Ende Oktober 2029“, „Zinsen bis zum Ende 789 €“, „Restschuld in 12 Monaten 6.828 €“.
+- **SÄ-A3-2 Warnung:** Beispiel 10.000 € bei 6 % und 40 € Rate: „Die Rate deckt die Zinsen nicht (50 € im Monat). Die Schuld wächst.“ Vorher gab es keinen solchen Hinweis.
+- **SÄ-A3-3 Eingabe:** zwei neue Felder im Formular und im Bearbeiten-Formular. Ungültige Werte: „Zins bitte als Zahl von 0 bis 100 eingeben (% p. a.).“ bzw. „Rate bitte als Zahl ab 0 eingeben (Euro je Monat).“ Nichts wird gespeichert.
+- **SÄ-A3-4 Import:** Zins über 100 oder negative Rate: Feld entfernt, Datensatz bleibt, Meldung „Zins ungültig, Feld entfernt“ im Ergebnis unter „korrigiert“.
+- **SÄ-A3-5 Bewegung:** Schimmer auf den Fortschrittsbalken: vorher dauerhaft, nachher keiner. Badge in der Kopfzeile: vorher dauerhaft, nachher drei Durchläufe. Rote Warnungen (Notgroschen, Pauschbetrag, Budget, Sabbatical): vorher blinkend, nachher statisch. Der Live-Punkt bleibt.
+
+**Neue Datenfelder** (optional, je Schuld unter `S.debts`, werden mit synchronisiert und exportiert)
+
+- `S.debts[].r`: Zins in % p. a., 0 bis 100. Fehlt das Feld, gilt die bisherige Anzeige.
+- `S.debts[].rate`: monatliche Rate in €, ab 0 (höchstens 1 Mrd. € beim Import). Fehlt das Feld, gilt die bisherige Anzeige.
+- Keine neuen lokalen Schlüssel. `schema.sql` unverändert (Spalte `data jsonb`).
+
+**Was nicht geprüft wurde**
+
+- **Browser:** keine Sichtprüfung der neuen Zeilen und Felder (Umbruch bei 375 px, Dunkelmodus, Blur-Modus). Die Matrix `tests/ui/shoot.cjs` wurde nicht erneut gefahren. Die Animationen (Badge-Durchläufe, Wegfall des Schimmers) wurden nicht im Browser gesehen.
+- **Trefferflächen und Kontrast** der neuen Felder: Grundlage sind die bestehenden Regeln (Eingabefelder mindestens 44 px hoch, 16 px Schrift) und die vorhandenen Textfarben. Nicht gemessen.
+- **Synchronisierung** mit den neuen Feldern: nur über `sameData()` im Test. Kein Supabase-Lauf.
+- **Datei-Export und -Import:** nur über den Test-Harness, keine echte Datei im Browser.
+- **Fachliche Richtigkeit gegen Bankrechner:** nicht abgeglichen. Die Formel ist gegen eine monatliche Schleife nachgerechnet (`tests/reference/schulden.cjs`).
+- **Trailer:** Die Commits tragen `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`, nicht `Sonnet 5.5` wie im Auftrag. Das Modell dieses Laufs ist Haiku 5.5; gleiche Abweichung wie in 14.1.
