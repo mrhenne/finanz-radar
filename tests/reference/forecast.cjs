@@ -32,7 +32,17 @@ function real(value, inflPct, years) {
   return value / Math.pow(1 + inflPct / 100, years);
 }
 
-module.exports = { fvEquivalent, fvNominalMonthly, fvAnnual, taxEnd, real };
+// Kirchensteuer-Gesamtsatz in Prozent, aus den Bestandteilen gerechnet (unabhängig von der App-Formel):
+// Steuer = 25 % / (1 + 0,25 × k); Soli 5,5 % auf die Steuer; Kirchensteuer k × Steuer. k = 0, 0,08 oder 0,09.
+function refKirchSatz(kPct) {
+  const k = kPct / 100;
+  const steuer = 25 / (1 + 0.25 * k);
+  const soli = 0.055 * steuer;
+  const kirche = k * steuer;
+  return steuer + soli + kirche;
+}
+
+module.exports = { fvEquivalent, fvNominalMonthly, fvAnnual, taxEnd, real, refKirchSatz };
 
 // Schrittweise Nachrechnung (monatliche Schleife, unabhängig vom App-Code).
 // Ansparphase: Sparrate am Monatsende, Sparrate steigt jährlich um dyn %, Einmalzahlungen am Jahresende.
@@ -68,7 +78,7 @@ function refSim({ s0, sm, dyn = 0, years, annualPct, ter = 0, lumps = [], ex = f
 }
 
 // Fuck-Off-Rechner: Ansparen bis zur Zielzahl F (monatlich), danach jährliche Entnahme mit Steuer.
-function refFx({ rg, v0, b0, sr, F, wm, wy, wi, inf, kt, pb }) {
+function refFx({ rg, v0, b0, sr, F, wm, wy, wi, inf, kt, pb, tf = 30 }) {
   const m = Math.pow(1 + rg / 100, 1 / 12) - 1;
   let v = v0, b = Math.min(b0, v0), k = 0;
   while (v < F && k < 720) { v = v * (1 + m) + sr; b += sr; k++; }
@@ -80,7 +90,7 @@ function refFx({ rg, v0, b0, sr, F, wm, wy, wi, inf, kt, pb }) {
       v *= 1 + m;
       const w = wm * (wi ? Math.pow(1 + inf / 100, ya + (j - 1) + q / 12) : 1);
       const g = Math.min(w, Math.max(v, 0));
-      if (g > 0) { const fr = Math.max(0, (v - b) / v); tb += g * fr * 0.7; b -= g * (1 - fr); v -= g; gr += g; }
+      if (g > 0) { const fr = Math.max(0, (v - b) / v); tb += g * fr * (1 - tf / 100); b -= g * (1 - fr); v -= g; gr += g; }
     }
     const t = Math.max(0, tb - pb) * kt / 100;
     tax += t; net += gr - t;
