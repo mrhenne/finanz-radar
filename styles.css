@@ -114,21 +114,21 @@ svg.spk{width:100%;height:18px;display:block;overflow:visible}
 .btn.det{margin-top:12px}
 .cov{margin-top:6px}
 .li.pc.pos span:first-child{color:var(--gt)}.li.pc.nx span:first-child{color:var(--ort)}.li.pc>span:last-child{text-align:right}
-.pvt tr[onclick]{cursor:pointer}.pvt tr.on td{color:var(--ort);background:var(--orl)}
+.pvt tr[data-click]{cursor:pointer}.pvt tr.on td{color:var(--ort);background:var(--orl)}
 .offb{display:none;margin-top:6px;padding:7px 10px;font-size:11px;background:var(--ink);color:var(--bg);letter-spacing:.04em}.offb.on{display:block}
 .offl .live{background:var(--mut);animation:none}
 .cft{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
 .cft i{position:absolute;top:30%;width:7px;height:11px;animation:cf 1.9s cubic-bezier(.15,.6,.35,1) both}
 @keyframes cf{0%{transform:translate(0,0) rotate(0);opacity:1}30%{transform:translate(calc(var(--dx)*.55),calc(var(--dy)*-.4)) rotate(calc(var(--r)*.35));opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
 .tabs button{transition:transform .12s,color .2s}.tabs button:active{transform:scale(.94)}
-.li[onclick]{transition:background .15s}.li[onclick]:active{background:var(--orl)}
+.li[data-click]{transition:background .15s}.li[data-click]:active{background:var(--orl)}
 .chip{transition:transform .12s,background .15s}.chip:active{transform:scale(.95)}
 @media (max-width:360px){.hero{flex-direction:column;align-items:flex-start}.hk .k.big b{font-size:24px}.tile>b{font-size:15px}}
 .pvt.cmp th,.pvt.cmp td{padding:6px 5px}
 /* Schmale Schirme (375 bis 430 px): Vorschau und Verlauf passen ohne inneren Scroll; ab 431 px unverändert */
 @media (max-width:430px){.pvt:not(.cmp){font-size:10px}.pvt:not(.cmp) th,.pvt:not(.cmp) td{padding:6px 4px}.pvt:not(.cmp) th{letter-spacing:.04em}}
 /* Touch: anklickbare Abschnittsköpfe und Eingabefelder mindestens 44 px hoch */
-.panel h2>span[onclick]{position:relative}.panel h2>span[onclick]::after{content:"";position:absolute;inset:-22px -6px}
+.panel h2>span[data-click]{position:relative}.panel h2>span[data-click]::after{content:"";position:absolute;inset:-22px -6px}
 /* Kopfzeile: ◉ reicht nach links, ☀ nach rechts; so werden beide Trefferflächen mindestens 44 px breit, ohne sich zu überlappen */
 .top .x:not(#th)::after{inset:-14px 0 -14px -22px}#th::after{inset:-14px -20px -14px 0}
 input:not([type=checkbox]):not([type=range]),select{min-height:44px}

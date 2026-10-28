@@ -33,7 +33,7 @@ const THEMES = arg('themes', 'light,dark').split(',');
 const VIEW_FILTER = arg('views', null);
 const PIN = '1234';
 
-// Ansichten: [Name, Tab-Schlüssel]. Tab-Schlüssel gemäß onclick der Tab-Leiste.
+// Ansichten: [Name, Tab-Schlüssel]. Tab-Schlüssel gemäß data-click der Tab-Leiste.
 const VIEWS = [['home', 'home'], ['cash', 'cash'], ['vermoegen', 'assets'], ['fuckoff', 'fire'], ['prognose', 'plan'], ['mehr', 'more']].filter(v => !VIEW_FILTER || VIEW_FILTER.split(',').includes(v[0]));
 // Sheets/Dialoge: Schnellerfassung (FAB), CSV-Import, PIN-Sperre, Login
 const SHEETS = arg('sheets', 'schnellerfassung,csv-import,pin,login').split(',').filter(x => x && x !== 'none');
@@ -119,7 +119,7 @@ function pinRecord() {
 const AUDIT_JS = `(() => {
   const de = document.documentElement;
   const small = [];
-  document.querySelectorAll('button,a,input,select,textarea,[onclick],[role=tab]').forEach(el => {
+  document.querySelectorAll('button,a,input,select,textarea,[data-click],[role=tab]').forEach(el => {
     if (el.closest('[aria-hidden=true]')) return;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return;

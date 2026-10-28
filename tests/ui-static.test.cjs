@@ -123,7 +123,7 @@ test('Kopfzeilen-Icons: Trefferfläche mindestens 44 px breit und hoch', () => {
 // Die Rechnung aus dem CSS allein überschätzt die Fläche: Probe bei −15 px ergab 41 px (Ziel 44).
 // Deshalb die gemessenen Werte als Grenze: Abschnittskopf −22 px (47 px), Chip −8 px (46 px).
 test('Trefferflächen: Abschnittskopf und Chip mindestens 44 px hoch (Erweiterung je Seite)', () => {
-  const h2 = css.match(/\.panel h2>span\[onclick\]::after\{content:"";position:absolute;inset:(-?\d+)px/);
+  const h2 = css.match(/\.panel h2>span\[data-click\]::after\{content:"";position:absolute;inset:(-?\d+)px/);
   const chip = css.match(/\.chip::after\{content:"";position:absolute;inset:(-?\d+)px/);
   assert.ok(h2 && chip, 'Erweiterungen fehlen');
   assert.ok(Math.abs(Number(h2[1])) >= 22, 'Abschnittskopf: Erweiterung unter 22 px');
