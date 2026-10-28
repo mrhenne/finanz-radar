@@ -15,7 +15,7 @@
   const txOf = ym => S.tx.filter(x => x.d.startsWith(ym));
   const fm1 = v => isFinite(v) ? ((Math.round(v * 10) / 10) || 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
   const nS = h => '<span class="n">' + h + '</span>';
-  const go = k => "tab='" + k + "';render();scrollTo(0,0)";
+  const go = k => act('goTab', [k]);
   const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
   const toast = msg => { let t = $('toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); } t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); };
   const yr0 = () => new Date().getFullYear();
@@ -105,7 +105,7 @@
     let h = '<div class="k big"><b>' + eur(e.v) + '</b><span>' + (e.est ? 'geschätzt pro Monat (aus deinem Bestand)' : 'Ø pro Monat · letzte 12 Monate') + '</span></div>'
       + '<div class="cov"><div class="bar"><i style="width:' + Math.min(100, cov) + '%"></i></div><div class="mut">deckt ' + pct(cov) + ' deiner Fixkosten von ' + eur(f) + '</div></div>'
       + '<div class="g2" style="margin-top:12px"><div class="k"><b class="pos">' + eur(ytd) + '</b><span>Erhalten ' + yr0() + '</span></div><div class="k"><b>' + eur(pot) + '</b><span>Potenzial/Monat</span></div></div>';
-    if (cand.length) h += '<div class="al w" style="margin-top:12px"><span><b>' + nS(cand.length) + ' passende Buchungen</b><small>im Cashflow gefunden: Dividende, Zinsen, Miete</small></span><button class="chip" onclick="piImport()">Übernehmen</button></div>';
+    if (cand.length) h += '<div class="al w" style="margin-top:12px"><span><b>' + nS(cand.length) + ' passende Buchungen</b><small>im Cashflow gefunden: Dividende, Zinsen, Miete</small></span><button class="chip" ' + act('piImport') + '>Übernehmen</button></div>';
     let out = card('Passiv · Überblick', h);
 
     const fx = (S.rec || []).filter(r => !IN.includes(r.c) && r.c !== 'Sparen/Invest' && r.a > 0).map(r => ({ n: r.n || r.c, c: r.c, a: r.a })).sort((a, b) => a.a - b.a);
@@ -119,13 +119,13 @@
 
     out += card('Passiv · Neu', '<div class="row"><select aria-label="Art der Einnahme" id="pi_k">' + Object.entries(PI_K).map(([k, l]) => '<option value="' + k + '">' + l + '</option>').join('') + '</select><input aria-label="Betrag in Euro" id="pi_a" type="number" inputmode="decimal" placeholder="Betrag €"></div>'
       + '<div class="row" style="margin-top:8px"><input aria-label="Quelle der Einnahme" id="pi_n" placeholder="Quelle, z. B. MSCI World" list="pi_dl" autocomplete="off"><input aria-label="Datum der Einnahme" id="pi_d" type="date" value="' + today() + '"></div><datalist id="pi_dl">' + S.as.filter(a => a.k !== 'crypto').map(a => '<option value="' + esc(a.n) + '">').join('') + '</datalist>'
-      + '<label class="chk"><input aria-label="Auch als Einnahme im Cashflow buchen" type="checkbox" id="pi_tx">Auch als Einnahme im Cashflow buchen</label><button class="btn" onclick="piAdd()">Erfassen</button>'
+      + '<label class="chk"><input aria-label="Auch als Einnahme im Cashflow buchen" type="checkbox" id="pi_tx">Auch als Einnahme im Cashflow buchen</label><button class="btn" ' + act('piAdd') + '>Erfassen</button>'
       + '<div class="note">Brutto oder netto ist egal, bleib nur einheitlich. Wenn die Ausschüttung schon als Buchung im Cashflow steht, lass den Haken weg oder nutze „Übernehmen“ oben.</div>');
 
     const L = piItems().slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 15);
-    out += card('Passiv · Verlauf', (piBars() || '<span class="mut">Noch keine Einträge.</span>') + L.map(x => '<div class="li"><span>' + esc(x.n) + '<small>' + x.d.slice(8) + '.' + x.d.slice(5, 7) + '.' + x.d.slice(0, 4) + ' · ' + (PI_K[x.k] || 'Sonstiges') + (x.tx ? ' · im Cashflow' : '') + '</small></span><span class="pos">+' + eur(+x.a) + ' <button class="btn x" aria-label="Löschen" onclick="piDel(' + esc(JSON.stringify(x.id)) + ')">×</button></span></div>').join(''));
+    out += card('Passiv · Verlauf', (piBars() || '<span class="mut">Noch keine Einträge.</span>') + L.map(x => '<div class="li"><span>' + esc(x.n) + '<small>' + x.d.slice(8) + '.' + x.d.slice(5, 7) + '.' + x.d.slice(0, 4) + ' · ' + (PI_K[x.k] || 'Sonstiges') + (x.tx ? ' · im Cashflow' : '') + '</small></span><span class="pos">+' + eur(+x.a) + ' <button class="btn x" aria-label="Löschen" ' + act('piDel',[x.id]) + '>×</button></span></div>').join(''));
 
-    out += card('Passiv · Annahmen Potenzial', '<div class="row"><div><label>Ausschüttung ETF/Aktien %</label><input aria-label="Ausschüttung ETF und Aktien in Prozent" type="number" step="0.1" inputmode="decimal" value="' + c.yd + '" onchange="piSetF(\'yd\',this.value)"></div><div><label>Zins Cash %</label><input aria-label="Zins Cash in Prozent" type="number" step="0.1" inputmode="decimal" value="' + c.yz + '" onchange="piSetF(\'yz\',this.value)"></div></div><label>Mieteinnahmen netto €/Monat</label><input aria-label="Mieteinnahmen netto pro Monat in Euro" type="number" inputmode="decimal" value="' + (c.rent || '') + '" placeholder="0" onchange="piSetF(\'rent\',this.value)">'
+    out += card('Passiv · Annahmen Potenzial', '<div class="row"><div><label>Ausschüttung ETF/Aktien %</label><input aria-label="Ausschüttung ETF und Aktien in Prozent" type="number" step="0.1" inputmode="decimal" value="' + c.yd + '" ' + act('piSetF',['yd','$value'],'change') + '></div><div><label>Zins Cash %</label><input aria-label="Zins Cash in Prozent" type="number" step="0.1" inputmode="decimal" value="' + c.yz + '" ' + act('piSetF',['yz','$value'],'change') + '></div></div><label>Mieteinnahmen netto €/Monat</label><input aria-label="Mieteinnahmen netto pro Monat in Euro" type="number" inputmode="decimal" value="' + (c.rent || '') + '" placeholder="0" ' + act('piSetF',['rent','$value'],'change') + '>'
       + '<div class="note">Potenzial = (ETF + Aktien) × Ausschüttung + Cash × Zins, pro Monat, plus Miete. Thesaurierende ETFs schütten nichts aus: dann ist das Potenzial eine Rechengröße, kein Geldeingang. Solange keine echten Einträge da sind, nutzt die App das Potenzial als Schätzung.</div>');
     return bk() + out;
   };
@@ -165,17 +165,17 @@
 
   V.job = () => {
     const B = baseP(), c = jobC(), base = simJob(B, { ...c, at: 0, sab: 0 }, 100, false), sc = simJob(B, c, c.sh, true);
-    const head = card('Job · Ausgangslage', '<label>Netto-Gehalt heute €/Monat (nur Hauptjob)</label><input aria-label="Netto-Gehalt heute pro Monat in Euro" type="number" inputmode="decimal" value="' + (num(S.job && S.job.inc) || '') + '" placeholder="' + (Math.round(salary()) || 'z. B. 2800') + '" onchange="setJob(\'inc\',this.value)">'
+    const head = card('Job · Ausgangslage', '<label>Netto-Gehalt heute €/Monat (nur Hauptjob)</label><input aria-label="Netto-Gehalt heute pro Monat in Euro" type="number" inputmode="decimal" value="' + (num(S.job && S.job.inc) || '') + '" placeholder="' + (Math.round(salary()) || 'z. B. 2800') + '" ' + act('setJob',['inc','$value'],'change') + '>'
       + '<div class="g2" style="margin-top:12px"><div class="k"><b>' + eur(B.sr) + '</b><span>Ø investiert / Monat</span></div><div class="k"><b>' + yTxt(base.y) + '</b><span>bis Fuck Off in Vollzeit' + (base.y ? ' · ' + (yr0() + Math.ceil(base.y)) : '') + '</span></div></div>'
       + '<div class="note">Vorbelegt mit deinem Ø Gehalt der letzten 12 Monate. Nebenjob und andere Einnahmen bleiben in allen Szenarien unverändert.</div>');
     if (!(c.inc > 0) || !(B.F > 0)) return bk() + head + card('Job · Szenario', '<span class="mut">' + (!(B.F > 0) ? 'Es fehlt eine Fuck-Off-Zahl: trag im Tab „Fuck Off“ deine Ausgaben ein.' : 'Trag oben dein Netto-Gehalt ein, dann rechne ich die Szenarien.') + '</span>');
 
-    const chip = (on, lbl, js) => '<button class="chip' + (on ? ' on' : '') + '" onclick="' + js + '">' + lbl + '</button>';
+    const chip = (on, lbl, at) => '<button class="chip' + (on ? ' on' : '') + '" ' + at + '>' + lbl + '</button>';
     const est = netAt(c.inc, c.sh), freeD = (1 - c.sh / 100) * WD, perDay = freeD > 0 ? sc.loss * 12 / freeD : 0, dwd = (sc.wd != null && base.wd != null) ? sc.wd - base.wd : null;
-    let h = '<label>Arbeitszeit</label><div class="chips">' + PRESETS.slice(1).map(p => chip(c.sh === p, p + ' %', 'setJob(\'sh\',' + p + ')')).join('') + '</div>'
-      + '<div class="row" style="margin-top:6px"><div><label>Eigener Anteil %</label><input aria-label="Eigener Anteil in Prozent" type="number" inputmode="decimal" value="' + c.sh + '" onchange="setJob(\'sh\',this.value)"></div><div><label>Netto im Szenario €</label><input aria-label="Netto im Szenario in Euro" type="number" inputmode="decimal" value="' + (c.ov || '') + '" placeholder="ca. ' + Math.round(est) + '" onchange="setJob(\'ov\',this.value)"></div></div>'
-      + '<label>Sabbatical (Monate ohne Gehalt)</label><div class="chips">' + [0, 3, 6, 12].map(p => chip(c.sab === p, p ? p + ' Mon.' : 'keins', 'setJob(\'sab\',' + p + ')')).join('') + '</div>'
-      + '<label>Start</label><div class="chips">' + [0, 1, 2, 5].map(p => chip(c.at === p, p ? 'in ' + p + ' J.' : 'sofort', 'setJob(\'at\',' + p + ')')).join('') + '</div><div class="hatch"></div>';
+    let h = '<label>Arbeitszeit</label><div class="chips">' + PRESETS.slice(1).map(p => chip(c.sh === p, p + ' %', act('setJob',['sh',p]))).join('') + '</div>'
+      + '<div class="row" style="margin-top:6px"><div><label>Eigener Anteil %</label><input aria-label="Eigener Anteil in Prozent" type="number" inputmode="decimal" value="' + c.sh + '" ' + act('setJob',['sh','$value'],'change') + '></div><div><label>Netto im Szenario €</label><input aria-label="Netto im Szenario in Euro" type="number" inputmode="decimal" value="' + (c.ov || '') + '" placeholder="ca. ' + Math.round(est) + '" ' + act('setJob',['ov','$value'],'change') + '></div></div>'
+      + '<label>Sabbatical (Monate ohne Gehalt)</label><div class="chips">' + [0, 3, 6, 12].map(p => chip(c.sab === p, p ? p + ' Mon.' : 'keins', act('setJob',['sab',p]))).join('') + '</div>'
+      + '<label>Start</label><div class="chips">' + [0, 1, 2, 5].map(p => chip(c.at === p, p ? 'in ' + p + ' J.' : 'sofort', act('setJob',['at',p]))).join('') + '</div><div class="hatch"></div>';
     if (sc.broke) h += '<div class="neg p">Das Sabbatical zehrt dein Vermögen komplett auf. Kürzer planen oder später starten.</div>';
     h += '<div class="g2"><div class="k big" style="grid-column:1/-1"><b>' + dTxt(sc.y, base.y) + '</b><span>Verschiebung deines Fuck-Off-Datums</span></div>'
       + '<div class="k"><b>' + yTxt(sc.y) + '</b><span>bis Fuck Off' + (sc.y != null ? ' · ' + (yr0() + Math.ceil(sc.y)) : '') + '</span></div>'
@@ -190,7 +190,7 @@
     h += lc(rows, ['Szenario', 'Vollzeit', 'Ziel'], ['var(--or)', 'var(--mut)', '#ff4d6d'], { dash: 1 });
     let out = card('Job · Szenario', h);
 
-    out += card('Job · Vergleich', '<div class="tw"><table class="pvt cmp"><tr><th>Zeit</th><th>Netto</th><th>Sparrate</th><th>Fuck Off</th><th>Δ</th></tr>' + PRESETS.map(p => { const r = p === 100 ? base : simJob(B, { ...c, sab: 0 }, p, false); return '<tr' + (p === c.sh && !c.sab ? ' class="on"' : '') + ' onclick="setJob(\'sh\',' + p + ')"><td>' + p + ' %</td><td>' + eur(r.net) + '</td><td>' + eur(r.sr) + '</td><td>' + (r.y != null ? yr0() + Math.ceil(r.y) : '–') + '</td><td>' + (p === 100 ? '–' : dTxt(r.y, base.y)) + '</td></tr>'; }).join('') + '</table></div>'
+    out += card('Job · Vergleich', '<div class="tw"><table class="pvt cmp"><tr><th>Zeit</th><th>Netto</th><th>Sparrate</th><th>Fuck Off</th><th>Δ</th></tr>' + PRESETS.map(p => { const r = p === 100 ? base : simJob(B, { ...c, sab: 0 }, p, false); return '<tr' + (p === c.sh && !c.sab ? ' class="on"' : '') + ' ' + act('setJob',['sh',p]) + '><td>' + p + ' %</td><td>' + eur(r.net) + '</td><td>' + eur(r.sr) + '</td><td>' + (r.y != null ? yr0() + Math.ceil(r.y) : '–') + '</td><td>' + (p === 100 ? '–' : dTxt(r.y, base.y)) + '</td></tr>'; }).join('') + '</table></div>'
       + '<div class="note">Netto bei Teilzeit ist geschätzt (sinkt wegen der Steuerprogression etwas weniger als das Brutto). Für exakte Werte deinen Betrag aus dem Brutto-Netto-Rechner oben eintragen. Annahmen: Ausgaben bleiben gleich, die Einbuße geht 1:1 von der Sparrate ab, Rendite ' + pct(B.r) + ' p.a. wie im Tab „Fuck Off“. Rente, Krankenversicherung und Zulagen sind nicht modelliert.</div>');
     return bk() + head + out;
   };
@@ -199,9 +199,9 @@
   const _fire = V.fire;
   V.fire = () => {
     const h = _fire(), B = baseP(), c = jobC();
-    if (!(c.inc > 0) || !(B.F > 0)) return h + card('Was kostet Teilzeit?', '<span class="mut">Rechne aus, wie sich Teilzeit oder ein Sabbatical auf dein Fuck-Off-Datum auswirken.</span><button class="btn o" onclick="' + go('job') + '">Job-Szenarien öffnen</button>');
+    if (!(c.inc > 0) || !(B.F > 0)) return h + card('Was kostet Teilzeit?', '<span class="mut">Rechne aus, wie sich Teilzeit oder ein Sabbatical auf dein Fuck-Off-Datum auswirken.</span><button class="btn o" ' + go('job') + '>Job-Szenarien öffnen</button>');
     const b = simJob(B, { ...c, at: 0, sab: 0 }, 100, false), r = simJob(B, { ...c, at: 0, sab: 0 }, 80, false);
-    return h + card('Was kostet Teilzeit?', '<div class="li"><span>80 % Arbeitszeit<small>netto ca. −' + eur(r.loss) + ' / Monat · ' + nS(Math.round(.2 * WD)) + ' Tage mehr frei</small></span><b>' + dTxt(r.y, b.y) + '</b></div><button class="btn o" onclick="' + go('job') + '">Job-Szenarien öffnen</button>');
+    return h + card('Was kostet Teilzeit?', '<div class="li"><span>80 % Arbeitszeit<small>netto ca. −' + eur(r.loss) + ' / Monat · ' + nS(Math.round(.2 * WD)) + ' Tage mehr frei</small></span><b>' + dTxt(r.y, b.y) + '</b></div><button class="btn o" ' + go('job') + '>Job-Szenarien öffnen</button>');
   };
 
   /* =====================================================================
@@ -218,14 +218,14 @@
   W.qInvest = () => { if (!W.qOpen) return; W.qOpen(); setTimeout(() => { const s = $('q_c'); if (s) { s.value = 'Sparen/Invest'; if (W.Q_manual) W.Q_manual(); } }, 0); };
   W.homeFull = () => { S.ui.hf = !S.ui.hf; save(); render(); };
   function alerts() {
-    const a = [], al = (t, s, b, js) => '<div class="al w"><span><b>' + t + '</b><small>' + s + '</small></span><button class="chip" onclick="' + js + '">' + b + '</button></div>';
+    const a = [], al = (t, s, b, at) => '<div class="al w"><span><b>' + t + '</b><small>' + s + '</small></span><button class="chip" ' + at + '>' + b + '</button></div>';
     let ex = 0; try { ex = Number(localStorage.getItem('fr_exp')) || 0; } catch(e){/* Ohne lesbaren Zeitstempel gilt die Datei-Sicherung als nie erstellt. */}
     const age = ex ? Math.floor((Date.now() - ex) / 864e5) : null;
-    if (S.tx.length >= 5 && (age === null || age >= 30)) a.push(al('Backup fällig', age === null ? 'Noch kein Datei-Backup gespeichert' : 'Letztes Datei-Backup vor ' + nS(age) + ' Tagen', 'Sichern', W.dlBackup ? 'dlBackup()' : go('data')));
+    if (S.tx.length >= 5 && (age === null || age >= 30)) a.push(al('Backup fällig', age === null ? 'Noch kein Datei-Backup gespeichert' : 'Letztes Datei-Backup vor ' + nS(age) + ' Tagen', 'Sichern', W.dlBackup ? act('dlBackup') : go('data')));
     const eg = S.as.filter(x => x.eg);
     if (eg.length) { const have = eg.reduce((s, x) => s + val(x), 0), t = S.f.egt > 0 ? S.f.egt : fixk() * (S.f.egm || 3); if (t > 0 && have < t) a.push(al('Notgroschen unter Ziel', 'Es fehlen ' + eur(t - have), 'Ansehen', go('assets'))); }
     const sp = Math.max(0, Number(S.spl && S.spl.t) || 0);
-    if (sp > 0 && new Date().getDate() >= 20) { const ist = invSum(txOf(ymNow())); if (ist < sp) a.push(al('Sparplan offen', 'Noch ' + eur(sp - ist) + ' bis zum Monatsziel', 'Buchen', 'qInvest()')); }
+    if (sp > 0 && new Date().getDate() >= 20) { const ist = invSum(txOf(ymNow())); if (ist < sp) a.push(al('Sparplan offen', 'Noch ' + eur(sp - ist) + ' bis zum Monatsziel', 'Buchen', act('qInvest'))); }
     return a;
   }
   V.home = () => {
@@ -238,7 +238,7 @@
     const qs = [], ms6 = []; for (let i = -5; i <= 0; i++) ms6.push(addM(cur, i));
     ms6.forEach(m => { const l = txOf(m), i = sm(l, 'in'); qs.push(l.length && i ? invSum(l) / i * 100 : null); });
     const q = qs[5], rw = runwayM(), e = piEff(), cov = piCov();
-    const tile = (lbl, v, sub, extra, js) => '<button class="tile" onclick="' + js + '"><span>' + lbl + '</span><b>' + nS(v) + '</b>' + extra + '<small>' + sub + '</small></button>';
+    const tile = (lbl, v, sub, extra, at) => '<button class="tile" ' + at + '><span>' + lbl + '</span><b>' + nS(v) + '</b>' + extra + '<small>' + sub + '</small></button>';
     h += '<div class="tiles">'
       + tile('Sparquote', q == null ? '–' : pct(q), monLabel(cur) + ' · 6 Mon.', spk(qs, 'var(--g)'), go('review'))
       + tile('Runway', fm1(rw) + ' Mon.', 'Ziel 12 Mon.', '<div class="bar"><i style="width:' + Math.min(100, rw / 12 * 100) + '%"></i></div>', go('fire'))
@@ -247,7 +247,7 @@
     const A = alerts();
     h += A.length ? '<div class="alr">' + A.join('') + '</div>' : '<div class="allok pos">✓ Keine offenen Punkte</div>';
     const open = !!(S.ui && S.ui.hf);
-    h += '<button class="btn o det" onclick="homeFull()">' + (open ? '▴ Details ausblenden' : '▾ Alle Details anzeigen') + '</button>';
+    h += '<button class="btn o det" ' + act('homeFull') + '>' + (open ? '▴ Details ausblenden' : '▾ Alle Details anzeigen') + '</button>';
     const fokus = card('Fokus', h);
     if (!open) return edHTML() + fokus;
     const old = oldHome(), e0 = edHTML();
@@ -318,7 +318,7 @@
   const _more = V.more;
   V.more = () => {
     let h = _more();
-    const btn = (k, l) => '<button class="btn o" style="text-align:left" onclick="' + go(k) + '">' + l + '</button>', add = btn('passive', 'Passives Einkommen') + btn('job', 'Job-Szenarien · Teilzeit');
+    const btn = (k, l) => '<button class="btn o" style="text-align:left" ' + go(k) + '>' + l + '</button>', add = btn('passive', 'Passives Einkommen') + btn('job', 'Job-Szenarien · Teilzeit');
     const i = h.indexOf(act('goTab',['goals'])), j = i > 0 ? h.lastIndexOf('<button', i) : -1;
     h = j > 0 ? h.slice(0, j) + add + h.slice(j) : h + card('Neu', add);
     if (!standalone()) h += card('App installieren', '<div class="li"><span>1. Seite in <b>Safari</b> öffnen</span></div><div class="li"><span>2. <b>Teilen</b> antippen, dann „Zum Home-Bildschirm“</span></div><div class="li"><span>3. „Als Web-App öffnen“ aktiv lassen, <b>Hinzufügen</b></span></div><div class="note">Danach startet Finanz-Radar wie eine App: Vollbild, eigenes Icon, Startbildschirm und offline nutzbar. Die Home-Bildschirm-App hat einen eigenen Speicher: mit Cloud-Login sind deine Daten sofort da, ohne Login vorher unter Daten &amp; Backup exportieren.</div>');

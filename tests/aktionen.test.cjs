@@ -96,3 +96,29 @@ test('Dispatcher: Fehler in einer Aktion stoppt die übrigen Ziele nicht', () =>
   // Der Fehler wird wie bei einem Inline-Handler als ungefangene Ausnahme gemeldet (asynchron)
   assert.ok(app.pendingTimers() >= 1);
 });
+
+// Jede Aktion, die im Quelltext per act('…') vorkommt, steht in ACTS. Jeder Name in ACTS ist nach dem Laden eine Funktion am Fenster.
+const QUELL = ['app.js', 'features.js', 'extras.js', 'boost.js'];
+const quelltext = () => QUELL.map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n');
+
+test('jeder Name in act(…) im Quelltext steht in ACTS', () => {
+  const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin' });
+  const registriert = new Set(Array.from(app.evalApp('[...ACTS]')));
+  const genutzt = new Set([...quelltext().matchAll(/act\('([A-Za-z_$][\w$]*)'/g)].map(m => m[1]));
+  assert.ok(genutzt.size > 40, 'Liste der act()-Namen ist leer: Prüfung wäre leer');
+  assert.deepEqual([...genutzt].filter(n => !registriert.has(n)), [], 'nicht registriert');
+});
+
+test('jeder Name in ACTS ist nach dem Laden eine Funktion am Fenster (window[name])', () => {
+  const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin' });
+  const nichtFunktion = app.evalApp("[...ACTS].filter(n => typeof window[n] !== 'function')");
+  assert.deepEqual(Array.from(nichtFunktion), []);
+});
+
+test('keine Aktion ist überflüssig: jeder Name in ACTS wird im Quelltext genutzt', () => {
+  const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin' });
+  const registriert = Array.from(app.evalApp('[...ACTS]'));
+  const genutzt = new Set([...quelltext().matchAll(/act\('([A-Za-z_$][\w$]*)'/g)].map(m => m[1]));
+  // Nur Namen zählen, die im Quelltext als act('name' vorkommen; der Aufruf in den Tests zählt nicht
+  assert.deepEqual(registriert.filter(n => !genutzt.has(n)), []);
+});

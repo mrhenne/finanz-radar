@@ -63,7 +63,7 @@ test('imported portfolio-passive items get safe IDs (piDel handler is built from
 });
 
 test('source keeps the escaped handler and label forms', () => {
-  assert.match(boost, /onclick="piDel\(' \+ esc\(JSON\.stringify\(x\.id\)\) \+ '\)"/);
+  assert.match(boost, /act\('piDel',\[x\.id\]\)/); // Argument als JSON, Escaping in act() (Teil B)
   assert.match(boost, /<span style="flex:1">' \+ esc\(k\) \+ '<\/span>/);
   assert.match(features, /\+ ' ' \+ esc\(x\[0\]\) \+ '<\/span><b>'/);
   assert.match(app, /const clean=s=>/);
