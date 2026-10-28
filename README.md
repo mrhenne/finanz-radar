@@ -45,7 +45,9 @@ Im Projekt existiert bereits die ältere Tabelle `public.user_state` mit eigenen
 
 Die App unterstützt Registrierung, Anmeldung per E-Mail und Passwort, Login-Link, Passwort-Reset und Passwortänderung sowie Abmeldung.
 
-Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Hochgeladen wird erst, nachdem der Cloud-Stand gelesen wurde. Beim Anmelden vergleicht die App lokale und Cloud-Zeitstempel; der neuere Stand wird verwendet (der letzte Upload gewinnt). Vor jedem Überschreiben einer Fassung legt die App eine Sicherung unter **Mehr → Datenschutz → Sicherungen** ab: „vor Cloud-Abgleich“ für ungesicherte lokale Änderungen, „Cloud-Stand vor Überschreiben“ für die überschriebene Cloud-Fassung. Scheitert ein Upload, wird er bei der nächsten Änderung, nach Rückkehr der Verbindung oder manuell erneut versucht; es gibt keinen automatischen Wiederholungs-Timer.
+Nach erfolgreicher Anmeldung wird ein Datensatz pro Nutzer in `finance_state` gespeichert. Hochgeladen wird erst, nachdem der Cloud-Stand gelesen wurde. Ist der Cloud-Stand neuer als der bekannte Stand, liegen auf dem Gerät ungesicherte Änderungen (`fr_dirty`) und unterscheidet sich der Inhalt, überschreibt die App nichts. Die Synchronisierung pausiert, ein Banner erklärt das, und ein Dialog bietet drei Wege: **Cloud-Stand übernehmen** (lokale Fassung vorher in die Sicherungen), **Diesen Stand behalten** (Cloud-Fassung vorher in die Sicherungen, danach hochladen) oder **Später entscheiden** (nichts ändern, die Synchronisierung bleibt pausiert). Zusammengeführt wird nicht. Ohne ungesicherte Änderungen oder bei gleichem Inhalt gibt es keinen Dialog; die Cloud-Fassung wird dann geladen. Sicherungen liegen unter **Mehr → Datenschutz → Sicherungen**: „vor Cloud-Abgleich“ für lokale Fassungen, „Cloud-Stand vor Überschreiben“ für verdrängte Cloud-Fassungen.
+
+Scheitert ein Upload wegen Netz, Zeitüberschreitung oder Serverfehler (5xx), wird er nach 5 s, 15 s, 45 s und 2 min erneut versucht, insgesamt fünf Versuche. Bei den Ereignissen „wieder online“ und Rückkehr in den Vordergrund wird sofort erneut versucht, wenn etwas aussteht. Der Sync-Status im Konto zeigt die Restzeit. Bei 401, 403 und 413 wird nicht erneut versucht; die Meldung nennt die Ursache. Nach fünf erfolglosen Versuchen wartet die App auf eine Änderung, auf Netzrückkehr oder auf „Jetzt hochladen“.
 
 Beim Wechsel zu einem anderen Konto prüft die App, ob auf dem Gerät ungesicherte Änderungen des vorherigen Kontos liegen. Wenn ja, fragt sie: **als Datei sichern und wechseln**, **verwerfen und wechseln** oder **abbrechen** (dann wird das neue Konto abgemeldet und der bisherige Stand bleibt unverändert). Ohne ungesicherte Änderungen wechselt die App direkt. Daten des vorherigen Kontos erscheinen nie im neuen Konto und werden nie in dessen Cloud hochgeladen.
 
@@ -116,6 +118,9 @@ Weitere Werkzeuge:
 - **Monat übernehmen:** Der 29. bis 31. wird auf den letzten Tag des Zielmonats gesetzt (kein 31.02.).
 - **Historie:** Je Monat erscheint ein Eintrag, Verlauf und Rückblick zeigen dieselbe Auswahl.
 - **Synchronisierung:** Ungesicherte lokale Änderungen werden vor dem Laden der Cloud gesichert, nicht still verworfen. Die Sicherungen-Liste enthält dafür Einträge „vor Cloud-Abgleich“ und „Cloud-Stand vor Überschreiben“.
+- **Konflikt (B-03):** Vorher überschrieb der letzte Upload eine neuere Cloud-Fassung. Nachher pausiert die Synchronisierung und fragt nach einer Entscheidung.
+- **Kontowechsel (B-25):** Vorher wurden ungesicherte Änderungen des alten Kontos still verworfen. Nachher fragt die App vorher.
+- **Upload-Fehler (B-24):** Vorher kein Neuversuch. Nachher automatische Versuche mit Restzeit im Konto-Status; bei 401, 403 und 413 keine Wiederholung, sondern eine Meldung mit Ursache.
 - **Kaputter lokaler Stand:** Die Rohdaten werden als `fr_s_defekt` gesichert, bevor die App startet.
 - **PIN:** Neues Verfahren mit Salt, alte PINs bleiben gültig. Fehlversuche werden dauerhaft gezählt.
 - **CSV-Import:** Ungültige Kalendertage (z. B. 31.02.) werden übersprungen. Mehr als 1.500 Zeilen werden in der Vorschau gemeldet.
@@ -126,7 +131,7 @@ Weitere Werkzeuge:
 
 ## Bekannte Grenzen
 
-Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Last-Write-Wins bei zwei Geräten, Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung und Kirchensteuer.
+Offene Entscheidungen und Restrisiken stehen in `ENDKONTROLLE-BERICHT.md`. Die wichtigsten: Zeitstempel kommen vom Gerät (eine falsche Uhr kann einen Konflikt übersehen lassen), Schulden ohne Zins und Tilgung, Steuerannahmen ohne Verlustverrechnung und Kirchensteuer.
 
 ## Fachliche Regeln (bitte bei Änderungen beibehalten)
 

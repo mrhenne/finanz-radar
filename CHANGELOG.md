@@ -2,6 +2,27 @@
 
 Änderungen der Endkontrolle von Finanz-Radar. Basis ist der Tag `backup-vor-endkontrolle-2026-10-26` (Commit `e4e1ff9`), Arbeitsbranch `endkontrolle-2026-10-26`. Nichts ist gepusht oder deployt. Die Entscheidungen für Henne stehen in `ENDKONTROLLE-BERICHT.md`, Abschnitt 5 und 10.5.
 
+## Umsetzung der offenen Vorschläge
+
+### Teil A1: Synchronisierung und Kontowechsel (B-03, B-24, B-25)
+
+- `acd510c` Konflikt-Dialog statt Last-Write-Wins (B-03); Fehlalarm bei frischen Geräten behoben (`features.js`)
+- `e61b739` Kontowechsel fragt bei ungesicherten Änderungen (B-25)
+- `80f4deb` Upload-Neuversuch mit Backoff, Ereignisse „online“ und Vordergrund (B-24)
+- Dieser Commit: README, CHANGELOG und Bericht (Abschnitt 14)
+
+Tests: 157 grün vorher, 185 grün nachher (`sh tests/run-all.sh`).
+
+Sichtbare Änderungen (vorher / nachher):
+
+- Konflikt: vorher überschreibt der letzte Upload eine neuere Cloud-Fassung. Nachher Banner „Synchronisierung pausiert“ und Dialog mit „Cloud-Stand übernehmen“, „Diesen Stand behalten“, „Später entscheiden“.
+- Kontowechsel: vorher still verworfen. Nachher Dialog mit „Als Datei sichern und wechseln“, „Verwerfen und wechseln“, „Abbrechen“; Esc = Abbrechen.
+- Upload-Fehler: vorher „Nicht synchronisiert: …“ ohne Wiederholung. Nachher automatische Versuche (5 s, 15 s, 45 s, 2 min), Restzeit im Konto, Stopp nach fünf Versuchen.
+- 401, 403, 413: vorher technische Meldung, nachher verständlicher Text ohne Wiederholung.
+- Wieder online oder Rückkehr in den Vordergrund: sofortiger Versuch, wenn Änderungen ausstehen.
+
+Nicht geprüft: echte Supabase-Latenz und RLS, Safari/iOS, Browser-Lauf des Dialogs, Wirkung des Dateiexports im Browser (Details in Bericht 14.1).
+
 ## Endkontrolle (Phase 1 bis 5)
 
 ### Phase 1: Baseline und Inventur

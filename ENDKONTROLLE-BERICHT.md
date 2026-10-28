@@ -8,6 +8,7 @@ Stand: 2026-10-27 (Phase 5 abgeschlossen) · Basis: Commit `e4e1ff9` (Tag `backu
 - **Tests:** Start Phase 5: 142 grün. Ende Phase 5: **150 grün**, alle Testdateien inkl. Unterordner (`sh tests/run-all.sh`). Baseline des Auftrags: 11.
 - **Performance** (Extrem-Fixture, 5.000 Buchungen). Node: Start 114,5 → 26,2 ms, Fuck-Off-Ansicht 51,8 → 6,0 ms, Home 24,5 → 1,3 ms. Chrome (Median aus 3 Läufen): Fuck Off 45,1 → 5,6 ms, Home 32,6 → 1,8 ms, Prognose 24,6 → 3,6 ms. Ursache der großen Stelle: `avg()` (quadratisch), behoben.
 - **Entfernt (toter Code, belegt):** `plan()` und `pcalc()` in app.js, `theme()` und `bars()` in app.js (von boost.js ersetzt), CSV-Pfad in features.js (Parser, Hilfsfunktionen, Ansicht). **Korrektur zu S-29:** `cu()` und `applyTh()` in app.js sind nicht tot. Beide laufen beim ersten Render, bevor boost.js geladen ist. Sie bleiben.
+- **Umsetzung der offenen Vorschläge, Teil A1 (B-03, B-24, B-25):** umgesetzt, Abschnitt 14.1. Tests 157 → 185 grün.
 - **Offen:** Entscheidungen für Henne priorisiert in Abschnitt 13.1. Kein Push, kein Deploy, keine Live-Prüfung.
 - **Nicht getan (wie vorgegeben):** kein Push, kein Deploy, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt, `schema.sql` unverändert, Datenmodell `S` unverändert, kein Zugriff auf Live-Supabase.
 - **Abweichung:** Die Commits tragen `Co-Authored-By: Claude Haiku 5.5`, nicht `Sonnet 5.5` wie im Auftrag. Begründung in Abschnitt 12.7.
@@ -601,7 +602,7 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | S-34 | Header | offen | vercel.json | Cache-Header live nicht geprüft | nicht geprüft | – | – |
 | B-01 | Sync | hoch | app.js (`save`, `push`, `pull`) | Nach der Anmeldung lief der Upload-Timer, bevor der Cloud-Stand gelesen war. Ein leerer lokaler Stand konnte die Cloud überschreiben. | behoben | `sync.test.cjs` („zwei Geräte“, „Erster Abruf“), vorher rot | e24c6bc |
 | B-02 | Sync | hoch | app.js (`pull`) | Das Laden der Cloud ersetzte ungesicherte lokale Änderungen ohne Sicherung. | behoben (Eintrag in „Sicherungen“, Art `vor-cloud`) | `sync.test.cjs` („ungesicherte Offline-Änderungen“), vorher rot | e24c6bc |
-| B-03 | Sync | mittel | app.js (`push`) | Ein Upload überschrieb eine neuere Cloud-Fassung eines anderen Geräts (Last-Write-Wins ohne Konfliktprüfung). | behoben als Sicherung (Art `cloud`); Last-Write-Wins bleibt, Entscheidung Henne (3a.8) | `sync.test.cjs` („gleichzeitiger Upload“), vorher rot | e24c6bc |
+| B-03 | Sync | mittel | app.js (`push`) | Ein Upload überschrieb eine neuere Cloud-Fassung eines anderen Geräts (Last-Write-Wins ohne Konfliktprüfung). | umgesetzt (Teil A1) | `sync.test.cjs` („gleichzeitiger Upload“), vorher rot | acd510c |
 | B-04 | Datenhaltung | hoch | app.js (Start, `fr_s`) | Lokaler Stand mit ungültigem JSON oder falscher Struktur: Die Rohdaten wurden beim ersten Speichern überschrieben. | behoben (Sicherung unter `fr_s_defekt`) | `speicher.test.cjs`, vorher rot | e9f3c3f |
 | B-05 | Berechnung | mittel | app.js (`heldMore1Y`, `hf`, `doTr`, `tax`) | Haltefrist: Am Jahrestag steuerfrei gezeigt und gerechnet; im Schaltjahr falsch (365,25-Tage-Jahr); „bis“ nannte das früheste Ende. | behoben (SÄ-9) | `krypto.test.cjs` (4 Fälle), vorher rot | 785af24 |
 | B-06 | Anzeige | mittel | app.js (`V.home`, `V.year`); features.js (`V.review`) | Sparquote „0 %“ ohne Einnahmen; Vormonatsvergleich gegen 0. | behoben (SÄ-1, SÄ-2) | `kennzahlen.test.cjs`, vorher rot | ecae92f |
@@ -622,8 +623,8 @@ Spalten: ID, Bereich, Schwere, Datei:Zeile (Stand `e4e1ff9`), Befund, Status, Be
 | B-21 | Fehlende Funktion | niedrig | app.js (`liveHTML`) | Anzeige „Kurs veraltet“ fehlt (Plan 4.5). | gemeldet | Code-Lesung | – |
 | B-22 | Text | niedrig | app.js (`liveFetch`) | Fehlertext für Kurse nennt die Entwicklungsumgebung („In der Claude-Vorschau …“). Der Nutzer sieht ihn. | gemeldet (Phase 4, Texte) | Code-Lesung | – |
 | B-23 | Datenschutz | niedrig | app.js (`sugg`) | Die Eingabe der Coin-Suche (Name, kein Betrag) wird an CoinGecko gesendet. | gemeldet (Restrisiko) | Code-Lesung | – |
-| B-24 | Sync | niedrig | app.js (`push`) | Upload-Fehler ohne automatischen Neuversuch (nur bei nächster Änderung, Netzrückkehr oder manuell). | gemeldet (Vorschlag) | `sync.test.cjs` („Offline“) | – |
-| B-25 | Sync, Datenschutz | mittel | app.js (`pull`, `logout`) | Kontowechsel verwirft ungesyncte Daten des vorherigen Kontos (README-Regel). | gemeldet, Entscheidung Henne | `sync.test.cjs` („Konto-Wechsel“) | – |
+| B-24 | Sync | niedrig | app.js (`push`) | Upload-Fehler ohne automatischen Neuversuch (nur bei nächster Änderung, Netzrückkehr oder manuell). | umgesetzt (Teil A1) | `sync.test.cjs` („Offline“) | 80f4deb |
+| B-25 | Sync, Datenschutz | mittel | app.js (`pull`, `logout`) | Kontowechsel verwirft ungesyncte Daten des vorherigen Kontos (README-Regel). | umgesetzt (Teil A1) | `sync.test.cjs` („Konto-Wechsel“) | e61b739 |
 | B-26 | Text | niedrig | extras.js (Sicherungen, `wrap('sec')`) | Die Sicherungen-Liste enthält jetzt auch Cloud-Einträge. Der Hinweis „Täglich wird automatisch …“ passt nicht mehr ganz. | gemeldet (Phase 4) | Code-Lesung | – |
 | B-27 | Testlücke | niedrig | features.js (`prPlanUi`), extras.js (`qSave`, Feed-Filter, Alarme, Notizen) | Nicht per Test geprüft: gespeicherte Prognose-Pläne, Schnellerfassung, Feed-Filter, Meilenstein- und Monatsnotizen. Der Harness führt keine Ereignis-Handler aus. | gemeldet | 3a.7 | – |
 | B-28 | Testlücke | niedrig | app.js (`blurHtml`, `blurNums`) | Blur wurde im Browser nicht geprüft (im Harness nicht ausgeführt). | gemeldet (Phase 4) | 3a.7 | – |
@@ -646,9 +647,9 @@ Nach Nutzen und Aufwand sortiert. Entscheidung bei Henne.
 11. **Ausgaben-Basis vereinheitlichen** (B-16): eine Basis für Fuck-Off-Zahl und Fuck-Off-Rechner, sichtbar in der Anzeige. Aufwand klein, Zahlen ändern sich bei leerem Ausgaben-Feld. Entscheidung Henne.
 12. **Schulden mit Zins und Restlaufzeit** (B-19): Datenmodell-Erweiterung, daher nur Vorschlag. Aufwand groß.
 13. **Steuer-Annahmen ergänzen oder ausweisen** (B-17): Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart. Aufwand mittel, rechtlicher Abgleich nötig.
-14. **Neuversuch bei Upload-Fehlern** (B-24): kurzer Wiederholungs-Timer mit Obergrenze. Aufwand klein, Verhalten sichtbar im Konto-Tab.
-15. **Konflikt-Dialog statt Last-Write-Wins** (B-03): Aufwand mittel, Verhalten sichtbar. Entscheidung Henne.
-16. **Kontowechsel mit Sicherung** (B-25): nur wenn Henne das will (Datenschutz gegen Datenverlust abwägen).
+14. **Neuversuch bei Upload-Fehlern** (B-24): kurzer Wiederholungs-Timer mit Obergrenze. Aufwand klein, Verhalten sichtbar im Konto-Tab. **Umgesetzt (Teil A1).**
+15. **Konflikt-Dialog statt Last-Write-Wins** (B-03): Aufwand mittel, Verhalten sichtbar. Entscheidung Henne. **Umgesetzt (Teil A1).**
+16. **Kontowechsel mit Sicherung** (B-25): nur wenn Henne das will (Datenschutz gegen Datenverlust abwägen). **Umgesetzt (Teil A1).**
 17. **Live-Kurs-Fehlertext und „Kurs veraltet“** (B-21, B-22): Texte und Anzeige, Phase 4.
 
 ## 6. Restrisiken
@@ -1132,7 +1133,7 @@ Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. 
 | S-34 | Header | offen | teilweise: Cache-Regeln in vercel.json, live nicht geprüft | 15bcb74 |
 | B-01 | Sync | hoch | behoben | e24c6bc |
 | B-02 | Sync | hoch | behoben (Eintrag in „Sicherungen“, Art `vor-cloud`) | e24c6bc |
-| B-03 | Sync | mittel | behoben als Sicherung (Art `cloud`); Last-Write-Wins bleibt, Entscheidung Henne (3a.8) | e24c6bc |
+| B-03 | Sync | mittel | umgesetzt (Teil A1) | acd510c |
 | B-04 | Datenhaltung | hoch | behoben (Sicherung unter `fr_s_defekt`) | e9f3c3f |
 | B-05 | Berechnung | mittel | behoben (SÄ-9) | 785af24 |
 | B-06 | Anzeige | mittel | behoben (SÄ-1, SÄ-2) | ecae92f |
@@ -1153,8 +1154,8 @@ Quelle: Abschnitt 4 (S-, B-) und 10.2 (U-), dort mit Befund, Beleg und Details. 
 | B-21 | Fehlende Funktion | niedrig | gemeldet | – |
 | B-22 | Text | niedrig | gemeldet (Phase 4, Texte) | – |
 | B-23 | Datenschutz | niedrig | gemeldet (Restrisiko) | – |
-| B-24 | Sync | niedrig | gemeldet (Vorschlag) | – |
-| B-25 | Sync, Datenschutz | mittel | gemeldet, Entscheidung Henne | – |
+| B-24 | Sync | niedrig | umgesetzt (Teil A1) | 80f4deb |
+| B-25 | Sync, Datenschutz | mittel | umgesetzt (Teil A1) | e61b739 |
 | B-26 | Text | niedrig | gemeldet (Phase 4) | – |
 | B-27 | Testlücke | niedrig | gemeldet | – |
 | B-28 | Testlücke | niedrig | gemeldet (Phase 4) | – |
@@ -1240,10 +1241,10 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 |---|---|---|---|---|---|
 | 1 | Supabase live: `user_state`-RLS prüfen (Advisors und `finance_state`-Policies am 27.10.2026 erledigt, 3.8) | S-25, Abschnitt 8 | hoch | Claude | vor jedem Push |
 | 2 | Inline-Handler auf `addEventListener`, danach `'unsafe-inline'` aus der CSP streichen | 5.1, S-07 | hoch (XSS-Restrisiko) | groß (rund 100 `onclick`, 154 `style=`) | eigener Auftrag, je Ansicht |
-| 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | Entscheidung |
+| 3 | Last-Write-Wins durch Konflikt-Dialog ersetzen | B-03, 3a.8.2 | hoch (Datenverlust bei zwei Geräten) | mittel, sichtbar | umgesetzt (Teil A1) |
 | 4 | Backup-Import prüfen: Datumsformate, Zahltypen, Textbeträge ablehnen statt 0 | S-17, 5.3 | hoch (fremde Backups) | klein bis mittel, sichtbar | Entscheidung |
-| 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | Entscheidung (Datenschutz abwägen) |
-| 6 | Neuversuch bei Upload-Fehlern (Timer mit Obergrenze) | B-24, 5.14 | mittel | klein | empfohlen |
+| 5 | Kontowechsel: ungesyncte Daten des alten Kontos sichern | B-25, 3a.8.3, 5.16 | mittel bis hoch | klein | umgesetzt (Teil A1) |
+| 6 | Neuversuch bei Upload-Fehlern (Timer mit Obergrenze) | B-24, 5.14 | mittel | klein | umgesetzt (Teil A1) |
 | 7 | Schema-Härtung nach Live-Prüfung auf Testkonto anwenden (REVOKE-Zeile seit 27.10.2026 im Vorschlag) | S-24, 5.7, `vorschlaege/` | mittel | klein, Testkonto nötig | nach Punkt 1 |
 | 8 | Ausgaben-Basis vereinheitlichen (Fuck-Off-Zahl und -Rechner) | B-16, 3a.8.1, 5.11 | mittel (Zahlen ändern sich) | klein | Entscheidung |
 | 9 | Steuer-Annahmen ergänzen oder ausweisen (Verlustverrechnung, Vorabpauschale, Kirchensteuer, Teilfreistellung je Fondsart) | B-17, 3a.8.4, 5.13 | mittel | mittel, Rechtsabgleich | zuerst ausweisen |
@@ -1278,11 +1279,11 @@ Sortiert nach Nutzen, dann nach Aufwand. „Entscheidung“ heißt: nicht ohne F
 
 - **`'unsafe-inline'`** in `script-src` und `style-src`. Der XSS-Schutz hängt an `esc()`. Phase 5 hat keine ungeschützte Senke hinzugefügt (Diff geprüft, 12.6).
 - **PIN nur Sichtschutz.** Die Daten liegen unverschlüsselt in `localStorage`.
-- **Last-Write-Wins bei zwei Geräten.** Zeitstempel kommen vom Client (B-03).
+- **Zeitstempel vom Gerät.** Der Konflikt-Dialog (B-03, Teil A1) greift nur, wenn der Cloud-Stand neuer ist. Uhrabweichungen können einen Konflikt übersehen lassen.
 - **Backup-Import** prüft Strukturen und Limits, aber nicht Datumsfelder und Textbeträge (S-17).
 - **Service Worker:** geöffnete Tabs können kurz mit neuem SW und altem Stand arbeiten. Eine fehlende Datei bei der Installation bricht die Installation nicht ab (S-27).
 - **Supabase live:** `user_state`-RLS nicht geprüft; Advisors und `finance_state`-Policies am 27.10.2026 geprüft (3.8). **Cache-Header live** (S-34) nicht geprüft.
-- **Kontowechsel** verwirft ungesyncte Daten des alten Kontos (B-25).
+- **Kontowechsel** fragt bei ungesicherten Änderungen (B-25, Teil A1). Verwerfen bleibt als Wahl im Dialog.
 - **Ausschnitts-Tests:** Einige Tests lesen Funktionen per Zeichenkette aus dem Quelltext. Umbauten brechen sie, das ist gewollt, macht Änderungen aber aufwendiger.
 - **Messungen** in Node und Chrome auf dem Mac, nicht auf einem iPhone. Der Audit misst Boxen (P5-15).
 
@@ -1470,3 +1471,58 @@ Der Bericht-Commit selbst ist in der Liste nicht enthalten.
 - **GitHub-Action:** nur lokal simuliert, kein Push, kein Lauf auf GitHub.
 - **Abnahme nach Plan Abschnitt 8:** Die Gesamtabnahme durch Claude steht aus. Der Executer hat die Nachweise geliefert.
 - **Design-Hook:** meldete erneut `dark-glow` (U-34). Nicht geändert, Entscheidung Henne.
+
+## 14. Umsetzung der offenen Vorschläge
+
+Henne hat entschieden, alle offenen Vorschläge aus der Endkontrolle umzusetzen. Dieser Abschnitt führt die Umsetzung nach Teilen. Teil A1 umfasst B-03 (Konflikt-Dialog), B-24 (Upload-Neuversuch) und B-25 (Kontowechsel), also die Punkte 3, 5 und 6 aus 13.1. Keine Änderung am Datenmodell `S`, an `schema.sql` oder an den fachlichen Regeln. Kein Push, kein Deploy, kein Zugriff auf Live-Supabase, keine echten Daten, keine neue Abhängigkeit, kein Build-Schritt. `.github/workflows/` unangetastet.
+
+### 14.1 Teil A1: Synchronisierung und Kontowechsel
+
+Commits auf dem Branch `endkontrolle-2026-10-26-ohne-workflow` (älteste zuerst):
+
+| Commit | Befund | Inhalt |
+|---|---|---|
+| `acd510c` | B-03 | Konflikt-Dialog statt Last-Write-Wins; Fehlalarm bei frischen Geräten behoben (`features.js`) |
+| `e61b739` | B-25 | Kontowechsel fragt bei ungesicherten Änderungen des alten Kontos |
+| `80f4deb` | B-24 | Upload-Neuversuch mit Backoff, Ereignisse „online“ und Vordergrund |
+| dieser Commit | B-03, B-24, B-25 | README, CHANGELOG, Bericht |
+
+**Prüfprotokoll**
+
+| Prüfung | vorher (`a6372ab`) | nachher (`80f4deb`) |
+|---|---|---|
+| Syntax (`node --check` alle JS-Dateien und Tests) | OK | OK |
+| Gesamtcheck `bash tests/run-all.sh` | 157 grün | 185 grün |
+| Neue Testdateien | – | `tests/sync-konflikt.test.cjs` (8), `tests/sync-konto.test.cjs` (9), `tests/sync-neuversuch.test.cjs` (11) |
+| Angepasste Assertionen | – | `tests/sync.test.cjs`: 3 Tests zum B-03-Verhalten, 1 Assertion zum 413-Text |
+| Secret-Scan | keine Treffer | keine Treffer |
+
+**Umsetzungsentscheidungen (aus dem Code, nicht von Henne bestätigt)**
+
+- „Cloud neuer“ heißt: Cloud-Zeitstempel größer als `S.ts`, dem Stand der letzten bekannten Cloud-Fassung. Der Konflikt braucht zusätzlich `fr_dirty` und einen anderen Inhalt. Der Inhaltsvergleich ignoriert Schlüsselreihenfolge, `ts` und `uid`. `ui` und `th` zählen mit. Ein reiner Unterschied bei Panel-Zuständen oder Design kann deshalb einen Dialog auslösen. Das ist die vorsichtige Richtung, aber nicht getestet.
+- Lokal ohne ungesicherte Änderungen und Cloud neuer: Die App lädt die Cloud, statt hochzuladen. Vorher lud sie mit Sicherung „Cloud-Stand vor Überschreiben“ hoch. Das ist eine Verhaltensänderung im Randfall.
+- Ursache des Fehlalarms (Fund bei der Umsetzung): `autoRecurring()` in `features.js` schrieb nach der Anmeldung, bevor der Cloud-Stand geladen war (fehlendes `recDone`). Dadurch galt ein frisches Gerät als ungesichert. Jetzt schreibt die Funktion erst, wenn der Cloud-Stand für den Nutzer bekannt ist.
+- Neuversuch: fünf Versuche insgesamt (1 Erstversuch und 4 Wiederholungen nach 5 s, 15 s, 45 s, 2 min). Zeitgrenze 20 s pro Anfrage. Zählt auch für das Lesen der Cloud bei der Anmeldung. Ein Ereignis („online“, Vordergrund) startet die Serie neu und löst höchstens einen Versuch aus.
+- Neuversuch nur bei Netzfehler, Zeitüberschreitung, 408 und 5xx. Bei 401, 403, 413 und lokalen Fehlern (z. B. Sicherung nicht schreibbar) nicht.
+- Die Restzeit „Neuer Versuch in X s.“ wird beim Neuzeichnen der Konto-Ansicht berechnet, nicht live (Abkürzung).
+- Kontowechsel „Als Datei sichern und wechseln“ löst den vorhandenen Export aus (`dlBackup`, setzt `fr_exp`). Ob der Browser die Datei tatsächlich speichert, prüft die App nicht.
+- `sw.js` VERSION: `fr-2026-10-27ac` (A1 Konflikt), `ad` (Kontowechsel), `ae` (Neuversuch).
+- Trailer: Die Commits tragen `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`, nicht `Sonnet 5.5` wie im Auftrag. Das Modell dieses Laufs ist Haiku 5.5. Gleiche Abweichung wie in 12.7.
+
+**Sichtbare Änderungen (vorher / nachher)**
+
+- **SÄ-A1 Konflikt:** Vorher überschrieb ein Upload eine neuere Cloud-Fassung (letzter Upload gewinnt, Kopie in „Sicherungen“). Ein Laden der Cloud ersetzte ungesicherte lokale Änderungen (Kopie „vor Cloud-Abgleich“). Nachher: Banner „Synchronisierung pausiert“ über der Ansicht, Dialog „Cloud-Stand ist neuer“ mit „Cloud-Stand übernehmen“, „Diesen Stand behalten“ und „Später entscheiden“. Nichts wird überschrieben, nichts zusammengeführt.
+- **SÄ-A2 Kontowechsel:** Vorher wurden ungesicherte Änderungen des alten Kontos beim Anmelden eines anderen Kontos still verworfen. Nachher: Dialog „Anderes Konto angemeldet“ mit „Als Datei sichern und wechseln“, „Verwerfen und wechseln“ und „Abbrechen“ (meldet das neue Konto ab). Esc wirkt wie Abbrechen. Solange der Dialog offen ist, zeigt die App keine Daten des alten Kontos und lädt oder speichert nichts.
+- **SÄ-A3 Sitzungswechsel ohne Abmeldung:** Vorher konnte der Stand des alten Kontos bis zum nächsten Laden sichtbar bleiben. Nachher wird wie bei einer Anmeldung geladen; bis dahin steht „Konto wird geladen …“.
+- **SÄ-A4 Upload-Fehler:** Vorher „Nicht synchronisiert: …“ mit technischem Text, kein Neuversuch. Nachher verständliche Texte. Bei Netz, Zeitüberschreitung und 5xx: automatischer Neuversuch, im Konto „Neuer Versuch in X s.“. Nach fünf Versuchen: „Automatische Versuche beendet.“ Bei 401, 403 und 413: Ursache in Klartext, kein Neuversuch.
+- **SÄ-A5 Datenstand zu groß (413):** Vorher „payload too large“, nachher „Der Datenstand ist zu groß für die Cloud.“
+- **SÄ-A6 Wieder online / Vordergrund:** Vorher startete der Upload nur beim Ereignis „online“ (und nur mit Nutzer). Nachher startet die App bei „online“ und bei Rückkehr in den Vordergrund sofort einen Versuch, wenn Änderungen ausstehen.
+
+**Was nicht geprüft wurde**
+
+- Echte Supabase-Latenz, RLS mit zwei echten Konten und die Fehlerstruktur des echten Clients. Geprüft wurde nur gegen den Fake (`tests/harness/fake-supabase.cjs`), der HTTP-Status und Netzfehler nachbildet.
+- Safari und iOS (Home-Bildschirm-App, Tastatur, Hintergrund-Drosselung der Timer). Der Dialog wurde nicht in einem Browser geöffnet, nur über den DOM-Stub.
+- Tatsächliche Wirkung des Dateiexports im Browser.
+- Uhrabweichung zwischen Geräten (Restrisiko von B-03).
+- Häufigkeit von Dialogen durch reine UI-Unterschiede (Design, Panels), siehe Umsetzungsentscheidungen.
+- Die Prüfung von `user_state` (Altdaten) wird nicht automatisch wiederholt. Das ist unverändert und nicht Teil von B-24.
