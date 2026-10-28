@@ -27,17 +27,47 @@ if(Array.isArray(v)){if(v.length>20000)throw new Error('Zu viele Einträge im Ba
 if(v&&typeof v==='object'){const out={};const entries=Object.entries(v);if(entries.length>500)throw new Error('Zu viele Felder im Backup.');for(const [key,val] of entries){if(['__proto__','prototype','constructor'].includes(key))continue;const k=key.replace(/[<>&\u0000-\u001f\u007f]/g,'').slice(0,200);if(k)out[k]=sanitizeImportedValue(val,depth+1)}return out}
 throw new Error('Unzulässiger Datentyp im Backup.')
 }
-function normalizeImportedState(raw){
+/* Import-Prüfung (S-17). Nur der Dateiimport übergibt einen Bericht und prüft streng: ungültige Datensätze werden verworfen und gezählt, nichts still verschluckt. Lokaler Stand und Sicherungen laufen ohne Bericht wie bisher, damit beim Start nichts verloren geht. */
+const IMPORT_MAX_BETRAG=1e9,IMPORT_MODI=['man','nw','cash','etf','crypto'];
+const importZaehl=(map,g)=>{map[g]=(map[g]||0)+1};
+function istKalendertag(s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const[y,m,d]=s.split('-').map(Number),t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d}
+function istMonat(s){return typeof s==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(s)}
+/* Zahl aus dem Backup. Text nur, wenn das Format eindeutig ist: 12,50 · 1.234,50 · 12.50. „1.234“ bleibt mehrdeutig (null). */
+function betragAus(v){if(typeof v==='number')return Number.isFinite(v)?v:null;if(typeof v!=='string')return null;const t=v.replace(/[\s€]/g,'');if(/^-?\d+$|^-?\d+\.\d{1,2}$/.test(t))return Number(t);if(/^-?(\d{1,3}(\.\d{3})+|\d+),\d{1,2}$/.test(t))return Number(t.replace(/\./g,'').replace(',','.'));return null}
+/* Prüft einen Datensatz. Gibt den Grund für die Verwerfung zurück oder null. Korrekturen zählen nur, wenn der Datensatz übernommen wird. */
+function importPruefe(k,row,rep){
+const kors=[],kor=g=>kors.push(g),hat=(o,f)=>Object.prototype.hasOwnProperty.call(o,f);
+const betrag=(o,name,pflicht)=>{const v=o[name];if(v===undefined||v===null){if(pflicht)return 'Betrag fehlt';o[name]=0;return null}const n=betragAus(v);if(n===null)return 'Betrag keine gültige Zahl';if(Math.abs(n)>IMPORT_MAX_BETRAG)return 'Betrag außerhalb des Bereichs';if(typeof v==='string')kor('Textbetrag als Zahl übernommen');o[name]=n;return null};
+const kat=o=>{if(o.c===undefined)return null;if(![...IN,...OUT].includes(o.c)){kor('Kategorie unbekannt, als Sonstiges übernommen');o.c='Sonstiges'}return null};
+const art=o=>{if(o.k!==undefined&&!hat(KIND,o.k)){kor('Art unbekannt, als Sonstiges übernommen');o.k='sonst'}return null};
+const grund=(()=>{
+if(k==='tx'||k==='rec'){if(k==='tx'&&!istKalendertag(row.d))return 'Datum ungültig';kat(row);return betrag(row,'a',true)}
+if(k==='as'){art(row);for(const n of ['q','p','c']){const g=betrag(row,n,n!=='c');if(g)return g}
+if(row.l!==undefined){if(!Array.isArray(row.l))return 'Kaufliste ungültig';for(const x of row.l){if(!x||typeof x!=='object'||Array.isArray(x))return 'Kauf ungültig';if(x.d!==undefined&&x.d!==''&&!istKalendertag(x.d))return 'Kaufdatum ungültig';for(const n of ['q','p','f']){const g=betrag(x,n,n!=='f');if(g)return g}}}return null}
+if(k==='goals'){if(row.m!==undefined&&!IMPORT_MODI.includes(row.m)){kor('Stand-Berechnung unbekannt, als manuell übernommen');row.m='man'}const g=betrag(row,'t',true);return g||betrag(row,'c',false)}
+if(k==='debts')return betrag(row,'a',true);
+if(k==='hist'){if(!istMonat(row.m))return 'Monat ungültig';return betrag(row,'nw',true)}
+if(k==='sales'){if(!istKalendertag(row.d))return 'Datum ungültig';art(row);const g=betrag(row,'g',true);return g||betrag(row,'gc',false)||betrag(row,'gp',false)}
+if(k==='pi'){if(!istKalendertag(row.d))return 'Datum ungültig';return betrag(row,'a',true)}
+return null})();
+if(!grund)kors.forEach(g=>importZaehl(rep.korrigiert,g));
+return grund
+}
+function normalizeImportedState(raw,rep){
 if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Das Backup muss ein JSON-Objekt sein.');
+const streng=!!rep;
 const clean=sanitizeImportedValue(raw),keys=['tx','as','goals','rec','debts','hist','sales'],base={tx:[],as:[],goals:[],rec:[],debts:[],hist:[],sales:[],ui:{c:{},o:{}},th:'light',f:{wr:4,exp:'',r:6}};
 const textField=(row,k,def='')=>typeof row[k]==='string'?row[k]:def;
 const numberField=(row,k,def=0)=>Number.isFinite(row[k])?row[k]:def;
+/* S-18: Die Nutzerkennung kommt aus einer Datei nie in den Stand. Sie wird beim nächsten Sync neu gesetzt. */
+if(streng)delete clean.uid;
 for(const k of keys){
 if(clean[k]===undefined)clean[k]=[];
 if(!Array.isArray(clean[k]))throw new Error('Ungültige Datenstruktur: '+k+' muss eine Liste sein.');
 if(clean[k].length>20000)throw new Error('Zu viele Datensätze in '+k+'.');
-for(const row of clean[k]){
-if(!row||typeof row!=='object'||Array.isArray(row))throw new Error('Ungültiger Datensatz in '+k+'.');
+clean[k]=clean[k].filter(row=>{
+if(!row||typeof row!=='object'||Array.isArray(row)){if(streng){importZaehl(rep.verworfen,'kein Datensatz (Text oder Zahl)');return false}throw new Error('Ungültiger Datensatz in '+k+'.')}
+if(streng){const g=importPruefe(k,row,rep);if(g){importZaehl(rep.verworfen,g);return false}rep.uebernommen++}
 if(typeof row.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(row.id))row.id=uid();
 if(k==='tx'){row.d=textField(row,'d');row.c=textField(row,'c','Sonstiges');row.a=numberField(row,'a');row.n=textField(row,'n');row.r=typeof row.r==='string'?row.r:null}
 if(k==='as'){row.n=textField(row,'n');row.k=textField(row,'k','sonst');row.q=numberField(row,'q');row.p=numberField(row,'p');row.c=numberField(row,'c');if(row.l!==undefined){if(!Array.isArray(row.l))row.l=[];row.l=row.l.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)).map(x=>({d:textField(x,'d'),q:numberField(x,'q'),p:numberField(x,'p'),f:numberField(x,'f')}))}if(typeof row.cg==='string'&&!/^[a-z0-9-]{1,100}$/i.test(row.cg))row.cg=''}
@@ -46,9 +76,12 @@ if(k==='rec'){row.c=textField(row,'c','Sonstiges');row.a=numberField(row,'a');ro
 if(k==='debts'){row.n=textField(row,'n');row.a=numberField(row,'a')}
 if(k==='hist'){row.m=textField(row,'m');row.nw=numberField(row,'nw')}
 if(k==='sales'){row.n=textField(row,'n');row.d=textField(row,'d');row.k=textField(row,'k','sonst');row.g=numberField(row,'g');row.gc=numberField(row,'gc');row.gp=numberField(row,'gp')}
+return true});
 }
+if(clean.pi&&Array.isArray(clean.pi.items)){
+if(streng)clean.pi.items=clean.pi.items.filter(x=>{if(!x||typeof x!=='object'||Array.isArray(x)){importZaehl(rep.verworfen,'kein Datensatz (Text oder Zahl)');return false}const g=importPruefe('pi',x,rep);if(g){importZaehl(rep.verworfen,g);return false}rep.uebernommen++;return true});
+clean.pi.items.forEach(x=>{if(x&&typeof x==='object'&&(typeof x.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(x.id)))x.id=uid()});
 }
-if(clean.pi&&Array.isArray(clean.pi.items))clean.pi.items.forEach(x=>{if(x&&typeof x==='object'&&(typeof x.id!=='string'||!/^[A-Za-z0-9_-]{1,64}$/.test(x.id)))x.id=uid()});
 const out={...base,...clean};
 out.ui=clean.ui&&typeof clean.ui==='object'&&!Array.isArray(clean.ui)?{c:{},o:{},...clean.ui}:{c:{},o:{}};
 for(const k of ['c','o'])if(!out.ui[k]||typeof out.ui[k]!=='object'||Array.isArray(out.ui[k]))out.ui[k]={};
@@ -310,8 +343,10 @@ function addGoal(){const t=N('gt'),n=clean($('gn').value);if(!n||!(t>0))return;S
 function setF(){S.f={...S.f,wr:N('fw')||DEFAULT_WR_PCT,exp:$('fe').value,r:N('fr'),fireTarget:Math.max(0,N('ft'))};save();render()}
 function simYears(v,sr,r,F){const m=Math.pow(1+r/100,1/12)-1;for(let k=0;k<=960;k++){if(v>=F)return k/12;v=v*(1+m)+sr}return null}
 function importBackup(){
-try{const raw=$('bk').value;if(!raw.trim())throw new Error('Bitte zuerst eine Backup-Datei als JSON einfügen.');if(raw.length>2000000)throw new Error('Das Backup ist größer als 2 MB. Bitte prüfe die Datei.');if(!confirm('Das aktuelle Finanz-Radar wird durch den importierten Datenstand ersetzt. Vorher am besten exportieren. Fortfahren?'))return;const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object')delete parsed.uid;S=normalizeImportedState(parsed);save();render();alert('Import erfolgreich. Prüfe die Daten bitte kurz, bevor du weiterarbeitest.')}catch(e){alert('Import fehlgeschlagen: '+(e&&e.message?e.message:'Ungültige Daten.'))}
+try{const raw=$('bk').value;if(!raw.trim())throw new Error('Bitte zuerst eine Backup-Datei als JSON einfügen.');if(raw.length>2000000)throw new Error('Das Backup ist größer als 2 MB. Bitte prüfe die Datei.');if(!confirm('Das aktuelle Finanz-Radar wird durch den importierten Datenstand ersetzt. Vorher am besten exportieren. Fortfahren?'))return;const parsed=JSON.parse(raw),rep=importBericht();S=normalizeImportedState(parsed,rep);save();render();alert('Import erfolgreich. '+importText(rep)+' Prüfe die Daten bitte kurz, bevor du weiterarbeitest.')}catch(e){alert('Import fehlgeschlagen: '+(e&&e.message?e.message:'Ungültige Daten.'))}
 }
+function importBericht(){return {uebernommen:0,verworfen:{},korrigiert:{}}}
+function importText(r){const v=Object.entries(r.verworfen),k=Object.entries(r.korrigiert),nv=v.reduce((s,[,n])=>s+n,0),liste=x=>x.map(([g,n])=>n+' × '+g).join('; ');return r.uebernommen+' übernommen, '+nv+' verworfen'+(v.length?' ('+liste(v)+')':'')+'.'+(k.length?' Korrigiert: '+liste(k)+'.':'')}
 let fq='',fcat='';
 function feedList(){return mt().sort((a,b)=>b.d.localeCompare(a.d)).filter(x=>(!fcat||x.c===fcat)&&(!fq||(x.c+' '+(x.n||'')+' '+x.a+' '+x.d).toLowerCase().includes(fq)))}
 function feedBar(){const cs=[...new Set(mt().map(x=>x.c))].sort();return `<div class="row"><input aria-label="Buchungen durchsuchen" id="fq" type="search" placeholder="Suchen: Notiz, Betrag, Kategorie" value="${esc(fq)}" oninput="feedUpd()"><select aria-label="Kategorie filtern" id="fcat" onchange="feedUpd()"><option value="">Alle</option>${cs.map(c=>`<option${c===fcat?' selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="mut" id="fcnt" style="margin-top:6px">${feedList().length} Buchungen</div>`}
