@@ -35,7 +35,7 @@ svg{width:100%;height:auto;display:block}
 @keyframes pg{0%{box-shadow:0 0 0 0 rgba(40,200,100,.65)}100%{box-shadow:0 0 0 9px rgba(40,200,100,0)}}
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes bl{50%{opacity:.3}}
-.badge{animation:pu 2.2s infinite}
+.badge{animation:pu 2.2s 3}
 .live{width:8px;height:8px;border-radius:50%;background:#28c840}.live.pulse{animation:pg 1.6s infinite}
 .in .panel{animation:up .4s both}.in .panel:nth-child(2){animation-delay:.06s}.in .panel:nth-child(3){animation-delay:.12s}.in .panel:nth-child(4){animation-delay:.18s}
 .bar{overflow:hidden}.bar i{position:relative;transition:width .9s cubic-bezier(.2,.8,.2,1)}
