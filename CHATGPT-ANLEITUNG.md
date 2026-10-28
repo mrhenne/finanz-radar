@@ -21,7 +21,8 @@ Die Endkontrolle (Sicherheit, Berechnungen, UI, Performance, Prozesse) ist abges
 
 ## Regeln für den Code
 
-- **Nutzertext immer mit `esc()` ausgeben.** `esc()` escaped `& < > " ' \``. Attribute und Argumente in `onclick` nie aus Rohtext bauen.
+- **Nutzertext immer mit `esc()` ausgeben.** `esc()` escaped `& < > " ' \``. Argumente in Aktionen nie aus Rohtext bauen: `act()` legt sie als JSON im Attribut ab und escaped sie.
+- **Keine Inline-Handler (`onclick` etc.) mehr; Aktionen über `data-click`/`data-args` und Registrierung.** Vorlage: `${act('del', ['tx', x.id])}`, Eingabe: `${act('setSchuldName', [d.id, '$value'], 'change')}`. In `app.js` den Namen in `ACTS` aufnehmen und die Funktion als `function`-Deklaration schreiben (nicht `const`), z. B. `function setSchuldName(id, v) { … }`. `$value`, `$checked`, `$el`, `$event` sind Platzhalter. Die CSP erlaubt keine Inline-Handler (`script-src-attr 'none'`).
 - **Kalendertage nie mit `toISOString()` bilden** (UTC). Stattdessen `ymdOf()`, `ymOf()` oder `ldate()` aus `app.js`.
 - **`VERSION` in `sw.js` erhöhen**, sobald eine ausgelieferte Datei geändert wird (`index.html`, `styles.css`, `config.js`, `app.js`, `features.js`, `extras.js`, `boost.js`, `manifest.webmanifest`, `sw.js`). Die CI prüft das gegen die Basis.
 - **Fachliche Werte** (Steuern, Freibeträge, Limits, Fristen) als benannte Konstanten führen. Werte nur mit zugehörigem Test ändern.

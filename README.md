@@ -19,7 +19,7 @@ Persönliche Finanz-App für Cashflow, Vermögen, Krypto, FIRE, Prognosen und St
 | `sw.js` | Service Worker: App offline startbar, `VERSION` steuert den Cache |
 | `manifest.webmanifest`, `icon-*.png`, `splash/` | Installierbare App (PWA), Startbilder für iPhone |
 | `schema.sql` | Tabelle, explizite Data-API-Rechte und Row Level Security |
-| `vercel.json` | Sicherheitsheader (CSP, HSTS, COOP, CORP) und Cache-Regeln |
+| `vercel.json` | Sicherheitsheader (CSP ohne `'unsafe-inline'` bei Skripten, `script-src-attr 'none'`, HSTS, COOP, CORP) und Cache-Regeln |
 | `tests/` | Automatische Prüfungen (Node, ohne npm), Harness, Fixtures, Messung, UI-Matrix |
 | `CHANGELOG.md` | Änderungen der Endkontrolle |
 
@@ -67,7 +67,7 @@ In diesem Supabase-Projekt existiert bereits ein älterer Datensatz in `public.u
 - Eine öffentliche Vercel-Adresse ist erreichbar. Persönliche Finanzdaten sollten erst synchronisiert werden, nachdem Login und Datenisolation erfolgreich getestet wurden.
 - Die **PIN-Sperre** ist ein Sichtschutz auf dem Gerät. Die PIN wird mit PBKDF2-SHA-256 (310.000 Iterationen, Zufallssalt) gespeichert; alte PIN-Einträge bleiben gültig und werden beim nächsten Entsperren umgestellt. Nach Fehlversuchen steigt die Sperrzeit (30 s, 60 s, 120 s … höchstens 15 min).
 - Die Daten liegen unverschlüsselt im `localStorage` des Geräts. Wer die Entwicklerwerkzeuge des Geräts öffnet, kommt an die Daten. Die Sperre ersetzt keine Verschlüsselung.
-- Die CSP erlaubt `'unsafe-inline'`, weil die Oberfläche noch Inline-Handler (`onclick`) nutzt. Der XSS-Schutz hängt deshalb an `esc()` (siehe Regeln unten).
+- Die CSP erlaubt nur Skripte aus der App und dem Supabase-CDN (`script-src 'self' https://cdn.jsdelivr.net`) und keine Inline-Ereignisattribute (`script-src-attr 'none'`). Die Oberfläche arbeitet ohne Inline-Handler. `style-src` erlaubt weiterhin `'unsafe-inline'`, weil es rund 150 `style=`-Attribute gibt (Restrisiko, siehe Bericht 14.4). Der XSS-Schutz hängt an `esc()` und an `act()` (siehe Regeln unten).
 
 ## Lokale Schlüssel (nur auf dem Gerät, nicht in der Cloud)
 
@@ -100,10 +100,23 @@ Weitere Werkzeuge:
 
 - `node tests/perf/measure.cjs`: Laufzeiten und DOM-Zähler mit der Extrem-Fixture (5.000 Buchungen, erfundene Werte).
 - `node tests/ui/shoot.cjs`: Screenshots und DOM-Audit in Chrome (siehe `tests/ui/README.md`).
+- `node tests/ui/smoke.cjs`: Browser-Smoketest über CDP mit der CSP aus `vercel.json` (18 Schritte, Konsole und CSP-Verletzungen werden je Schritt geprüft; siehe `tests/ui/README.md`).
 
 ## Regeln für Änderungen
 
-- **Nutzertext immer mit `esc()` ausgeben** (escaped `& < > " ' \``). Attribute und Argumente in `onclick` nie aus Rohtext bauen.
+- **Nutzertext immer mit `esc()` ausgeben** (escaped `& < > " ' \``). Argumente in Aktionen nie aus Rohtext bauen: `act()` legt sie als JSON im Attribut ab und escaped sie.
+- **Keine Inline-Handler (`onclick` etc.) mehr; Aktionen über `data-click`/`data-args` und Registrierung.** Ein Element nennt die Funktion mit `act(name, [args], ereignis)`, die Funktion steht in `ACTS` (app.js) und ist eine `function`-Deklaration (nicht `const`), damit der Dispatcher sie am Fenster findet. Beispiel:
+
+  ```js
+  // Vorlage (Ansicht): Klick mit Nutzer-ID, Eingabe mit Elementwert
+  `<button class="btn x" ${act('del', ['tx', x.id])}>×</button>`
+  `<input aria-label="Name" ${act('setSchuldName', [d.id, '$value'], 'change')}>`
+  // app.js: Name in ACTS aufnehmen, Funktion als Deklaration
+  const ACTS = new Set([..., 'setSchuldName']);
+  function setSchuldName(id, v) { const d = S.debts.find(x => x.id === id); if (d) { d.n = clean(v); save(); render(); } }
+  ```
+
+  Platzhalter: `'$value'` (Wert), `'$checked'` (Haken), `'$el'` (Element), `'$event'` (Ereignis). Mehrere Anweisungen gehören in eine benannte Funktion. `tests/aktionen.test.cjs` und `tests/handler-statisch.test.cjs` prüfen die Registrierung und das Fehlen von `on*`-Attributen.
 - **Keine `toISOString()` für Kalendertage.** Das liefert UTC und verschiebt Buchungen am Monatsersten in den Vormonat. Stattdessen `ymdOf()`, `ymOf()` oder `ldate()` aus `app.js` verwenden.
 - **Jede Änderung an einer ausgelieferten Datei** (`index.html`, `styles.css`, `config.js`, `app.js`, `features.js`, `extras.js`, `boost.js`, `manifest.webmanifest`, `sw.js`) erhöht `VERSION` in `sw.js`. Die CI prüft das.
 - **Fachliche Werte** (Steuersätze, Freibeträge, Limits, Fristen) stehen als benannte Konstanten möglichst am Anfang der Datei. Änderungen nur zusammen mit dem zugehörigen Test.
@@ -119,6 +132,7 @@ Weitere Werkzeuge:
 - **Historie:** Je Monat erscheint ein Eintrag, Verlauf und Rückblick zeigen dieselbe Auswahl.
 - **Synchronisierung:** Ungesicherte lokale Änderungen werden vor dem Laden der Cloud gesichert, nicht still verworfen. Die Sicherungen-Liste enthält dafür Einträge „vor Cloud-Abgleich“ und „Cloud-Stand vor Überschreiben“.
 - **Konflikt (B-03):** Vorher überschrieb der letzte Upload eine neuere Cloud-Fassung. Nachher pausiert die Synchronisierung und fragt nach einer Entscheidung.
+- **Teil B (Inline-Handler):** keine sichtbaren Änderungen. Die Oberfläche ist vor und nach dem Umbau bytegleich gerendert (Screenshots von 6 Ansichten, Schnellerfassung, CSV-Import, PIN und Login, je Breite und Design).
 - **Kontowechsel (B-25):** Vorher wurden ungesicherte Änderungen des alten Kontos still verworfen. Nachher fragt die App vorher.
 - **Upload-Fehler (B-24):** Vorher kein Neuversuch. Nachher automatische Versuche mit Restzeit im Konto-Status; bei 401, 403 und 413 keine Wiederholung, sondern eine Meldung mit Ursache.
 - **Kaputter lokaler Stand:** Die Rohdaten werden als `fr_s_defekt` gesichert, bevor die App startet.

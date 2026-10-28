@@ -57,9 +57,23 @@ node --test tests/*.test.cjs
 | `klein` | `tests/fixtures/small.json` | 3 Monate, erfundene Werte |
 | `extrem` | `tests/fixtures/extreme.cjs` | 5.000 Buchungen, 12 Jahre, 20 Krypto-Positionen |
 
+## Browser-Smoketest (Teil B)
+
+`tests/ui/smoke.cjs` startet Chrome headless über CDP gegen einen lokalen Server. Der Server liefert das Repo mit den Headern aus `vercel.json` aus (also mit der CSP). `config.js` wird im Speicher durch einen leeren `FR_CONFIG` ersetzt, die Daten sind die Fixture „klein“.
+
+```sh
+node tests/ui/smoke.cjs
+```
+
+Der Lauf umfasst 18 Schritte: Start, alle sechs Tabs, Panel-Köpfe, Design, Zahlen ausblenden, Monatsnavigation, Buchung anlegen und löschen, Backup-Export und Import-Dialog, PIN-Sperre, Prognose-Chips, Schuld anlegen und löschen, Schnellerfassung mit Esc. Je Schritt werden Ausnahmen, Konsolenfehler und CSP-Verletzungen (Ereignis `securitypolicyviolation`) gemeldet. Netzmeldungen stehen getrennt. Kursabrufe von CoinGecko beantwortet der Lauf selbst mit leeren, gültigen Antworten, damit das Ergebnis nicht vom Netz und von Ratenbegrenzungen abhängt. Die CSP wird vor der Anfrage geprüft.
+
+Exit 0 nur, wenn alle Schritte bestehen und keine Konsole-, Ausnahme- oder CSP-Meldung auftritt. Chrome muss unter `/Applications/Google Chrome.app` liegen (Pfad per `--chrome`).
+
+Die Screenshot-Matrix `shoot.cjs` nutzt die Handler-Attribute `data-click` im DOM-Audit (Ziele unter 44 px).
+
 ## Grenzen
 
 - Nur Chrome headless, kein Safari. Die Bilder zeigen Chrome-Rendering auf dem Mac, nicht den iPhone-Safari-Stand.
-- Keine Bedienung (Klicks, Eingaben). Kernabläufe bleiben manuell zu prüfen.
+- Keine Bedienung außer dem Smoketest (Klicks, Eingaben nur für die 18 Schritte). Weitere Abläufe bleiben manuell zu prüfen.
 - Der Blur-Modus (◉) wird nicht gesondert fotografiert.
 - Die Breiten 375 bis 430 px sind eine Chrome-Geräteemulation mit Touch, kein echtes Gerät.
