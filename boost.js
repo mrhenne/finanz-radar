@@ -312,7 +312,7 @@
     const off = navigator.onLine === false; b.classList.toggle('on', off); document.body.classList.toggle('offl', off);
   }
   W.addEventListener('offline', offBar);
-  W.addEventListener('online', () => { offBar(); toast('Wieder online'); try { if (typeof sb !== 'undefined' && sb && user) push(); } catch(e){/* push() meldet Fehler selbst im Sync-Status; hier nur Schutz vor Ausnahmen beim Aufruf. */} });
+  W.addEventListener('online', () => { offBar(); toast('Wieder online'); /* Upload-Neuversuch: syncNun in app.js */ });
   function sab() { if ($('sab')) return; const s = document.createElement('div'); s.id = 'sab'; s.className = 'sab'; document.body.appendChild(s); }
 
   const _more = V.more;

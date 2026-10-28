@@ -73,7 +73,7 @@ test('Serverfehler 413 (Daten zu groß): sichtbare Meldung, lokale Daten bleiben
   await A.settle();
   assert.equal(A.h.S().tx.length, 1);
   assert.equal(A.h.sync().syncOk, false);
-  assert.match(A.h.sync().syncMsg, /Nicht synchronisiert: payload too large/);
+  assert.match(A.h.sync().syncMsg, /Nicht synchronisiert: Der Datenstand ist zu groß/);
 });
 
 test('Konto-Wechsel auf demselben Gerät: Daten von Konto A sind für Konto B nicht sichtbar', async () => {

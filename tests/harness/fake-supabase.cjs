@@ -14,8 +14,20 @@ function makeServer(opts = {}) {
     selectError: null,  // {message}: Lesefehler
     maxBytes: opts.maxBytes || MAX_BYTES,
     upserts: 0,
+    requests: 0,        // jede Leseanfrage und jeder Upload zählt
+    failures: [],       // Warteschlange: {op:'select'|'upsert', status} (status 0 = Netzfehler)
+    hang: false,        // true: Upload antwortet nie (Zeitüberschreitung)
     addUser(email, pw) { const id = 'u_' + (Object.keys(this.users).length + 1); this.users[email] = { id, pw }; return id; },
   };
+}
+
+/* Nächster Fehler aus der Warteschlange für diese Operation. Status 0: Netzfehler (wirft wie fetch). */
+function takeFailure(s, op) {
+  const i = s.failures.findIndex(f => f.op === op);
+  if (i < 0) return null;
+  const [f] = s.failures.splice(i, 1);
+  if (f.status === 0) throw new TypeError('Failed to fetch');
+  return { data: null, error: { message: 'HTTP ' + f.status, code: String(f.status) }, status: f.status };
 }
 
 class Builder {
@@ -24,22 +36,29 @@ class Builder {
   eq(col, val) { this.filters[col] = val; return this; }
   async maybeSingle() {
     const s = this.server;
+    s.requests++;
     if (s.offline) throw new TypeError('Failed to fetch');
-    if (s.selectError) return { data: null, error: s.selectError };
+    const f = takeFailure(s, 'select');
+    if (f) return f;
+    if (s.selectError) return { data: null, error: s.selectError, status: 500 };
     const uid = this.filters.user_id;
     const row = s[this.table][uid];
-    if (!row) return { data: null, error: null };
-    return { data: this.table === 'user_state' ? { app_state: row.app_state, updated_at: row.updated_at } : { data: JSON.parse(JSON.stringify(row.data)), updated_at: row.updated_at }, error: null };
+    if (!row) return { data: null, error: null, status: 200 };
+    return { data: this.table === 'user_state' ? { app_state: row.app_state, updated_at: row.updated_at } : { data: JSON.parse(JSON.stringify(row.data)), updated_at: row.updated_at }, error: null, status: 200 };
   }
   async upsert(row) {
     const s = this.server;
+    s.requests++;
     if (s.offline) throw new TypeError('Failed to fetch');
-    if (s.upsertError) return { error: s.upsertError };
+    if (s.hang) return new Promise(() => {});
+    const f = takeFailure(s, 'upsert');
+    if (f) return f;
+    if (s.upsertError) return { error: s.upsertError, status: 500 };
     const size = JSON.stringify(row.data || {}).length;
-    if (size > s.maxBytes) return { error: { message: 'payload too large', code: '413' } };
+    if (size > s.maxBytes) return { error: { message: 'payload too large', code: '413' }, status: 413 };
     s.upserts++;
     s[this.table][row.user_id] = { data: JSON.parse(JSON.stringify(row.data)), updated_at: row.updated_at };
-    return { error: null };
+    return { error: null, status: 201 };
   }
 }
 

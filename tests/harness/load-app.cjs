@@ -144,6 +144,7 @@ function loadApp(opts = {}) {
   const doc = makeDocument();
   registerStaticDom(doc);
   const timers = [];
+  const winL = {};
   let timerId = 0;
   const calls = [], alerts = [], confirms = [], logs = { error: [], warn: [], log: [] };
   const storage = new Storage(Object.assign({}, opts.storage || {}, opts.fixture ? { fr_s: JSON.stringify(opts.fixture) } : {}));
@@ -168,7 +169,7 @@ function loadApp(opts = {}) {
       if (opts.fetch) return opts.fetch(String(url), init, calls.length);
       throw new TypeError('fetch failed (offline)');
     },
-    addEventListener() {}, removeEventListener() {},
+    addEventListener(t, fn) { (winL[t] = winL[t] || []).push(fn); }, removeEventListener() {},
   };
   sandbox.window = sandbox;
   sandbox.self = sandbox;
@@ -196,6 +197,10 @@ function loadApp(opts = {}) {
     /** Führt alle ausstehenden Timer aus (debounce, Wiederholungen). */
     runTimers() { const list = timers.splice(0); list.forEach(t => t.fn(...t.args)); return list.length; },
     pendingTimers: () => timers.length,
+    /** Verzögerungen (ms) der ausstehenden Timer, in Reihenfolge. */
+    timerMs: () => Array.from(timers.map(t => t.ms)),
+    /** Löst ein Ereignis auf dem Fenster und dem Dokument aus (online, visibilitychange). */
+    fire(type) { (winL[type] || []).forEach(fn => fn({})); (doc.listeners[type] || []).forEach(fn => fn({})); },
     /** Lässt Promises und Timer so lange laufen, bis nichts mehr ansteht. */
     async settle(rounds = 20) {
       for (let i = 0; i < rounds; i++) {
