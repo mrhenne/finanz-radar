@@ -232,6 +232,22 @@ function applyRec(){S.rec.forEach(r=>{if(!S.tx.some(x=>x.r===r.id&&x.d.startsWit
 function copyMo(){const[y,m]=mo.split('-').map(Number),pm=new Date(y,m-2,1),k=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');S.tx.filter(x=>x.d.startsWith(k)).forEach(x=>{if(!S.tx.some(z=>z.d.startsWith(mo)&&z.c===x.c&&z.a===x.a&&z.n===x.n))S.tx.push({...x,id:uid(),d:mo+'-'+clampDay(mo,x.d.slice(8))})});save();render()}
 function addDebt(){const a=N('da'),n=clean($('dn').value);if(!n||!(a>0))return;S.debts.push({id:uid(),n,a});save();render()}
 function setP(id,v){const a=S.as.find(x=>x.id===id);if(a){a.p=parseFloat(String(v).replace(',','.'))||0;save();render()}}
+/* Schulden mit Zins und Tilgung (B-19). Optional je Schuld: r = Zinssatz % p. a. (0 bis 100), rate = monatliche Rate € (≥ 0).
+   Monatlicher Zins i = r/12/100. Die erste Rate fällt im Folgemonat an, das Ende ist der Monat heute + n. Obergrenze 100 Jahre. */
+const DEBT_MAX_MONATE=1200;
+function schuldPlan(B,r,rate,heute){
+if(!(B>0))return{art:'getilgt'};
+if(!(rate>0))return{art:'keine-rate'};
+const i=r/1200,zins=i*B;
+if(rate<=zins)return{art:'zins',zins};
+const n=i===0?Math.ceil(B/rate):Math.ceil(-Math.log(1-zins/rate)/Math.log(1+i));
+const rest=k=>{const q=Math.pow(1+i,k);return Math.max(0,i===0?B-rate*k:B*q-rate*(q-1)/i)};
+const p={art:'plan',zins,n,rest12:rest(12),lang:n>DEBT_MAX_MONATE};
+if(p.lang)return p;
+const h=heute||new Date();
+p.ende=new Date(h.getFullYear(),h.getMonth()+n,1);
+if(i===0)p.gesamt=0;else{const q=Math.pow(1+i,n-1),bl=B*q-rate*(q-1)/i;p.gesamt=(n-1)*rate+bl*(1+i)-B}
+return p}
 const debtsHTML=()=>P('[Schulden] '+eur(dt()),S.debts.map(d=>`<div class="li" data-k="debts" data-id="${d.id}"><span><span class="hd">⠿</span>${esc(d.n)}</span><span class="neg">${eur(d.a)} <button class="btn x" aria-label="Bearbeiten" onclick="ed={k:'debts',id:'${d.id}'};render();scrollTo(0,0)">✎</button> <button class="btn x" aria-label="Löschen" onclick="del('debts','${d.id}')">×</button></span></div>`).join('')+`<div class="row" style="margin-top:8px"><input aria-label="Bezeichnung der Schuld" id="dn" placeholder="Bezeichnung"><input aria-label="Betrag in Euro" id="da" type="number" inputmode="decimal" placeholder="Betrag €"></div><button class="btn o" onclick="addDebt()">Schuld hinzufügen</button>`);
 const kzHTML=()=>{const F=fireF(),n=nn();return P('[Kennzahlen]',[['Assets',eur(nw())],['Schulden',eur(dt())],['Net Worth',eur(n)],['Liquidität',eur(byK('cash'))],['Realisierte G/V',eur(S.real||0)],['FIRE Fortschritt',pct(F?n/F*100:0)]].filter(r=>!['Schulden','Liquidität','Realisierte G/V'].includes(r[0])||r[1]!=='0 €').map(([a,b])=>`<div class="li"><span class="mut">${a}</span><b>${b}</b></div>`).join(''))};
 function sankey(l){const cs={},os={};let inv=0;l.forEach(x=>{if(IN.includes(x.c))cs[x.c]=(cs[x.c]||0)+x.a;else if(x.c==='Sparen/Invest')inv+=x.a;else os[x.c]=(os[x.c]||0)+x.a});
