@@ -40,12 +40,14 @@ const kors=[],kor=g=>kors.push(g),hat=(o,f)=>Object.prototype.hasOwnProperty.cal
 const betrag=(o,name,pflicht)=>{const v=o[name];if(v===undefined||v===null){if(pflicht)return 'Betrag fehlt';o[name]=0;return null}const n=betragAus(v);if(n===null)return 'Betrag keine gültige Zahl';if(Math.abs(n)>IMPORT_MAX_BETRAG)return 'Betrag außerhalb des Bereichs';if(typeof v==='string')kor('Textbetrag als Zahl übernommen');o[name]=n;return null};
 const kat=o=>{if(o.c===undefined)return null;if(![...IN,...OUT].includes(o.c)){kor('Kategorie unbekannt, als Sonstiges übernommen');o.c='Sonstiges'}return null};
 const art=o=>{if(o.k!==undefined&&!hat(KIND,o.k)){kor('Art unbekannt, als Sonstiges übernommen');o.k='sonst'}return null};
+/* Optionale Zahl (B-19: Zins 0 bis 100, Rate ab 0). Ungültig: Feld entfernt, Datensatz bleibt; die Meldung zählt als korrigiert. */
+const optZahl=(o,name,max,msg)=>{const v=o[name];if(v===undefined)return;const n=typeof v==='string'?betragAus(v):v;if(typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=max){if(typeof v==='string')kor('Textbetrag als Zahl übernommen');o[name]=n}else{delete o[name];kor(msg)}};
 const grund=(()=>{
 if(k==='tx'||k==='rec'){if(k==='tx'&&!istKalendertag(row.d))return 'Datum ungültig';kat(row);return betrag(row,'a',true)}
 if(k==='as'){art(row);for(const n of ['q','p','c']){const g=betrag(row,n,n!=='c');if(g)return g}
 if(row.l!==undefined){if(!Array.isArray(row.l))return 'Kaufliste ungültig';for(const x of row.l){if(!x||typeof x!=='object'||Array.isArray(x))return 'Kauf ungültig';if(x.d!==undefined&&x.d!==''&&!istKalendertag(x.d))return 'Kaufdatum ungültig';for(const n of ['q','p','f']){const g=betrag(x,n,n!=='f');if(g)return g}}}return null}
 if(k==='goals'){if(row.m!==undefined&&!IMPORT_MODI.includes(row.m)){kor('Stand-Berechnung unbekannt, als manuell übernommen');row.m='man'}const g=betrag(row,'t',true);return g||betrag(row,'c',false)}
-if(k==='debts')return betrag(row,'a',true);
+if(k==='debts'){const g=betrag(row,'a',true);if(g)return g;optZahl(row,'r',100,'Zins ungültig, Feld entfernt');optZahl(row,'rate',IMPORT_MAX_BETRAG,'Rate ungültig, Feld entfernt');return null}
 if(k==='hist'){if(!istMonat(row.m))return 'Monat ungültig';return betrag(row,'nw',true)}
 if(k==='sales'){if(!istKalendertag(row.d))return 'Datum ungültig';art(row);const g=betrag(row,'g',true);return g||betrag(row,'gc',false)||betrag(row,'gp',false)}
 if(k==='pi'){if(!istKalendertag(row.d))return 'Datum ungültig';return betrag(row,'a',true)}
@@ -73,7 +75,7 @@ if(k==='tx'){row.d=textField(row,'d');row.c=textField(row,'c','Sonstiges');row.a
 if(k==='as'){row.n=textField(row,'n');row.k=textField(row,'k','sonst');row.q=numberField(row,'q');row.p=numberField(row,'p');row.c=numberField(row,'c');if(row.l!==undefined){if(!Array.isArray(row.l))row.l=[];row.l=row.l.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)).map(x=>({d:textField(x,'d'),q:numberField(x,'q'),p:numberField(x,'p'),f:numberField(x,'f')}))}if(typeof row.cg==='string'&&!/^[a-z0-9-]{1,100}$/i.test(row.cg))row.cg=''}
 if(k==='goals'){row.n=textField(row,'n');row.t=numberField(row,'t');row.y=row.y==null?'':textField(row,'y',String(row.y));row.m=textField(row,'m','man');row.c=numberField(row,'c')}
 if(k==='rec'){row.c=textField(row,'c','Sonstiges');row.a=numberField(row,'a');row.n=textField(row,'n');row.e=!!row.e}
-if(k==='debts'){row.n=textField(row,'n');row.a=numberField(row,'a')}
+if(k==='debts'){row.n=textField(row,'n');row.a=numberField(row,'a');for(const[f,max]of[['r',100],['rate',IMPORT_MAX_BETRAG]])if(row[f]!==undefined&&!(Number.isFinite(row[f])&&row[f]>=0&&row[f]<=max))delete row[f]}
 if(k==='hist'){row.m=textField(row,'m');row.nw=numberField(row,'nw')}
 if(k==='sales'){row.n=textField(row,'n');row.d=textField(row,'d');row.k=textField(row,'k','sonst');row.g=numberField(row,'g');row.gc=numberField(row,'gc');row.gp=numberField(row,'gp')}
 return true});
