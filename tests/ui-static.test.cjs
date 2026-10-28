@@ -140,3 +140,19 @@ test('Kategorie-Farben: nur der ■-Marker ist farbig und aria-hidden, der Name 
   assert.doesNotMatch(js, /<i style="color:/, 'Marker als <i> ohne aria-hidden');
   assert.ok((js.match(/<span aria-hidden="true" style="color:/g) || []).length >= 3, 'Marker-Muster fehlt');
 });
+
+// Bewegung nur für sich ändernde Inhalte (Design-Hinweis): Endlos läuft im Stylesheet allein der Live-Punkt bei laufender Synchronisierung.
+// Offen und hier festgehalten: der SVG-Pulse (ANIM in app.js) auf Endpunkten der Diagramme ist unbegrenzt (ENDKONTROLLE-BERICHT, Teil A3).
+test('Bewegung: Endlos-Animationen im Stylesheet nur der Live-Punkt, Badge höchstens 3 Wiederholungen', () => {
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+  const endlos = rules.filter(m => /animation:[^;}]*infinite/.test(m[2])).map(m => m[1].trim());
+  assert.deepEqual(endlos, ['.live.pulse'], 'unbegrenzte Animation außer dem Live-Punkt');
+  const badge = css.match(/\.badge\{animation:pu [\d.]+s (\d+)\}/);
+  assert.ok(badge && Number(badge[1]) <= 3, 'Badge: höchstens 3 Wiederholungen');
+  assert.doesNotMatch(css, /\.s-crypto\b|\.p\{animation/, 'blinkende Warnungen');
+  assert.doesNotMatch(css, /\.bar i::after\{[^}]*animation/, 'Schimmer auf Fortschrittsbalken');
+});
+
+test('Bewegung: SVG-Pulse in app.js ist die einzige bekannte unbegrenzte Animation außerhalb des Stylesheets', () => {
+  assert.equal((js.match(/repeatCount="indefinite"/g) || []).length, 1, 'eine Stelle (ANIM) erwartet');
+});
