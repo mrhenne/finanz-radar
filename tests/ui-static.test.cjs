@@ -46,10 +46,10 @@ test('Eingabefelder haben einen Namen (aria-label, aria-labelledby oder label fo
   assert.deepEqual(bad, [], 'Eingabefeld ohne Namen');
 });
 
-test('Tab-Leiste mit role=tablist und role=tab', () => {
-  assert.match(all, /role="tablist"/); // steht in index.html
-  assert.match(js, /role="tab"/);
-  assert.match(js, /aria-selected/);
+test('Navigation als nav mit aria-label, aktiver Eintrag mit aria-current="page"', () => {
+  // Phase 2B: Icon-Rail und Tab-Leiste sind eine Navigation (nav), kein tablist mehr
+  assert.match(html, /<nav class="tabs" id="tb" aria-label="[^"]+">/);
+  assert.match(js, /aria-current="page"/);
 });
 
 test('Dialoge mit role=dialog und aria-modal', () => {

@@ -212,7 +212,7 @@
    ]
   },
   "assets|leer": {
-   "hash": "ca22df08da9d2350c12e7b54c58688104a5d1a7572a6c959dbb93070873fc871",
+   "hash": "259ef12da7af122c345619a1b9dd1cf1fe1b30822833da3f22e48ace2ef0647b",
    "list": [
     [
      "click",
@@ -263,6 +263,11 @@
      "input",
      "input",
      "sugg()"
+    ],
+    [
+     "change",
+     "select",
+     "setAm(this.value)"
     ],
     [
      "click",
@@ -721,7 +726,7 @@
    ]
   },
   "crypto|leer": {
-   "hash": "279cf336ea9d993e4b8e9c1ad848f80b85d385c6ebc1aba86927a1c29252f169",
+   "hash": "340524b27245699dad9269ce2be2c20400ee279796625dc3fd05405e4f2e4492",
    "list": [
     [
      "click",
@@ -1361,7 +1366,7 @@
    ]
   },
   "assets|klein": {
-   "hash": "cea4eea797ae303943d0a85a9645df8187009bdcef0af4020a250ab989682d23",
+   "hash": "99d7852088ea15fb13569503d82aa9df1318daf36a4e926949ccb67821f0bc01",
    "list": [
     [
      "click",
@@ -1412,6 +1417,11 @@
      "input",
      "input",
      "sugg()"
+    ],
+    [
+     "change",
+     "select",
+     "setAm(this.value)"
     ],
     [
      "click",
@@ -2810,7 +2820,7 @@
    ]
   },
   "assets|grenzfaelle": {
-   "hash": "f8fa0c31ac2644149ab6d91fbfe8cd893d933507b3fd5e0c673fd208645be245",
+   "hash": "968132a9dd060a0e65c2395cf01819728ea378b21c512af1c13e5e565d8306df",
    "list": [
     [
      "click",
@@ -2861,6 +2871,11 @@
      "input",
      "input",
      "sugg()"
+    ],
+    [
+     "change",
+     "select",
+     "setAm(this.value)"
     ],
     [
      "click",
@@ -3189,7 +3204,7 @@
    ]
   },
   "tax|grenzfaelle": {
-   "hash": "5d9ac1261d91e8f576b707aca077f65351cba85271c587c10bc2fe8ed8edbacd",
+   "hash": "28d5189dd76cf25c33468a718a269475c2a5d94e2c693556c62c696dac1ead6b",
    "list": [
     [
      "click",
@@ -3384,7 +3399,7 @@
    ]
   },
   "crypto|grenzfaelle": {
-   "hash": "ec8ad6cca45bb0ecf8df6f60d183aa488b833eeef358c3d9d964c551c11e426c",
+   "hash": "d11c47ce9c52c3cdb3bbfb653ec7180b16db70d83455d7edf9d166c42ddaf102",
    "list": [
     [
      "click",
@@ -4519,7 +4534,7 @@
    ]
   },
   "assets|extrem": {
-   "hash": "2cfa6d8b71873cf26eaabd0f3ff00a9d3225ec0026a4c7a0253270b5e5fe20a8",
+   "hash": "831bb6a04cad83038e1004a9e6e211c3d437e7b6f5b47179dd4b3f2db78d0659",
    "list": [
     [
      "click",
@@ -4570,6 +4585,11 @@
      "input",
      "input",
      "sugg()"
+    ],
+    [
+     "change",
+     "select",
+     "setAm(this.value)"
     ],
     [
      "click",
@@ -6045,6 +6065,7 @@
   "lrg='S';render()": "setLrg",
   "setP('S',this.value)": "setP",
   "snapRestore(N)": "snapRestore",
-  "setJob('S',N)": "setJob"
+  "setJob('S',N)": "setJob",
+  "setAm(this.value)": "setAm"
  }
 }

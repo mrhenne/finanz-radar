@@ -32,6 +32,7 @@ test('Historie: Verlaufspunkt des laufenden Monats aktualisiert den angezeigten 
 test('Bearbeiten einer Buchung ohne Datum behält das bisherige Datum', () => {
   const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: fixture('small.json') });
   app.h.setEd({ k: 'tx', id: 'f2' });
+  app.h.setMo('2026-07');   // Inline-Bearbeitung: die Buchung muss im angezeigten Monat stehen
   app.h.setTab('cash');
   app.render();
   app.doc.getElementById('ef0').value = 'Wohnen';
@@ -46,6 +47,7 @@ test('Bearbeiten einer Buchung ohne Datum behält das bisherige Datum', () => {
 test('Bearbeiten eines Historie-Eintrags mit ungültigem Monat ändert den Monat nicht', () => {
   const app = loadApp({ now: '2026-10-26T10:00:00Z', tz: 'Europe/Berlin', fixture: fixture('small.json') });
   app.h.setEd({ k: 'hist', id: 'h2' });
+  app.h.setS({ ...app.h.S(), ui: { c: {}, o: {}, hf: true } });   // Verlauf steht unter „Alle Details anzeigen“
   app.h.setTab('home');
   app.render();
   app.doc.getElementById('ef0').value = 'August';

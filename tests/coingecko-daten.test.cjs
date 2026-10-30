@@ -32,11 +32,12 @@ test('Marktliste mit fehlendem Preis und fehlenden Feldern: Krypto-Ansicht rende
   assert.deepEqual(app.logsOfErrors(), []);
 });
 
-test('Kurs aus der Marktliste übernimmt den Preis der Position (Coin-ID aus cg)', async () => {
+test('Kurs der Position kommt aus /simple/price über die Coin-ID (cg), nicht aus der Top-Liste', async () => {
+  // Geändert mit Teil „Kurse gebündelt“: Die Top-Liste ist nur noch 20 Coins; der Positionskurs stammt aus dem gebündelten Aufruf.
   const pos = { id: 'k1', n: 'Bitcoin', k: 'crypto', q: 0.5, p: 1, c: 6000, cg: 'bitcoin', l: [{ d: '2025-01-01', q: 0.5, p: 12000, f: 0 }] };
   const app = loadApp({ now: NOW, tz: 'Europe/Berlin', fixture: base([pos]), fetch: fetchWith(marketBody()) });
   await app.ctx.liveFetch();
-  assert.equal(app.h.S().as[0].p, 60000);
+  assert.equal(app.h.S().as[0].p, 61000);
 });
 
 test('Fehlender Kurs in der Positionsliste (Netz aus): bisheriger Kurs bleibt, Fehlermeldung statt Absturz', async () => {

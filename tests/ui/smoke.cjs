@@ -155,7 +155,7 @@ async function main() {
     console.log((ok && neu.length === 0 ? 'OK   ' : 'FEHL ') + name + (detail ? ' · ' + detail : '') + (dialog.length ? ' · Dialog: ' + dialog.join(' | ') : '') + (neu.length ? ' · ' + neu.map(m => m.art + ' ' + m.text).join(' ; ') : ''));
   }
   const klick = sel => c.evaluate(`(() => { const b = document.querySelector(${JSON.stringify(sel)}); if (!b) return false; b.click(); return true; })()`);
-  const tabKlick = key => c.evaluate(`(() => { const b = [...document.querySelectorAll('#tb [role=tab]')].find(x => x.getAttribute('data-args') === ${JSON.stringify(JSON.stringify([key]))}); if (!b) return false; b.click(); return true; })()`);
+  const tabKlick = key => c.evaluate(`(() => { const b = [...document.querySelectorAll('#tb [data-click="goTab"]')].find(x => x.getAttribute('data-args') === ${JSON.stringify(JSON.stringify([key]))}); if (!b) return false; b.click(); return true; })()`);
   // Löschen-Schaltfläche der Zeile mit dieser ID (data-args enthält die ID als JSON-Text)
   const loescheVon = id => c.evaluate(`(() => { const id = ${JSON.stringify(id)}; const b = [...document.querySelectorAll('[data-click="del"]')].find(x => (x.getAttribute('data-args') || '').includes(id)); if (!b) return false; b.click(); return true; })()`);
   const sb = async (sel, ms) => c.waitFor(`!!document.querySelector(${JSON.stringify(sel)})`, ms);

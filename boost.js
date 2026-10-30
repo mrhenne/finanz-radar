@@ -44,7 +44,7 @@
     _applyTh();
     const d = isDark(), t = S.th || 'auto';
     document.documentElement.style.colorScheme = d ? 'dark' : 'light';
-    document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', d ? '#17181a' : '#e9eaec'));
+    document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', d ? '#161108' : '#fbf5ec'));
     const b = $('th'); if (b) { const l = { light: 'Design: Hell', dark: 'Design: Dunkel', auto: 'Design: Automatisch' }[t]; b.title = l; b.setAttribute('aria-label', l); }
   };
   W.theme = function () {
@@ -249,9 +249,8 @@
     const open = !!(S.ui && S.ui.hf);
     h += '<button class="btn o det" ' + act('homeFull') + '>' + (open ? '▴ Details ausblenden' : '▾ Alle Details anzeigen') + '</button>';
     const fokus = card('Fokus', h);
-    if (!open) return edHTML() + fokus;
-    const old = oldHome(), e0 = edHTML();
-    return (e0 && old.startsWith(e0) ? e0 + fokus + old.slice(e0.length) : fokus + old);
+    if (!open) return fokus;
+    return fokus + oldHome();
   };
 
   /* =====================================================================
@@ -286,7 +285,7 @@
   const MS = [10000, 50000, 100000, 250000, 500000, 1000000];
   function confetti() {
     if (reduced()) return;
-    const box = document.createElement('div'), cols = ['#ff5a1f', '#1f9d63', '#5b6cff', '#d4a017', '#ff4d6d'];
+    const box = document.createElement('div'), cols = ['var(--or)', 'var(--c-green)', 'var(--c-blue)', 'var(--c-gold)', 'var(--bad)'];
     box.className = 'cft'; box.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 40; i++) { const s = document.createElement('i'); s.style.left = (50 + (Math.random() * 20 - 10)) + '%'; s.style.background = cols[i % cols.length]; s.style.setProperty('--dx', ((Math.random() * 2 - 1) * 48).toFixed(1) + 'vw'); s.style.setProperty('--dy', (40 + Math.random() * 55).toFixed(1) + 'vh'); s.style.setProperty('--r', (Math.random() * 900 - 450).toFixed(0) + 'deg'); s.style.animationDelay = (Math.random() * .12).toFixed(2) + 's'; box.appendChild(s); }
     document.body.appendChild(box); setTimeout(() => box.remove(), 2400);

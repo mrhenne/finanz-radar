@@ -3,8 +3,8 @@
   "short_name": "Finanz",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#e9eaec",
-  "theme_color": "#e9eaec",
+  "background_color": "#fbf5ec",
+  "theme_color": "#fbf5ec",
   "icons": [
     {
       "src": "icon-180.png",
