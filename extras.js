@@ -58,7 +58,7 @@
   function spPanel() {
     const t = spT(), a = avg(), ist = invSum(txOf(mo)), sug = Math.round(a.s / 10) * 10;
     const cur = ymOf(), day = new Date().getDate();
-    let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input aria-label="Sparziel pro Monat in Euro" id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn o" style="margin:0;align-self:end" ' + act('setSpl') + '>Speichern</button></div>';
+    let h = '<div class="row"><div><label>Sparziel pro Monat €</label><input aria-label="Sparziel pro Monat in Euro" id="sp_t" type="number" inputmode="decimal" value="' + (t || '') + '" placeholder="z. B. ' + (sug || 300) + '"></div><button class="btn primary" style="margin:0;align-self:end" ' + act('setSpl') + '>Speichern</button></div>';
     if (!t) return card('Sparplan', h + '<div class="note">Lege ein monatliches Sparziel fest, dann zeige ich dir Soll und Ist.' + (sug > 0 ? ' Dein Ø investiert pro Monat: ' + eur(a.s) + '. <a href="#" ' + act('useSpl',[sug,'$event']) + ' style="color:var(--ort)">' + eur(sug) + ' übernehmen</a>' : '') + '</div>');
     const pc = Math.min(100, ist / t * 100), diff = ist - t;
     let status;
@@ -88,7 +88,7 @@
     if (S.tx.length < 5) return '';
     const age = expAt() ? Math.floor((Date.now() - expAt()) / 86400000) : null;
     if (age !== null && age < 30) return '';
-    return card('Hinweis', '<b class="neg">Backup fällig</b><div class="mut" style="margin-top:4px">' + (age === null ? 'Noch kein Datei-Backup gespeichert.' : 'Letztes Datei-Backup vor ' + age + ' Tagen.') + '</div><button class="btn o" ' + act('dlBackup') + '>Jetzt als Datei sichern</button>');
+    return card('Hinweis', '<b class="neg">Backup fällig</b><div class="mut" style="margin-top:4px">' + (age === null ? 'Noch kein Datei-Backup gespeichert.' : 'Letztes Datei-Backup vor ' + age + ' Tagen.') + '</div><button class="btn primary" ' + act('dlBackup') + '>Jetzt als Datei sichern</button>');
   }
   wrap('home', h => insAfterFirst(h, backupBanner() + spPanel()));
 
@@ -148,10 +148,10 @@
   function buildSheet() {
     if (document.getElementById('qsh')) return;
     const tpl = document.createElement('template');
-    tpl.innerHTML = '<div class="qsh" id="qsh" role="dialog" aria-modal="true" aria-labelledby="q_t"><div><h2 id="q_t" style="margin:0 0 10px;font-size:11px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase">[Schnell] Buchung</h2>'
+    tpl.innerHTML = '<div class="qsh" id="qsh" role="dialog" aria-modal="true" aria-labelledby="q_t"><div><h2 id="q_t" style="margin:0 0 10px;font-size:11px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase">Buchung</h2>'
       + '<input aria-label="Betrag in Euro" id="q_a" type="number" inputmode="decimal" placeholder="Betrag €" style="font-size:22px"><input aria-label="Notiz" id="q_n" placeholder="Notiz, z. B. Rewe" style="margin-top:8px" autocomplete="off" ' + act('qSug',[],'input') + '>'
       + '<div class="chips" id="q_ch" style="margin-top:8px"></div><div class="row" style="margin-top:8px"><select aria-label="Kategorie" id="q_c" ' + act('Q_manual',[],'change') + '></select><input aria-label="Datum" id="q_d" type="date"></div>'
-      + '<div class="mut" id="q_h" style="margin-top:6px;min-height:14px"></div><div class="row"><button class="btn o" ' + act('qClose') + '>Abbrechen</button><button class="btn" ' + act('qSave') + '>Buchen</button></div></div></div>';
+      + '<div class="mut" id="q_h" style="margin-top:6px;min-height:14px"></div><div class="row"><button class="btn o" ' + act('qClose') + '>Abbrechen</button><button class="btn primary" ' + act('qSave') + '>Buchen</button></div></div></div>';
     const el = tpl.content.firstElementChild;
     el.addEventListener('click', e => { if (e.target === el) qClose(); });
     document.body.appendChild(el);
@@ -307,7 +307,7 @@ const CSV_MAX_ROWS = 1500;
   function impPanel() {
     return card('Import', '<label>CSV-Kontoauszug (Bank, Trade Republic u. ä.)</label><input aria-label="CSV-Kontoauszug auswählen" id="imp_f" type="file" accept=".csv,.txt,text/csv,text/plain" ' + act('impFile',['$el'],'change') + '><div class="note">Erkannt werden Kopfzeile, Trennzeichen und Zahlenformat automatisch. Kategorien werden aus deinen früheren Buchungen und Stichworten vorgeschlagen; vor dem Import kannst du alles anpassen. Bereits vorhandene Buchungen mit gleichem Datum und Betrag werden als Duplikat abgewählt.</div><div id="imp_out">' + impPreview() + '</div>' + (S.lastImp && S.lastImp.ids && S.lastImp.ids.length ? '<button class="btn o" ' + act('impUndo') + '>Letzten Import rückgängig (' + S.lastImp.ids.length + ')</button>' : ''));
   }
-  wrap('data', h => h + card('Sicherung', '<div class="mut">Letztes Datei-Backup: ' + (expAt() ? new Date(expAt()).toLocaleDateString('de-DE') : 'noch nie') + '</div><button class="btn o" ' + act('dlBackup') + '>Backup als Datei speichern</button>'));
+  wrap('data', h => h + card('Sicherung', '<div class="mut">Letztes Datei-Backup: ' + (expAt() ? new Date(expAt()).toLocaleDateString('de-DE') : 'noch nie') + '</div><button class="btn primary" ' + act('dlBackup') + '>Backup als Datei speichern</button>'));
   V.csv = () => bk() + impPanel();
 
   /* ---------- 8. Sicherheit & Datenschutz ---------- */

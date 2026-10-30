@@ -71,7 +71,7 @@ test('Monatssummen August: Einnahmen, Ausgaben und Cashflow gleich in Home, Mona
   const review = [first(r, /<b class="pos">([^<]*)<\/b><span>Einnahmen<\/span>/), first(r, /<b class="neg">([^<]*)<\/b><span>Ausgaben<\/span>/), first(r, /<b>([^<]*)<\/b><span>Cashflow<\/span>/)];
   a.h.setTab('cash');
   const c = a.render();
-  const cash = [first(c, /\[Einnahmen\] ([^<]*)</), first(c, /\[Ausgaben\] ([^<]*)</)];
+  const cash = [first(c, />Einnahmen ([^<]*)</), first(c, />Ausgaben ([^<]*)</)];
   a.h.setTab('year');
   const y = txt(a.render()).match(/Aug 3\.000 € 1\.111 € 300 € (\S+ €)/);
   assert.deepEqual(home, ['3.000 €', '1.111 €', '1.890 €']);

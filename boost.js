@@ -31,7 +31,7 @@
     if (pts.length < 2) return '';
     const ys = pts.map(p => p[1]), mn = Math.min(...ys), mx = Math.max(...ys), w = 100, h = 18, n = vals.length - 1 || 1;
     const P2 = pts.map(p => [p[0] / n * w, h - 3 - (p[1] - mn) / ((mx - mn) || 1) * (h - 6)]), last = P2[P2.length - 1];
-    return '<svg class="spk" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + P2.map((p, j) => (j ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('') + '" fill="none" stroke="' + (col || 'var(--mut)') + '" stroke-width="1.6" vector-effect="non-scaling-stroke"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2" fill="var(--or)"/></svg>';
+    return '<svg class="spk" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + P2.map((p, j) => (j ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('') + '" fill="none" stroke="' + (col || 'var(--mut)') + '" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2" fill="var(--or)"/></svg>';
   }
 
   /* =====================================================================
@@ -92,9 +92,9 @@
     const ms = []; for (let i = -11; i <= 0; i++) ms.push(addM(ymNow(), i));
     const vs = ms.map(m => piItems().filter(x => x.d.startsWith(m)).reduce((s, x) => s + +x.a, 0)), mx = Math.max(...vs, 1), bw = 312 / ms.length;
     if (!vs.some(v => v > 0)) return '';
-    let g = '<line x1="40" x2="352" y1="100" y2="100" stroke="var(--ln)"/><text x="36" y="14" font-size="8" text-anchor="end" fill="var(--mut)">' + eur(mx) + '</text>';
-    vs.forEach((v, i) => { const h = v / mx * 86, x = 40 + i * bw; g += '<rect x="' + (x + 3).toFixed(1) + '" y="' + (100 - h).toFixed(1) + '" width="' + (bw - 6).toFixed(1) + '" height="' + Math.max(v > 0 ? 1.5 : 0, h).toFixed(1) + '" fill="' + (i === vs.length - 1 ? 'var(--or)' : 'var(--g)') + '"' + (v > 0 ? '' : ' opacity=".3"') + '><title>' + monLabel(ms[i]) + ': ' + eur(v) + '</title></rect>'; if (i % 2 === 1 || i === vs.length - 1) g += '<text x="' + (x + bw / 2).toFixed(1) + '" y="112" font-size="7" text-anchor="middle" fill="var(--mut)">' + monLabel(ms[i]) + '</text>'; });
-    return '<svg role="img" aria-label="Balkendiagramm: passives Einkommen pro Monat" viewBox="0 0 360 118" class="pib">' + g + '</svg>';
+    let g = '<line class="gl" x1="40" x2="352" y1="100" y2="100"/><text class="ax" x="36" y="14" text-anchor="end">' + eur(mx) + '</text>';
+    vs.forEach((v, i) => { const h = v / mx * 86, x = 40 + i * bw, w = Math.max(3, Math.min(24, bw * .58)); g += '<rect style="--i:' + i + '" x="' + (x + (bw - w) / 2).toFixed(1) + '" y="' + (100 - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(v > 0 ? 1.5 : 0, h).toFixed(1) + '" rx="' + Math.min(7, w / 2).toFixed(1) + '" fill="' + (i === vs.length - 1 ? 'var(--accent-2)' : 'var(--accent)') + '"' + (v > 0 ? '' : ' opacity=".3"') + '><title>' + monLabel(ms[i]) + ': ' + eur(v) + '</title></rect>'; if (i % 2 === 1 || i === vs.length - 1) g += '<text class="ax" x="' + (x + bw / 2).toFixed(1) + '" y="112" text-anchor="middle">' + monLabel(ms[i]) + '</text>'; });
+    return '<svg role="img" aria-label="Balkendiagramm: passives Einkommen pro Monat" viewBox="0 0 360 118" class="chart pib">' + g + '</svg>';
   }
 
   SUB.push('passive', 'job');
@@ -119,7 +119,7 @@
 
     out += card('Passiv · Neu', '<div class="row"><select aria-label="Art der Einnahme" id="pi_k">' + Object.entries(PI_K).map(([k, l]) => '<option value="' + k + '">' + l + '</option>').join('') + '</select><input aria-label="Betrag in Euro" id="pi_a" type="number" inputmode="decimal" placeholder="Betrag €"></div>'
       + '<div class="row" style="margin-top:8px"><input aria-label="Quelle der Einnahme" id="pi_n" placeholder="Quelle, z. B. MSCI World" list="pi_dl" autocomplete="off"><input aria-label="Datum der Einnahme" id="pi_d" type="date" value="' + today() + '"></div><datalist id="pi_dl">' + S.as.filter(a => a.k !== 'crypto').map(a => '<option value="' + esc(a.n) + '">').join('') + '</datalist>'
-      + '<label class="chk"><input aria-label="Auch als Einnahme im Cashflow buchen" type="checkbox" id="pi_tx">Auch als Einnahme im Cashflow buchen</label><button class="btn" ' + act('piAdd') + '>Erfassen</button>'
+      + '<label class="chk"><input aria-label="Auch als Einnahme im Cashflow buchen" type="checkbox" id="pi_tx">Auch als Einnahme im Cashflow buchen</label><button class="btn primary" ' + act('piAdd') + '>Erfassen</button>'
       + '<div class="note">Brutto oder netto ist egal, bleib nur einheitlich. Wenn die Ausschüttung schon als Buchung im Cashflow steht, lass den Haken weg oder nutze „Übernehmen“ oben.</div>');
 
     const L = piItems().slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 15);
@@ -208,13 +208,19 @@
      7. Fokus-Home
      ===================================================================== */
   const oldHome = V.home;
+  /* Fuck-Off-Gauge: Strich-Halbkreis mit 41 Strichen (f = i/40, Winkel π bis 0). Aktiv sind die Striche mit f <= Anteil; bei 0 % keiner. */
   function ring(p) {
-    const R = 50, C = 2 * Math.PI * R, f = clamp(p / 100, 0, 1), done = p >= 100;
-    return '<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Fortschritt zur Fuck-Off-Zahl"><circle cx="60" cy="60" r="' + R + '" fill="none" stroke="var(--ln)" stroke-width="9"/>'
-      + [.25, .5, .75].map(q => { const a = q * 2 * Math.PI - Math.PI / 2; return '<line x1="' + (60 + 44 * Math.cos(a)).toFixed(1) + '" y1="' + (60 + 44 * Math.sin(a)).toFixed(1) + '" x2="' + (60 + 56 * Math.cos(a)).toFixed(1) + '" y2="' + (60 + 56 * Math.sin(a)).toFixed(1) + '" stroke="var(--p)" stroke-width="1.5"/>'; }).join('')
-      + '<circle class="rga" cx="60" cy="60" r="' + R + '" fill="none" stroke="' + (done ? 'var(--g)' : 'var(--or)') + '" stroke-width="9" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - f)).toFixed(1) + '" transform="rotate(-90 60 60)" style="--c:' + C.toFixed(1) + '"/>'
-      + '<text x="60" y="64" text-anchor="middle" font-size="' + (done ? 30 : 22) + '" font-weight="600" fill="var(--ink)">' + (done ? '✓' : Math.floor(p) + ' %') + '</text><text x="60" y="81" text-anchor="middle" font-size="7" letter-spacing="1.2" fill="var(--mut)">FUCK OFF</text></svg>';
+    const share = clamp(p / 100, 0, 1), done = p >= 100;
+    let t = '';
+    for (let i = 0; i <= 40; i++) {
+      const f = i / 40, a = Math.PI * (1 - f), on = share > 0 && f <= share + 1e-9, c = Math.cos(a), s = Math.sin(a);
+      t += '<line class="tk' + (on ? ' on' : '') + '" style="--i:' + i + '" x1="' + (100 + 72 * c).toFixed(1) + '" y1="' + (100 - 72 * s).toFixed(1) + '" x2="' + (100 + 86 * c).toFixed(1) + '" y2="' + (100 - 86 * s).toFixed(1) + '"/>';
+    }
+    return '<svg class="ring gauge' + (done ? ' done' : '') + '" viewBox="0 0 200 118" role="img" aria-label="Fortschritt zur Fuck-Off-Zahl">' + t
+      + '<text class="gv" x="100" y="84" text-anchor="middle">' + (done ? '✓' : Math.floor(p) + '<tspan>%</tspan>') + '</text>'
+      + '<text class="gcap" x="100" y="104" text-anchor="middle">FUCK OFF</text></svg>';
   }
+  W.gaugeSVG = ring;
   W.qInvest = () => { if (!W.qOpen) return; W.qOpen(); setTimeout(() => { const s = $('q_c'); if (s) { s.value = 'Sparen/Invest'; if (W.Q_manual) W.Q_manual(); } }, 0); };
   W.homeFull = () => { S.ui.hf = !S.ui.hf; save(); render(); };
   function alerts() {
@@ -248,7 +254,7 @@
     h += A.length ? '<div class="alr">' + A.join('') + '</div>' : '<div class="allok pos">✓ Keine offenen Punkte</div>';
     const open = !!(S.ui && S.ui.hf);
     h += '<button class="btn o det" ' + act('homeFull') + '>' + (open ? '▴ Details ausblenden' : '▾ Alle Details anzeigen') + '</button>';
-    const fokus = card('Fokus', h);
+    const fokus = P('[Fokus]', h, true);
     if (!open) return fokus;
     return fokus + oldHome();
   };

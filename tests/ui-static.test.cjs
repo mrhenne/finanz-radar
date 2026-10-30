@@ -58,10 +58,9 @@ test('Dialoge mit role=dialog und aria-modal', () => {
   assert.match(sheet, /aria-modal="true"/);
 });
 
-test('dekorative Fensterpunkte sind aria-hidden', () => {
+test('keine dekorativen Fensterpunkte mehr in der Kopfzeile (Distill)', () => {
   const dots = html.match(/<span class="dot"[^>]*>/g) || [];
-  assert.ok(dots.length >= 3);
-  for (const d of dots) assert.match(d, /aria-hidden="true"/);
+  assert.equal(dots.length, 0);
 });
 
 test('sichtbarer Tastaturfokus ist per CSS definiert', () => {
@@ -132,7 +131,7 @@ test('Trefferflächen: Abschnittskopf und Chip mindestens 44 px hoch (Erweiterun
 
 test('Vorschau-Tabelle: bei 375 bis 430 px kleinere Schrift und Innenabstand, ab 431 px unverändert', () => {
   assert.match(js, /<table class="pvt">/);
-  assert.match(css, /@media \(max-width:430px\)\{\.pvt:not\(\.cmp\)\{font-size:10px\}\.pvt:not\(\.cmp\) th,\.pvt:not\(\.cmp\) td\{padding:6px 4px\}/);
+  assert.match(css, /@media \(max-width:430px\)\{\.pvt:not\(\.cmp\)\{font-size:11px\}\.pvt:not\(\.cmp\) th,\.pvt:not\(\.cmp\) td\{padding:6px 4px\}/);
 });
 
 test('Kategorie-Farben: nur der ■-Marker ist farbig und aria-hidden, der Name steht in Textfarbe', () => {
@@ -143,12 +142,11 @@ test('Kategorie-Farben: nur der ■-Marker ist farbig und aria-hidden, der Name 
 
 // Bewegung nur für sich ändernde Inhalte (Design-Hinweis): Endlos läuft im Stylesheet allein der Live-Punkt bei laufender Synchronisierung.
 // Offen und hier festgehalten: der SVG-Pulse (ANIM in app.js) auf Endpunkten der Diagramme ist unbegrenzt (ENDKONTROLLE-BERICHT, Teil A3).
-test('Bewegung: Endlos-Animationen im Stylesheet nur der Live-Punkt, Badge höchstens 3 Wiederholungen', () => {
+test('Bewegung: Endlos-Animationen im Stylesheet nur der Live-Punkt, Badge ohne Animation (Distill)', () => {
   const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)];
   const endlos = rules.filter(m => /animation:[^;}]*infinite/.test(m[2])).map(m => m[1].trim());
   assert.deepEqual(endlos, ['.live.pulse'], 'unbegrenzte Animation außer dem Live-Punkt');
-  const badge = css.match(/\.badge\{animation:pu [\d.]+s (\d+)\}/);
-  assert.ok(badge && Number(badge[1]) <= 3, 'Badge: höchstens 3 Wiederholungen');
+  assert.doesNotMatch(css, /\.badge\{[^}]*animation/, 'Badge: keine Animation');
   assert.doesNotMatch(css, /\.s-crypto\b|\.p\{animation/, 'blinkende Warnungen');
   assert.doesNotMatch(css, /\.bar i::after\{[^}]*animation/, 'Schimmer auf Fortschrittsbalken');
 });

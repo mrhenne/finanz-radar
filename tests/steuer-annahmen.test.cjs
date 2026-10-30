@@ -113,7 +113,7 @@ test('Steuer-Übersicht: Annahmen an einer Stelle, Hinweise zu Verlustverrechnun
   const a = loadApp({ now: '2026-10-28T10:00:00Z', tz: 'Europe/Berlin' });
   a.h.setTab('tax');
   const html = a.render();
-  assert.match(html, /\[Annahmen\] Steuer/);
+  assert.match(html, />Steuer<\/span>/);
   assert.match(html, /Abgeltung \+ Soli/);
   assert.match(html, /Pauschbetrag/);
   assert.match(html, /Teilfreistellung Aktien-ETF \(fest\)/);

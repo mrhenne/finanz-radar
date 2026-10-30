@@ -71,8 +71,9 @@ for (const [name, t] of Object.entries(THEMES)) {
 }
 
 test('Akzentfarbe ist als Text nicht mehr verwendet, nur als Fläche/Rahmen', () => {
-  // .btn, .badge, .qfab: Hintergrund ist --orb (Weiß-Text), Textfarbe --ort
-  assert.match(css, /\.btn\{[^}]*background:var\(--orb\)/);
+  // .btn: Ghost (Hintergrund --tint, Text --text); .btn.primary: Hintergrund --accent (Textfarbe --on-accent); .badge, .qfab: Hintergrund ist --orb (Weiß-Text)
+  assert.match(css, /\.btn\{[^}]*background:var\(--tint\)[^}]*color:var\(--text\)/);
+  assert.match(css, /\.btn\.primary\{[^}]*background:var\(--accent\)/);
   assert.match(css, /\.badge\{background:var\(--orb\)/);
   assert.match(css, /\.qfab\{[^}]*background:var\(--orb\)/);
 });
